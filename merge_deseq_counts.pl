@@ -1,7 +1,9 @@
 #!/usr/bin/env perl
 
 # PODNAME: merge_deseq_counts.pl
-# ABSTRACT: Description
+# ABSTRACT: The script takes a file of the filenames to merge. Optionally,
+# a gene list can be supplied to subset the count files with.
+# The script can get either normalised or unnormalised counts.
 
 use warnings;
 use strict;
