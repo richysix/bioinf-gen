@@ -3,10 +3,10 @@
 library('optparse')
 
 option_list <- list(
-  #make_option("--group_by_cols", type="character", action="store", default='Set,Parent.Term',
-  #            help="Name of the column to group by for aggregation [default]")
-  #make_option("--arrange_cols", type="character", action="store", default='Cluster',
-  #            help="Name of the column to group by for aggregation [default]")
+  make_option("--group_by_cols", type="character", action="store", default='Set,Parent.Term',
+              help="Name of the column to group by for aggregation [default]"),
+  make_option("--filter_by_cols", type="character", action="store", default='Parent.Term',
+              help="Name of the column to group by for aggregation [default]")
 )
 
 desc <- paste('', 'Script to aggregate ZFA terms by another column',
@@ -26,12 +26,12 @@ cmd_line_args <- parse_args(
 )
 
 # unpack options
-#group_by_cols <-
-#    as.list(
-#        unlist( strsplit(cmd_line_args$options[['group_by_cols']],
-#                          ',', fixed = TRUE) )
-#    )
-#group_by_cols_q <- quos(group_by_cols)
+group_by_cols <-
+        unlist( strsplit(cmd_line_args$options[['group_by_cols']],
+                          ',', fixed = TRUE) )
+filter_by_cols <-
+        unlist( strsplit(cmd_line_args$options[['filter_by_cols']],
+                          ',', fixed = TRUE) )
 
 packages <- c('tidyverse')
 for( package in packages ){
@@ -40,8 +40,8 @@ for( package in packages ){
 
 data <- read.delim(cmd_line_args$args[1])
 aggregated_data <- data %>%
-    filter(!is.na(Parent.Term)) %>%
-    group_by(Set, Parent.Term) %>%
+    filter_at(filter_by_cols, all_vars(!is.na(.))) %>%
+    group_by_at(group_by_cols) %>%
     summarise(max_log10p = max(log10p), max_fe = max(FE), numTerms = n()) %>%
     arrange(desc(numTerms), .by_group = TRUE)
 
