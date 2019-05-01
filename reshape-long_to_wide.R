@@ -44,7 +44,13 @@ input_data <- read.delim(file = input_file,
 check_col <- function(option_name, input_data) {
     option <- cmd_line_args$options[[option_name]]
     if (is.null(option)) {
-        col <- ncol(input_data) - 1
+        if (option_name == 'key') {
+            col <- ncol(input_data) - 1
+        } else if (option_name == 'value') {
+            col <- ncol(input_data)
+        } else {
+            stop('option_name parameter must be one of "key" or "value"')
+        }
     } else {
         # if there is a header assume the key is a column name
         if (cmd_line_args$options[['header']]) {
