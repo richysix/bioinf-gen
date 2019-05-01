@@ -4,16 +4,13 @@ library('optparse')
 
 option_list <- list(
   make_option("--group_by_cols", type="character", action="store", default='Set,Parent.Term',
-              help="Name of the column to group by for aggregation [default]"),
+              help="Name of the columns to group by for aggregation [default %default]"),
   make_option("--filter_by_cols", type="character", action="store", default='Parent.Term',
-              help="Name of the column to group by for aggregation [default]")
+              help="Name of the columns to filter by [default %default]")
 )
 
 desc <- paste('', 'Script to aggregate ZFA terms by another column',
     '(e.g. Parent.Term)',
-    paste('At the moment the script assumes the columns Set and Parent.Term',
-           'exist to group by.'),
-    'Eventually it will allow those columns to be specified.',
     sep = "\n"
 )
 
