@@ -71,6 +71,7 @@ data <- read.delim(data_file, header=TRUE, check.names=FALSE)
 
 # Support different column names
 names(data)[names(data) == 'chr']               <- 'Chr'
+names(data)[names(data) == '#Chr']              <- 'Chr'
 names(data)[names(data) == 'start']             <- 'Start'
 names(data)[names(data) == 'end']               <- 'End'
 names(data)[names(data) == 'strand']            <- 'Strand'
@@ -82,12 +83,12 @@ names(data)[names(data) == 'Gene name']         <- 'Name'
 names(data)[ grepl("e[0-9]+ Ensembl Gene ID", names(data)) ] <- 'Gene ID'
 
 if (cmd_line_args$options[['detct']]) {
-    data$region <- paste(data[['#Chr']], data[['Region start']],
+    data$region <- paste(data[['Chr']], data[['Region start']],
                          data[['Region end']], data[["3' end position"]],
                          data[["3' end strand"]], sep=":")
 } else {
     data$region <-
-        sprintf("%s:%d-%d:%s", data[['#Chr']], data[['Start']],
+        sprintf("%s:%d-%d:%s", data[['Chr']], data[['Start']],
                 data[['End']], data[['Strand']])
 }
 regions <- unique(data$region)
