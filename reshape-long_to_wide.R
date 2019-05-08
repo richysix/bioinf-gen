@@ -13,6 +13,8 @@ option_list <- list(
             help="Value to use to fill any missing cells [default %default]"),
   make_option("--header", type="logical", default=FALSE, action="store_true",
             help="Does the input data have a header line [default %default]" ),
+  make_option("--ordering", type="logical", default=FALSE, action="store_true",
+            help="Order the output columns by the order in which they appear in the input file. If false the ordering is alphabetcial. [default %default]" ),
   make_option("--debug", type="logical", default=FALSE, action="store_true",
             help="Turns on debugging statements [default %default]" )
 )
@@ -82,6 +84,11 @@ if (debug) {
         '\nvalue =', value, '\n')
 }
 
+if (cmd_line_args$options[['ordering']]) {
+    # order levels of key column by the order in which they appear
+    input_data[[key]] <- factor(input_data[[key]],
+                                levels = unique(input_data[[key]]))
+}
 reshaped_data <- spread(input_data, key, value,
                         fill = cmd_line_args$options[['fill_value']])
 
