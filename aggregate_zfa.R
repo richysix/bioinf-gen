@@ -36,6 +36,12 @@ for( package in packages ){
 }
 
 data <- read.delim(cmd_line_args$args[1])
+
+# set levels of group by columns
+for (col in group_by_cols) {
+    data[[col]] <- factor(data[[col]], levels = unique(data[[col]]))
+}
+
 aggregated_data <- data %>%
     filter_at(filter_by_cols, all_vars(!is.na(.))) %>%
     group_by_at(group_by_cols) %>%
