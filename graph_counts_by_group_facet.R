@@ -13,6 +13,8 @@ option_list <- list(
               help="Name of column from samples file to plot as colour [default %default]" ),
   make_option("--shape_variable", type="character", default=NULL,
               help="Name of column from samples file to plot as shape [default %default]" ),
+  make_option("--colour_palette", type="character", default=NULL,
+              help="comma-separated list of factor levels to colours (e.g. sib=blue,mut=red or sib=#0000ff,mut=#ff0000) [default %default]" ),
   make_option("--crossbar", type="character", default=NULL,
               help="Type of crossbar (mean/median) to add to each group [default %default]" ),
   make_option("--seed", type="integer", default=25673,
@@ -118,7 +120,35 @@ colour_blind_palette <-
      'purple' = rgb(0.8, 0.6, 0.7),
      'black' = rgb(0, 0, 0) )
 # make colour palette for the data
-if (nlevels(samples[[colour_var]]) <= length(colour_blind_palette)) {
+num_levels <- nlevels(samples[[colour_var]])
+if (!is.null(cmd_line_args$options[['colour_palette']])) {
+    # split by ',' then by '='
+    if (grepl("=", cmd_line_args$options[['colour_palette']])) {
+        colours <- strsplit(unlist(strsplit(cmd_line_args$options[['colour_palette']], ",")), "=")
+        colour_palette <- sapply(colours, function(x){ return(x[2]) })
+        names(colour_palette) <- sapply(colours, function(x){ return(x[1]) })
+        
+        # check that names match levels
+        missing_levels <- unlist( lapply(levels(samples[[colour_var]]),
+                                        function(level, colour_palette){
+                                            if( !(level %in% names(colour_palette)) ){
+                                                return(level)
+                                            }
+                                        }, colour_palette ) )
+        if (!is.null(missing_levels)) {
+            print(colour_palette)
+            cat(missing_levels, "\n")
+            stop('names in colour_palette option do not match levels of colour variable!')
+        }
+    } else {
+        colour_palette <- unlist(strsplit(cmd_line_args$options[['colour_palette']], ","))
+    }
+    
+    # check that number of colours match the number of levels
+    if (length(colour_palette) < num_levels) {
+        stop('Not enough colours in colour_palette option!')
+    }
+} else if (nlevels(samples[[colour_var]]) <= length(colour_blind_palette)) {
     colour_palette <- colour_blind_palette[seq_len(nlevels(samples[[colour_var]]))]
     names(colour_palette) <- levels(samples[[colour_var]])
 } else{
@@ -127,6 +157,10 @@ if (nlevels(samples[[colour_var]]) <= length(colour_blind_palette)) {
     ord2 <- seq(2,num_levels,2)
     colour_palette <- hue_pal()(num_levels)[ order(c(ord1,ord2)) ]
 }
+if (debug) {
+    print(colour_palette)
+}
+
 if (!is.null(shape_var)) {
     shape_palette <- 21:25
     make_shape_palette <- function(shape_palette, samples) {
@@ -210,13 +244,42 @@ plot_list <- lapply(regions,
         
         plot <- plot +      
             labs(title = title, x = "Sample", y = "Normalised Counts") +
-            theme_minimal() +
+            theme_minimal(base_size = 12) +
             theme(strip.background = element_rect(fill = "grey90",
                                                   colour = "grey90"))
         return(plot)
     }, counts_for_plotting, data
 )
 
-pdf(file = cmd_line_args$options[['output_file']])
-invisible(lapply(plot_list, print))
-dev.off()
+# get output type from filename suffix
+# pdf is default if nothing matches
+if (sub("^.*\\.", "", cmd_line_args$options[['output_file']]) == "eps") {
+    invisible(
+        lapply(seq_len(length(plot_list)),
+            function(i, plot_list) {
+                filename <- sub("\\.eps", paste0('.', i, '.eps'),
+                                cmd_line_args$options[['output_file']])
+                postscript(file = filename, width = 7, height = 7)
+                print(plot_list[[i]])
+                dev.off()
+                return(TRUE)
+            }, plot_list)
+    )
+} else if (sub("^.*\\.", "", cmd_line_args$options[['output_file']]) == "svg") {
+    library('svglite')
+    invisible(
+        lapply(seq_len(length(plot_list)),
+            function(i, plot_list) {
+                filename <- sub("\\.svg", paste0('.', i, '.svg'),
+                                cmd_line_args$options[['output_file']])
+                svglite(file = filename, width = 7, height = 7)
+                print(plot_list[[i]])
+                dev.off()
+                return(TRUE)
+            }, plot_list)
+    )    
+} else {
+    pdf(file = cmd_line_args$options[['output_file']])
+    invisible(lapply(plot_list, print))
+    dev.off()
+}
