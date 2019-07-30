@@ -48,15 +48,11 @@ foreach my $file ( @files ) {
         if( $info[$i] =~ m/normalised\scount \z/xms ) {
             if( $options{'normalised'} ) {
                 push @columns, $i;
-            } else {
-                push @info_columns, $i;
             }
         } elsif( $info[$i] =~ m/count \z/xms &&
                     $info[$i] !~ m/normalised/xms ) {
             if( !$options{'normalised'} ) {
                 push @columns, $i;
-            } else {
-                push @info_columns, $i;
             }
         } else {
             push @info_columns, $i;
