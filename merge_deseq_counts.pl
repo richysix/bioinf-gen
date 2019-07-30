@@ -40,6 +40,7 @@ foreach my $file ( @files ) {
     # open file
     open my $counts_fh, '<', $file;
     my @columns;
+    my @info_columns;
     my $line = <$counts_fh>;
     chomp $line;
     my @info = split /\t/, $line;
@@ -47,18 +48,22 @@ foreach my $file ( @files ) {
         if( $options{'normalised'} ) {
             if( $info[$i] =~ m/normalised\scount \z/xms ) {
                 push @columns, $i;
+            } else {
+                push @info_columns, $i;
             }
         } else {
             if( $info[$i] =~ m/count \z/xms &&
                     $info[$i] !~ m/normalised/xms ) {
                 push @columns, $i;
+            } else {
+                push @info_columns, $i;
             }
         }
     }
     warn "$file @columns\n" if $options{'debug'};
     
     if( !$got_gene_info ) {
-        push @header, @info[0..10];
+        push @header, @info[@info_columns];
     }
     push @header, @info[@columns];
     
@@ -78,7 +83,7 @@ foreach my $file ( @files ) {
         # get the information about the gene (chr, start, end etc.) if this is
         # the first file
         if( !$got_gene_info ) {
-            $info_for{$gene_id} = [ @info[0..10] ];
+            $info_for{$gene_id} = [ @info[@info_columns] ];
         }
         push @{$counts_for{$gene_id}}, @info[@columns];
     }
