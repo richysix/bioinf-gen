@@ -17,6 +17,12 @@ option_list <- list(
               help="comma-separated list of factor levels to colours (e.g. sib=blue,mut=red or sib=#0000ff,mut=#ff0000) [default %default]" ),
   make_option("--crossbar", type="character", default=NULL,
               help="Type of crossbar (mean/median) to add to each group [default %default]" ),
+  make_option("--width", type="numeric", default=10,
+              help="width of plot (inches) [default %default]" ),
+  make_option("--height", type="numeric", default=7,
+              help="height of plot (inches) [default %default]" ),
+  make_option("--theme_base_size", type="numeric", default=12,
+              help="theme_base_size of plot (inches) [default %default]" ),
   make_option("--seed", type="integer", default=25673,
               help="random seed to make the jitter reproducible [default %default]" ),
   make_option("--detct", type="logical", action="store_true", default=FALSE,
@@ -32,6 +38,9 @@ cmd_line_args <- parse_args(
   positional_arguments = 2
 )
 debug <- cmd_line_args$options[['debug']]
+plot_width <- cmd_line_args$options[['width']]
+plot_height <- cmd_line_args$options[['height']]
+theme_base_size <- cmd_line_args$options[['theme_base_size']]
 
 packages <- c('ggplot2', 'tidyr', 'biovisr')
 for( package in packages ){
@@ -244,7 +253,7 @@ plot_list <- lapply(regions,
         
         plot <- plot +      
             labs(title = title, x = "Sample", y = "Normalised Counts") +
-            theme_minimal(base_size = 12) +
+            theme_minimal(base_size = theme_base_size) +
             theme(strip.background = element_rect(fill = "grey90",
                                                   colour = "grey90"))
         return(plot)
@@ -259,7 +268,8 @@ if (sub("^.*\\.", "", cmd_line_args$options[['output_file']]) == "eps") {
             function(i, plot_list) {
                 filename <- sub("\\.eps", paste0('.', i, '.eps'),
                                 cmd_line_args$options[['output_file']])
-                postscript(file = filename, width = 7, height = 7)
+                postscript(file = filename, width = plot_width, height = plot_height,
+                           paper="special", horizontal = FALSE)
                 print(plot_list[[i]])
                 dev.off()
                 return(TRUE)
@@ -272,14 +282,15 @@ if (sub("^.*\\.", "", cmd_line_args$options[['output_file']]) == "eps") {
             function(i, plot_list) {
                 filename <- sub("\\.svg", paste0('.', i, '.svg'),
                                 cmd_line_args$options[['output_file']])
-                svglite(file = filename, width = 7, height = 7)
+                svglite(file = filename, width = plot_width, height = plot_height)
                 print(plot_list[[i]])
                 dev.off()
                 return(TRUE)
             }, plot_list)
     )    
 } else {
-    pdf(file = cmd_line_args$options[['output_file']])
+    pdf(file = cmd_line_args$options[['output_file']],
+        width = plot_width, height = plot_height)
     invisible(lapply(plot_list, print))
     dev.off()
 }
