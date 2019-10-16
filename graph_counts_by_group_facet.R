@@ -7,7 +7,7 @@ option_list <- list(
               help="Output file name [default %default]" ),
   make_option("--x_variable", type="character", default='condition',
               help="Name of column from samples file to plot on x-axis [default %default]" ),
-  make_option("--facet_variable", type="character", default='condition',
+  make_option("--facet_variable", type="character", default=NULL,
               help="Name of column from samples file to use for facetting [default %default]" ),
   make_option("--colour_variable", type="character", default='condition',
               help="Name of column from samples file to plot as colour [default %default]" ),
@@ -55,14 +55,16 @@ samples <- read.table( samples_file, header=TRUE, row.names=1 )
 x_var <- cmd_line_args$options[['x_variable']]
 samples[[x_var]] <- factor(samples[[x_var]],
                                 levels = unique(samples[[x_var]]))
-facet_var <- cmd_line_args$options[['facet_variable']]
-samples[[facet_var]] <- factor(samples[[facet_var]],
-                                levels = unique(samples[[facet_var]]))
 
 colour_var <- cmd_line_args$options[['colour_variable']]
 samples[[colour_var]] <- factor(samples[[colour_var]],
                                 levels = unique(samples[[colour_var]]))
 
+facet_var <- cmd_line_args$options[['facet_variable']]
+if (!is.null(facet_var)) {
+    samples[[facet_var]] <- factor(samples[[facet_var]],
+                                    levels = unique(samples[[facet_var]]))
+}
 shape_var <- cmd_line_args$options[['shape_variable']]
 if (!is.null(shape_var)) {
     samples[[shape_var]] <- factor(samples[[shape_var]],
@@ -248,8 +250,10 @@ plot_list <- lapply(regions,
         }
         
         # add facets
-        plot <- plot +
-            facet_wrap(as.name(facet_var), nrow = 1)
+        if (!is.null(facet_var)) {
+            plot <- plot +
+                facet_wrap(as.name(facet_var), nrow = 1)
+        }
         
         plot <- plot +      
             labs(title = title, x = "Sample", y = "Normalised Counts") +
