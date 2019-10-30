@@ -256,7 +256,7 @@ plot_list <- lapply(regions,
         }
         
         plot <- plot +      
-            labs(title = title, x = "Sample", y = "Normalised Counts") +
+            labs(title = title, y = "Normalised Counts") +
             theme_minimal(base_size = theme_base_size) +
             theme(strip.background = element_rect(fill = "grey90",
                                                   colour = "grey90"))
