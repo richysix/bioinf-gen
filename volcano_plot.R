@@ -4,6 +4,12 @@
 library('optparse')
 
 option_list <- list(
+  make_option("--labels", action="store_true", type="logical", default=FALSE,
+              help="Label the points which are above the logfc and pvalue thresholds [default %default]" ),
+  make_option("--log2fc_threshold", type="numeric", default=2,
+              help="Log2 FC threshold above which to label the points [default %default]" ),
+  make_option("--pval_threshold", type="numeric", default=0.05,
+              help="P value cut-off to use to colour/label the points [default %default]" )
 )
 
 cmd_line_args <- parse_args(
@@ -11,10 +17,10 @@ cmd_line_args <- parse_args(
     option_list=option_list, prog = 'volcano_plot.R',
     usage = "Usage: %prog [options] results_file output_file",
     description = 'This script makes a volcano plot from a DESeq2 results file'),
-  positional_arguments = 3
+  positional_arguments = 2
 )
 
-#cmd_line_args <-
+# cmd_line_args <-
 #    list(options = list(),
 #        args = c('deseq2/3dpf_uninf_hom_vs_3dpf_uninf_sib.tsv',
 #                 'deseq2/3dpf_uninf_hom_vs_3dpf_uninf_sib.volcano.pdf'))
@@ -50,19 +56,43 @@ deseq_results <- arrange(deseq_results, desc(adjp))
 
 # highlight specific genes
 # label genes with abs(fold change) > 2
-biggest_changers <- filter(deseq_results, abs(log2fc) > 3)
+if (cmd_line_args$options[['labels']]) {
+  biggest_changers <- 
+    filter(deseq_results, 
+           abs(log2fc) > cmd_line_args$options[['log2fc_threshold']], 
+           adjp < cmd_line_args$options[['pval_threshold']] )
+}
 
 # plot adjusted pvalue against log2 fold change
 # with up coloured in orange and down coloured in blue
 # label highest changers
 volcano_plot <-
     ggplot(data = deseq_results, aes(x = log2fc, y = log10p, colour = up_or_down)) +
-        geom_point() +
-        geom_text_repel(data = biggest_changers, aes(label = Name)) +
-        scale_colour_manual(values = c(up = '#cc6600', down = '#0073b3'), na.value = "grey80") +
-        theme_minimal() +
-        guides(colour = "none") +
-        labs(x = expr(log[2]*'(Fold Change)'), y = expr(log[10]*'(Adjusted pvalue)')) +
-        NULL
+        geom_point()
+if (cmd_line_args$options[['labels']]) {
+  volcano_plot <- volcano_plot +
+        geom_text_repel(data = biggest_changers, aes(label = Name)) 
+}
 
+volcano_plot <- volcano_plot +
+  scale_colour_manual(values = c(up = '#cc6600', down = '#0073b3'), na.value = "grey80") +
+  theme_minimal() +
+  guides(colour = "none") +
+  labs(x = expr(log[2]*'(Fold Change)'), y = expr(log[10]*'(Adjusted pvalue)')) +
+  NULL
 
+# output plot
+# get output type from filename suffix
+# pdf is default if nothing matches
+if (sub("^.*\\.", "", output_file) == "eps") {
+  postscript(file = output_file)
+} else if (sub("^.*\\.", "", output_file) == "svg") {
+  library('svglite')
+  svglite(file = output_file)
+} else {
+  pdf(file = output_file)
+}
+
+# print plot and close graphics device
+print(volcano_plot)
+dev.off()
