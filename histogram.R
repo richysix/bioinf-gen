@@ -34,7 +34,7 @@ plot_data <- read_tsv(cmd_line_args$args[1])
 
 # try and find column
 if (!is.null(data_column)) {
-  if (!(hist_column %in% names(plot_data)) ) {
+  if (!(data_column %in% names(plot_data)) ) {
     stop('--data_column does not exist in the data\n')
   }
 } else {
@@ -43,7 +43,7 @@ if (!is.null(data_column)) {
 }
 
 # check column is numeric
-if (class(plot_data[[hist_column]]) != "numeric") {
+if (class(plot_data[[data_column]]) != "numeric") {
   stop('--data_column is not numeric\n')
 }
 
