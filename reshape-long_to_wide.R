@@ -84,10 +84,14 @@ if (debug) {
         '\nvalue =', value, '\n')
 }
 
+# change names of key and value columns to avoid quasiquotation
+names(input_data)[ names(input_data) == key ] <- 'key'
+names(input_data)[ names(input_data) == value ] <- 'value'
+
 if (cmd_line_args$options[['ordering']]) {
     # order levels of key column by the order in which they appear
-    input_data[[key]] <- factor(input_data[[key]],
-                                levels = unique(input_data[[key]]))
+    input_data[['key']] <- factor(input_data[['key']],
+                                levels = unique(input_data[['key']]))
 }
 reshaped_data <- spread(input_data, key, value,
                         fill = cmd_line_args$options[['fill_value']])
