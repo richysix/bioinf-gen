@@ -94,7 +94,14 @@ names(data)[names(data) == 'padj']              <- 'adjp'
 names(data)[names(data) == 'Adjusted p value']  <- 'adjp'
 names(data)[names(data) == 'Gene name']         <- 'Name'
 names(data)[ grepl("e[0-9]+ Ensembl Gene ID", names(data)) ] <- 'Gene ID'
+names(data)[names(data) == 'GeneID']                <- 'Gene ID'
 
+# find adjusted pvalue column
+if (sum(grepl("adjp", names(data))) == 1 ) {
+  adjp_col <- names(data)[ grepl("adjp", names(data)) ]
+}
+
+# make a region column
 if (cmd_line_args$options[['detct']]) {
     data$region <- paste(data[['Chr']], data[['Region start']],
                          data[['Region end']], data[["3' end position"]],
@@ -107,7 +114,7 @@ if (cmd_line_args$options[['detct']]) {
 regions <- unique(data$region)
 
 normalised_counts <- data[ , grepl("region|normalised", colnames(data)) ]
-colnames(normalised_counts) <- sub(" normalised count", "", colnames(normalised_counts))
+colnames(normalised_counts) <- sub(".normalised.count", "", colnames(normalised_counts))
 
 # order counts by sample
 normalised_counts <- normalised_counts[ , c('region', rownames(samples)) ]
@@ -198,7 +205,7 @@ plot_list <- lapply(regions,
         title <- sprintf("%s\n%s / %s\np = %.3g", region,
                          data[ data$region == region, "Gene ID"],
                          data[ data$region == region, "Name"],
-                         data[ data$region == region, "adjp"])
+                         data[ data$region == region, adjp_col ])
         
         plot <- ggplot(data = counts, aes_(x = as.name(x_var),
                                            y = as.name('count')))
