@@ -50,7 +50,8 @@ for( package in packages ){
 }
 
 # read in data
-excel_data <- read_tsv(file = cmd_line_args$args[1], na = c("NA"))
+excel_data <- read_tsv(file = cmd_line_args$args[1], na = c("NA"),
+                       guess_max = guess_max)
 
 # load yaml
 if (!is.null(yaml_file)) {
@@ -66,10 +67,47 @@ create_formatting <- function(sheet_name, formats, excel_df) {
     if (debug) {
       cat(format_info[['rule']], format_info[['fontColour']], format_info[['bgFill']], "\n")
     }
+    if (is.null(format_info[['type']])) {
+      format_type <- "expression"
+    } else {
+      format_type <- format_info[['type']]
+    }
+    
+    if (is.null(format_info[['rule']])) {
+      if (!is.null(format_info[['colname']]) & 
+          !is.null(format_info[['operator']]) &
+          !is.null(format_info[['text']]) ) {
+        # check column exists in data
+        if( !(format_info[['colname']] %in% colnames(excel_df)) ) {
+          stop(paste0("Column name, ", format_info[['colname']], ", isn't in the data"))
+        }
+        # work out excel column
+        excel_cols <- character(length = ncol(excel_df))
+        i <- 0
+        j <- 1
+        for( colnum in seq_len(ncol(excel_df)) ) {
+          excel_cols[colnum] <- paste0(LETTERS[i], LETTERS[j])
+          j <- j + 1
+          if(j > 26) {
+            j <- 1
+            i <- i + 1
+          }
+        }
+        excel_colname <- excel_cols[ colnames(excel_df) == format_info[['colname']] ]
+        format_rule <- paste0("$", excel_colname, "1", format_info[['operator']], 
+                              '"', format_info[['text']], '"')
+      } else {
+        stop("Don't know how to parse the YAML rules")
+      }
+    } else {
+      format_rule <- format_info[['rule']]
+    }
+    
     conditionalFormatting(wb, sheet_name, cols=1:ncol(excel_df), 
-                          rows=1:(nrow(excel_df)+1), rule=format_info[['rule']], 
+                          rows=1:(nrow(excel_df)+1), rule=format_rule, 
                           style = createStyle(fontColour = format_info[['fontColour']], 
-                                              bgFill = format_info[['bgFill']]) )
+                                              bgFill = format_info[['bgFill']]),
+                          type = format_type)
   }
 }
 
