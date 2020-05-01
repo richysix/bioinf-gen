@@ -4,15 +4,15 @@ library('optparse')
 
 option_list <- list(
   make_option(c("-o", "--output_file"), action="store", default='plots/sample_clustering.pdf',
-              help="Name of output file [default]"),
+              help="Name of output file [default %default]"),
   make_option("--plots_rda_file", action="store", default=NULL,
-              help="Name of output file [default]"),
+              help="Name of output file [default %default]"),
   make_option("--metadata_file", action="store", default=NULL,
-              help="Name of output file [default]"),
+              help="Name of output file [default %default]"),
   make_option(c("-d", "--debug"), action="store_true", default=FALSE,
-              help="Print debugging info [default]"),
+              help="Print debugging info [default %default]"),
   make_option(c("-v", "--verbose"), action="store_true", default=FALSE,
-              help="Print extra output [default]")
+              help="Print extra output [default %default]")
 )
 
 desc <- paste('\nScript to cluster samples from an RNA-Seq experiment', sep = "\n")
@@ -26,19 +26,27 @@ cmd_line_args <- parse_args(
 )
 
 # cmd_line_args <- list(
-#   options = list("output_file" = 'test-cor-plot.png',
-#                  "metadata_file" = 'test-metadata.tsv',
+#   options = list("output_file" = 'sample_cor.eps',
+#                  "plots_rda_file" = 'sample_cor.rda',
+#                  "metadata_file" = 'output/infection-status.ftr',
 #                  "debug" = TRUE, "verbose" = TRUE),
-#   args = c('all.tsv', 'test-samples.tsv')
+#   args = c('no_outliers-icu_004_cell_pellet-icu_0026_cell_pellet/deseq2/all.tsv',
+#            'deseq2-cell_pellet/samples.tsv')
 # )
 
-packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork')
+packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork',
+              'feather')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
 
+# set verbose options
+if (!cmd_line_args$options[['verbose']]){
+  options(readr.show_progress=FALSE)
+}
+
 # load RNAseq data
-data <- load_rnaseq_data(datafile = cmd_line_args$args[1])
+data <- load_rnaseq_data(data_file = cmd_line_args$args[1])
 
 # load sample data
 samples <- read_tsv(cmd_line_args$args[2])
@@ -73,12 +81,16 @@ tree_plot <- dendro_plot(clustering$clustering)
 # the second column are the metadata catgories (y axis)
 # the third column are the values (fill)
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
-  metadata <- read_tsv(cmd_line_args$options[['metadata_file']])
+  if (grepl("\.ftr$", cmd_line_args$options[['metadata_file']])) {
+    metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
+  } else {
+    metadata <- read_tsv(cmd_line_args$options[['metadata_file']])
+  }
 } else {
   metadata <- NULL
 }
 # metadata plot
-if (!.is.null(metadata)) {
+if (!is.null(metadata)) {
   # set order of samples
   y_cat <- names(metadata)[1]
   metadata <- select(metadata, y_cat, colnames(clustering$matrix)) %>% 
