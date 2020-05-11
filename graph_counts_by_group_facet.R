@@ -50,7 +50,7 @@ for( package in packages ){
 # Read samples
 if (debug) { cat("Samples\n") }
 samples_file <- cmd_line_args$args[1]
-samples <- read.table( samples_file, header=TRUE, row.names=1 )
+samples <- read.delim( samples_file, header=TRUE, row.names=1 )
 # set levels of colour and shape variable
 x_var <- cmd_line_args$options[['x_variable']]
 samples[[x_var]] <- factor(samples[[x_var]],
