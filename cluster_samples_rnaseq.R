@@ -6,11 +6,11 @@ option_list <- list(
   make_option(c("-o", "--output_file"), action="store", default='sample_clustering.svg',
               help="Name of output file [default %default]"),
   make_option("--plots_rda_file", action="store", default=NULL,
-              help="Name of output file [default %default]"),
+              help="Name of plots rda file [default %default]"),
   make_option("--distance_measure", action="store", default='spearman',
               help="Measure to use to calculate the distance matrix [default %default]"),
   make_option("--metadata_file", action="store", default=NULL,
-              help="Name of output file [default %default]"),
+              help="Name of metadata file [default %default]"),
   make_option("--plot_width", action="store", default=12,
               help="Width of plot [default %default]"),
   make_option("--plot_height", action="store", default=20,
@@ -92,30 +92,26 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
     metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
   } else {
     metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
-  }
-} else {
-  metadata_for_plot <- NULL
 }
 # metadata plot
-if (!is.null(metadata_for_plot)) {
-  # subset data to samples in samples file
-  metadata_for_plot <- filter(metadata_for_plot, sample %in% samples$sample)
-  # order levels by clustering
-  metadata_for_plot[['sample']] <- 
-    factor(metadata_for_plot[['sample']],
-           levels = colnames(clustering$matrix))
-  # reverse levels of Category to make plot match
-  metadata_for_plot[['Category']] <- factor(metadata_for_plot[['Category']],
-                                   levels = rev(levels(metadata_for_plot[['Category']])))
+# subset data to samples in samples file
+metadata_for_plot <- filter(metadata_for_plot, sample %in% samples$sample)
+# order levels by clustering
+metadata_for_plot[['sample']] <- 
+  factor(metadata_for_plot[['sample']],
+         levels = colnames(clustering$matrix))
+# reverse levels of Category to make plot match
+metadata_for_plot[['Category']] <- factor(metadata_for_plot[['Category']],
+                                 levels = rev(levels(metadata_for_plot[['Category']])))
 
-  metadata_plot <- 
-    df_heatmap(metadata_for_plot, x = 'sample', y = "Category", 
-               fill = "Value", colour = "black", size = 0.8,
-               xaxis_labels = FALSE, yaxis_labels = FALSE,
-               na.translate = FALSE, fill_palette = NULL
-    ) + theme(axis.title.y = element_blank(),
-              axis.text.y = element_text(colour = "black"))
-}
+metadata_plot <- 
+  df_heatmap(metadata_for_plot, x = 'sample', y = 'Category', 
+             fill = 'Value', colour = "black", size = 0.8,
+             xaxis_labels = FALSE, yaxis_labels = TRUE,
+             na.translate = FALSE, fill_palette = NULL
+  ) + guides(fill = guide_legend(title = "Category", reverse = TRUE)) +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_text(colour = "black"))
 
 # plot cor matrix
 # create correlation matrix and reorder
