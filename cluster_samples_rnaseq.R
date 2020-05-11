@@ -6,9 +6,9 @@ option_list <- list(
   make_option(c("-o", "--output_file"), action="store", default='plots/sample_clustering.pdf',
               help="Name of output file [default %default]"),
   make_option("--plots_rda_file", action="store", default=NULL,
-              help="Name of output file [default %default]"),
+              help="Name of plots rda file [default %default]"),
   make_option("--metadata_file", action="store", default=NULL,
-              help="Name of output file [default %default]"),
+              help="Name of metadata file [default %default]"),
   make_option(c("-d", "--debug"), action="store_true", default=FALSE,
               help="Print debugging info [default %default]"),
   make_option(c("-v", "--verbose"), action="store_true", default=FALSE,
@@ -25,14 +25,14 @@ cmd_line_args <- parse_args(
   positional_arguments = 2
 )
 
-# cmd_line_args <- list(
-#   options = list("output_file" = 'sample_cor.eps',
-#                  "plots_rda_file" = 'sample_cor.rda',
-#                  "metadata_file" = 'output/infection-status.ftr',
-#                  "debug" = TRUE, "verbose" = TRUE),
-#   args = c('no_outliers-icu_004_cell_pellet-icu_0026_cell_pellet/deseq2/all.tsv',
-#            'deseq2-cell_pellet/samples.tsv')
-# )
+#cmd_line_args <- list(
+#  options = list("output_file" = 'sample_cor.eps',
+#                 "plots_rda_file" = 'sample_cor.rda',
+#                 "metadata_file" = 'output/infection-status-cell_pellet.ftr',
+#                 "debug" = TRUE, "verbose" = TRUE),
+#  args = c("no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2/all.tsv",
+#           "no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cellpellet/samples-cell_pellet.tsv")
+#)
 
 packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork',
               'feather')
@@ -81,35 +81,47 @@ tree_plot <- dendro_plot(clustering$clustering)
 # the second column are the metadata catgories (y axis)
 # the third column are the values (fill)
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
-  if (grepl("\.ftr$", cmd_line_args$options[['metadata_file']])) {
+  if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) {
     metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
+    
+    # make samples a factor and set levels
+    metadata_for_plot[['sample']] <-
+      factor(metadata_for_plot[['sample']],
+              levels = colnames(clustering$matrix))
+    # remove missing samples
+    metadata_for_plot <- filter(metadata_for_plot, !is.na(sample))
+    
+    # reverse levels of Category to have matrix plot correctly
+    metadata_for_plot[['Category']] <-
+      factor(metadata_for_plot[['Category']],
+              levels = rev(levels(metadata_for_plot[['Category']])))
   } else {
-    metadata <- read_tsv(cmd_line_args$options[['metadata_file']])
+    metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
+    # set order of samples
+    y_cat <- names(metadata)[1]
+    metadata <- select(metadata, y_cat, colnames(clustering$matrix)) %>% 
+      pivot_longer(., -!!y_cat, names_to = "sample", values_to = "Category")
+    metadata[[y_cat]] <- factor(metadata[[y_cat]],
+                                levels = rev(unique(metadata[[y_cat]])))
+    
+    metadata[['sample']] <- factor(metadata[['sample']],
+                                   levels = unique(metadata[['sample']]))
+    
+    metadata[['Category']] <- factor(metadata[['Category']],
+                                     levels = rev(unique(metadata[['Category']])))
   }
 } else {
-  metadata <- NULL
+  metadata_for_plot <- NULL
 }
 # metadata plot
-if (!is.null(metadata)) {
-  # set order of samples
-  y_cat <- names(metadata)[1]
-  metadata <- select(metadata, y_cat, colnames(clustering$matrix)) %>% 
-    pivot_longer(., -!!y_cat, names_to = "sample", values_to = "Category")
-  metadata[[y_cat]] <- factor(metadata[[y_cat]],
-                              levels = rev(unique(metadata[[y_cat]])))
-  
-  metadata[['sample']] <- factor(metadata[['sample']],
-                                 levels = unique(metadata[['sample']]))
-  
-  metadata[['Category']] <- factor(metadata[['Category']],
-                                   levels = rev(unique(metadata[['Category']])))
-  
+if (!is.null(metadata_for_plot)) {
   metadata_plot <- 
-    df_heatmap(metadata, x = 'sample', y = y_cat, 
-               fill = 'Category', colour = "black", size = 0.8,
+    df_heatmap(metadata_for_plot, x = 'sample', y = 'Category', 
+               fill = 'Value', colour = "black", size = 0.8,
                xaxis_labels = FALSE, yaxis_labels = FALSE,
                na.translate = FALSE, fill_palette = NULL
-    ) + theme(axis.title.y = element_blank())
+    ) + guides(fill = guide_legend(title = "Category", reverse = TRUE)) +
+    theme(axis.title.y = element_blank())
 }
 
 # plot cor matrix
@@ -127,7 +139,7 @@ cor_matrix_plot <-
 # output plots together
 postscript(file = cmd_line_args$options[['output_file']], 
             width = 7, height = 10)
-if (is.null(metadata)) {
+if (is.null(metadata_for_plot)) {
   print(tree_plot + cor_matrix_plot + plot_layout(ncol = 1, nrow = 2))
 } else {
   print(tree_plot + metadata_plot + cor_matrix_plot + 
