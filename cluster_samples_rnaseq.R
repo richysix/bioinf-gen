@@ -92,6 +92,7 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
     metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
   } else {
     metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
+  }
 }
 # metadata plot
 # subset data to samples in samples file
@@ -109,8 +110,8 @@ metadata_plot <-
              fill = 'Value', colour = "black", size = 0.8,
              xaxis_labels = FALSE, yaxis_labels = TRUE,
              na.translate = FALSE, fill_palette = NULL
-  ) + guides(fill = guide_legend(title = "Category", reverse = TRUE)) +
-  theme(axis.title.y = element_blank(),
+  ) + guides(fill = guide_legend(title = "Category", reverse = FALSE)) +
+  theme(axis.title = element_blank(),
         axis.text.y = element_text(colour = "black"))
 
 # plot cor matrix
