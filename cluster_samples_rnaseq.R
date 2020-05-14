@@ -11,6 +11,12 @@ option_list <- list(
               help="Measure to use to calculate the distance matrix [default %default]"),
   make_option("--metadata_file", action="store", default=NULL,
               help="Name of metadata file [default %default]"),
+  make_option("--metadata_ycol", action="store", default='Category',
+              help="Column in metadata to plot on y-axis [default %default]"),
+  make_option("--metadata_fill", action="store", default='Value',
+              help="Column in metadata to plot as fill colour [default %default]"),
+  make_option("--metadata_fill_palette", action="store", default=NULL,
+              help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
   make_option("--plot_width", action="store", default=12,
               help="Width of plot [default %default]"),
   make_option("--plot_height", action="store", default=20,
@@ -32,14 +38,19 @@ cmd_line_args <- parse_args(
 )
 
 # cmd_line_args <- list(
-#   options = list("output_file" = 'no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/sample_cor.svg',
-#                  "plots_rda_file" = 'no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/sample_cor.rda',
-#                  "metadata_file" = 'output/infection-status-cell_pellet.ftr',
+#   options = list("output_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/sample_cor.svg',
+#                  "plots_rda_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/sample_cor.rda',
+#                  "metadata_file" = 'output/sample2organism-cell_pellet.ftr',
+#                  "metadata_ycol" = 'Organism',
+#                  "metadata_fill" = 'InfectionType',
+#                  "metadata_fill_palette" = NULL,
+#                  "plot_width" = 12, "plot_height" = 30,
+#                  "distance_measure" = 'spearman',
 #                  "debug" = TRUE, "verbose" = TRUE),
-#   args = c('no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/all.tsv',
-#            'no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/samples.tsv')
+#   args = c('deseq2-noHb/all.tsv',
+#            'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/samples.tsv')
 # )
-
+ 
 packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork',
               'feather', 'svglite')
 for( package in packages ){
@@ -85,8 +96,7 @@ tree_plot <- dendro_plot(clustering$clustering)
 
 # load metadata if it exists
 # The first column should be the sample ids/names (x axis, matching the samples file)
-# the second column are the metadata catgories (y axis)
-# the third column are the values (fill)
+# the y axis and fill variables are specified by metadata_ycol and metadata_fill
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
   if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) {
     metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
@@ -101,16 +111,40 @@ metadata_for_plot <- filter(metadata_for_plot, sample %in% samples$sample)
 metadata_for_plot[['sample']] <- 
   factor(metadata_for_plot[['sample']],
          levels = colnames(clustering$matrix))
-# reverse levels of Category to make plot match
-metadata_for_plot[['Category']] <- factor(metadata_for_plot[['Category']],
-                                 levels = rev(levels(metadata_for_plot[['Category']])))
+# reverse levels of y axis to make plot match
+ycol <- cmd_line_args$options[['metadata_ycol']]
+if (class(metadata_for_plot[[ycol]]) == 'character') {
+  metadata_for_plot[[ycol]] <- 
+    factor(metadata_for_plot[[ycol]],
+            levels = rev(unique(metadata_for_plot[[ycol]])))
+} else if (class(metadata_for_plot[[ycol]]) == 'factor') {
+  metadata_for_plot[[ycol]] <- 
+    factor(metadata_for_plot[[ycol]],
+           levels = rev(levels(metadata_for_plot[[ycol]])))
+}
+
+# sort out fill_palette
+fill_col <- cmd_line_args$options[['metadata_fill']]
+
+fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
+if (!is.null(fill_palette)) {
+  if (fill_palette %in% colnames(metadata_for_plot)) {
+    # make a named vector of levels to colours
+    if( length(unique(metadata_for_plot[[fill_palette]])) == 
+                        nlevels(metadata_for_plot[[fill_col]]) ) {
+      fill_palette <- unique(metadata_for_plot[[fill_palette]])
+      names(fill_palette) <- levels(metadata_for_plot[[fill_col]])
+    }
+  }
+}
 
 metadata_plot <- 
-  df_heatmap(metadata_for_plot, x = 'sample', y = 'Category', 
-             fill = 'Value', colour = "black", size = 0.8,
+  df_heatmap(metadata_for_plot, x = 'sample', y = ycol, 
+             fill = fill_col, fill_palette = fill_palette,
+             colour = "black", size = 0.8,
              xaxis_labels = FALSE, yaxis_labels = TRUE,
-             na.translate = FALSE, fill_palette = NULL
-  ) + guides(fill = guide_legend(title = "Category", reverse = FALSE)) +
+             na.translate = FALSE
+  ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
   theme(axis.title = element_blank(),
         axis.text.y = element_text(colour = "black"))
 
@@ -134,7 +168,7 @@ if (is.null(metadata_for_plot)) {
   print(tree_plot + cor_matrix_plot + plot_layout(ncol = 1, nrow = 2))
 } else {
   print(tree_plot + metadata_plot + cor_matrix_plot + 
-          plot_layout(ncol = 1, nrow = 3, heights = c(4,1,5)))
+          plot_layout(ncol = 1, nrow = 3, heights = c(3,2,5)))
 }
 dev.off()
 
