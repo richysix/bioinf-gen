@@ -3,12 +3,18 @@
 library('optparse')
 
 option_list <- list(
-  make_option(c("-o", "--output_file"), action="store", default='plots/sample_clustering.pdf',
+  make_option(c("-o", "--output_file"), action="store", default='sample_clustering.svg',
               help="Name of output file [default %default]"),
   make_option("--plots_rda_file", action="store", default=NULL,
               help="Name of plots rda file [default %default]"),
+  make_option("--distance_measure", action="store", default='spearman',
+              help="Measure to use to calculate the distance matrix [default %default]"),
   make_option("--metadata_file", action="store", default=NULL,
               help="Name of metadata file [default %default]"),
+  make_option("--plot_width", action="store", default=12,
+              help="Width of plot [default %default]"),
+  make_option("--plot_height", action="store", default=20,
+              help="Height of plot [default %default]"),
   make_option(c("-d", "--debug"), action="store_true", default=FALSE,
               help="Print debugging info [default %default]"),
   make_option(c("-v", "--verbose"), action="store_true", default=FALSE,
@@ -25,17 +31,17 @@ cmd_line_args <- parse_args(
   positional_arguments = 2
 )
 
-#cmd_line_args <- list(
-#  options = list("output_file" = 'sample_cor.eps',
-#                 "plots_rda_file" = 'sample_cor.rda',
-#                 "metadata_file" = 'output/infection-status-cell_pellet.ftr',
-#                 "debug" = TRUE, "verbose" = TRUE),
-#  args = c("no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2/all.tsv",
-#           "no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cellpellet/samples-cell_pellet.tsv")
-#)
+# cmd_line_args <- list(
+#   options = list("output_file" = 'no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/sample_cor.svg',
+#                  "plots_rda_file" = 'no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/sample_cor.rda',
+#                  "metadata_file" = 'output/infection-status-cell_pellet.ftr',
+#                  "debug" = TRUE, "verbose" = TRUE),
+#   args = c('no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/all.tsv',
+#            'no_outliers-icu_004_cell_pellet-icu_026_cell_pellet/deseq2-cell_pellet/samples.tsv')
+# )
 
 packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork',
-              'feather')
+              'feather', 'svglite')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
@@ -71,7 +77,8 @@ count_data <- get_counts(data, samples)
 # POSSIBLE OPTION: method	(the agglomeration method to use)
 # the cluster function will pass that through to hclust
 clustering <- cluster(as.matrix(count_data), scale = FALSE, 
-                      dist_method = "spearman", clustering = TRUE)
+                      dist_method = cmd_line_args$options[['distance_measure']], 
+                      clustering = TRUE)
 
 # plot tree
 tree_plot <- dendro_plot(clustering$clustering)
@@ -83,62 +90,45 @@ tree_plot <- dendro_plot(clustering$clustering)
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
   if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) {
     metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
-    
-    # make samples a factor and set levels
-    metadata_for_plot[['sample']] <-
-      factor(metadata_for_plot[['sample']],
-              levels = colnames(clustering$matrix))
-    # remove missing samples
-    metadata_for_plot <- filter(metadata_for_plot, !is.na(sample))
-    
-    # reverse levels of Category to have matrix plot correctly
-    metadata_for_plot[['Category']] <-
-      factor(metadata_for_plot[['Category']],
-              levels = rev(levels(metadata_for_plot[['Category']])))
   } else {
     metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
-    # set order of samples
-    y_cat <- names(metadata)[1]
-    metadata <- select(metadata, y_cat, colnames(clustering$matrix)) %>% 
-      pivot_longer(., -!!y_cat, names_to = "sample", values_to = "Category")
-    metadata[[y_cat]] <- factor(metadata[[y_cat]],
-                                levels = rev(unique(metadata[[y_cat]])))
-    
-    metadata[['sample']] <- factor(metadata[['sample']],
-                                   levels = unique(metadata[['sample']]))
-    
-    metadata[['Category']] <- factor(metadata[['Category']],
-                                     levels = rev(unique(metadata[['Category']])))
-  }
-} else {
-  metadata_for_plot <- NULL
 }
 # metadata plot
-if (!is.null(metadata_for_plot)) {
-  metadata_plot <- 
-    df_heatmap(metadata_for_plot, x = 'sample', y = 'Category', 
-               fill = 'Value', colour = "black", size = 0.8,
-               xaxis_labels = FALSE, yaxis_labels = FALSE,
-               na.translate = FALSE, fill_palette = NULL
-    ) + guides(fill = guide_legend(title = "Category", reverse = TRUE)) +
-    theme(axis.title.y = element_blank())
-}
+# subset data to samples in samples file
+metadata_for_plot <- filter(metadata_for_plot, sample %in% samples$sample)
+# order levels by clustering
+metadata_for_plot[['sample']] <- 
+  factor(metadata_for_plot[['sample']],
+         levels = colnames(clustering$matrix))
+# reverse levels of Category to make plot match
+metadata_for_plot[['Category']] <- factor(metadata_for_plot[['Category']],
+                                 levels = rev(levels(metadata_for_plot[['Category']])))
+
+metadata_plot <- 
+  df_heatmap(metadata_for_plot, x = 'sample', y = 'Category', 
+             fill = 'Value', colour = "black", size = 0.8,
+             xaxis_labels = FALSE, yaxis_labels = TRUE,
+             na.translate = FALSE, fill_palette = NULL
+  ) + guides(fill = guide_legend(title = "Category", reverse = TRUE)) +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_text(colour = "black"))
 
 # plot cor matrix
 # create correlation matrix and reorder
 # as clustering
 cor_matrix <- cor(as.matrix(count_data))
-cor_matrix <- cor_matrix[ , clustering$clustering$order ]
+cor_matrix <- cor_matrix[ clustering$clustering$order , clustering$clustering$order ]
 
 cor_matrix_plot <- 
   matrix_heatmap(cor_matrix, x_title = "Sample", y_title = "Sample",
                  fill_title = "Spearman", fill_palette = "plasma",
                  xaxis_labels = TRUE, yaxis_labels = TRUE,
-                 base_size = 14)
+                 base_size = 10)
 
 # output plots together
-postscript(file = cmd_line_args$options[['output_file']], 
-            width = 7, height = 10)
+svglite(file = cmd_line_args$options[['output_file']], 
+        width = cmd_line_args$options[['plot_width']], 
+        height = cmd_line_args$options[['plot_height']])
 if (is.null(metadata_for_plot)) {
   print(tree_plot + cor_matrix_plot + plot_layout(ncol = 1, nrow = 2))
 } else {
@@ -148,7 +138,7 @@ if (is.null(metadata_for_plot)) {
 dev.off()
 
 if (!is.null(cmd_line_args$options[['plots_rda_file']])) {
-  save(list(tree_plot, metadata_plot, cor_matrix_plot), 
+  save(tree_plot, metadata_plot, cor_matrix_plot, 
        file = cmd_line_args$options[['plots_rda_file']])
 }
 
