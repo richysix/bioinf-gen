@@ -87,32 +87,36 @@ if (cmd_line_args$options[['transform']] == 'center_scale') {
     counts <- as.data.frame(t( scale( t(counts) ) ))
 }
 
-# Clustering
-cluster <- function(df) {
-    df <- as.data.frame(df)
-    distance_matrix <- dist(df)
-    clustering <- hclust(distance_matrix)
-    df_ordered <- df[ clustering$order, ]
-    return(df_ordered)
+# skip clustering if only 1 row
+if (nrow(counts) > 1) {
+  # Clustering
+  cluster <- function(df) {
+      df <- as.data.frame(df)
+      distance_matrix <- dist(df)
+      clustering <- hclust(distance_matrix)
+      df_ordered <- df[ clustering$order, ]
+      return(df_ordered)
+  }
+  
+  cluster_rows <- FALSE
+  cluster_columns <- FALSE
+  if (cmd_line_args$options[['cluster']] == "rows") {
+      cluster_rows <- TRUE
+  } else if (cmd_line_args$options[['cluster']] == "columns") {
+      cluster_columns <- TRUE
+  } else if (cmd_line_args$options[['cluster']] == "both") {
+      cluster_rows <- TRUE
+      cluster_columns <- TRUE
+  }
+  if (cluster_rows) {
+      counts <- cluster(counts)
+  }
+  if (cluster_columns) {
+      counts <- as.data.frame(t( cluster(t(counts)) ))
+  }
 }
 
-cluster_rows <- FALSE
-cluster_columns <- FALSE
-if (cmd_line_args$options[['cluster']] == "rows") {
-    cluster_rows <- TRUE
-} else if (cmd_line_args$options[['cluster']] == "columns") {
-    cluster_columns <- TRUE
-} else if (cmd_line_args$options[['cluster']] == "both") {
-    cluster_rows <- TRUE
-    cluster_columns <- TRUE
-}
-if (cluster_rows) {
-    counts <- cluster(counts)
-}
-if (cluster_columns) {
-    counts <- as.data.frame(t( cluster(t(counts)) ))
-}
-
+# add id column
 counts$id <- factor(rownames(counts), levels = rownames(counts))
 
 # melt count df
