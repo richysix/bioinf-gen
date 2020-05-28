@@ -100,6 +100,8 @@ data <- load_rnaseq_data(data_file)
 # find adjusted pvalue column
 if (sum(grepl("adjp", names(data))) == 1 ) {
   adjp_col <- names(data)[ grepl("adjp", names(data)) ]
+} else {
+  adjp_col <- NULL
 }
 
 # make a region column
@@ -203,10 +205,16 @@ plot_list <- lapply(regions,
     function(region, counts_for_plotting, data) {
         if (debug) { cat(region, "\n") }
         counts <- counts_for_plotting[ counts_for_plotting$region == region, ]
-        title <- sprintf("%s\n%s / %s\np = %.3g", region,
-                         data[ data$region == region, "GeneID"],
-                         data[ data$region == region, "Name"],
-                         data[ data$region == region, adjp_col ])
+        if(!is.null(adjp_col)){
+          title <- sprintf("%s\n%s / %s\np = %.3g", region,
+                           data[ data$region == region, "GeneID"],
+                           data[ data$region == region, "Name"],
+                           data[ data$region == region, adjp_col ])
+        } else {
+          title <- sprintf("%s\n%s / %s", region,
+                           data[ data$region == region, "GeneID"],
+                           data[ data$region == region, "Name"])
+        }
         
         plot <- ggplot(data = counts, aes_(x = as.name(x_var),
                                            y = as.name('count')))
