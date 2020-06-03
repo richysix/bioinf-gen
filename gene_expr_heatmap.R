@@ -3,6 +3,14 @@
 library('optparse')
 
 option_list <- list(
+  make_option("--metadata_file", type="character", default=NULL,
+              help="feather file of metadata to plot with heatmap [default %default]" ),
+  make_option("--metadata_ycol", action="store", default='Category',
+              help="Column in metadata to plot on y-axis [default %default]"),
+  make_option("--metadata_fill", action="store", default='Value',
+              help="Column in metadata to plot as fill colour [default %default]"),
+  make_option("--metadata_fill_palette", action="store", default=NULL,
+              help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
   make_option("--detct", action="store_true", default=FALSE,
               help="Data is DeTCT data, not RNA-seq [default %default]"),
   make_option("--transform", action="store", type="character", default="none",
@@ -23,6 +31,29 @@ option_list <- list(
               help="output an .rda file containing the plot object and clustered counts [default %default]" )
 )
 
+# cmd_line_args <- list(
+#   options = list(
+#     "metadata_file" = "output/sample2organism-paxgene.ftr",
+#     "metadata_ycol" = "Organism",
+#     "metadata_fill" = "InfectionType",
+#     "metadata_fill_palette" = "fill_colour",
+#     "detct" = FALSE,
+#     "transform" = "center_scale",
+#     "cluster" = "both",
+#     "colour_palette" = 'plasma',
+#     "width" = 7,
+#     "height" = 10,
+#     "fill_limits" = NULL,
+#     "output_count_file" = NULL,
+#     "output_rda_file" = NULL
+#   ),
+#   args = c(
+#     'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/samples.tsv',
+#     'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/sig.tsv',
+#     'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/heatmap-genes_clustered-sig.pdf'
+#   )
+# )
+
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'gene_expr_heatmap.R',
@@ -39,14 +70,15 @@ if (!is.null(cmd_line_args$options[['fill_limits']])) {
     fill_limits <- cmd_line_args$options[['fill_limits']]
 }
 
-packages <- c('tidyverse', 'viridis', 'rnaseqtools')
+packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'feather', 
+              'biovisr', 'patchwork')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
 for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
 
 # load sample data
-samples <- read.delim(cmd_line_args$args[1], row.names = 1)
+samples <- read_tsv(cmd_line_args$args[1], col_names = c('sample', 'condition'))
 # set levels of condition to order in which they appear in the file
 samples$condition <- factor(samples$condition,
                             levels = unique(samples$condition))
@@ -54,21 +86,7 @@ samples$condition <- factor(samples$condition,
 #data <- read.delim(cmd_line_args$args[2], check.names = FALSE)
 data <- load_rnaseq_data(cmd_line_args$args[2])
 
-## Support different column names
-#names(data)[names(data) == 'chr']               <- 'Chr'
-#names(data)[names(data) == '#Chr']              <- 'Chr'
-#names(data)[names(data) == 'start']             <- 'Start'
-#names(data)[names(data) == 'end']               <- 'End'
-#names(data)[names(data) == 'strand']            <- 'Strand'
-#names(data)[names(data) == 'ID']                <- 'Gene ID'
-#names(data)[names(data) == 'adjpval']           <- 'adjp'
-#names(data)[names(data) == 'padj']              <- 'adjp'
-#names(data)[names(data) == 'Adjusted p value']  <- 'adjp'
-#names(data)[names(data) == 'Gene name']         <- 'Name'
-#names(data)[ grepl("e[0-9]+ Ensembl Gene ID", names(data)) ] <- 'Gene ID'
-#names(data)[names(data) == 'GeneID']              <- 'Gene ID'
-
-# 
+# make unique rownames depending on DeTCT/RNA-seq 
 if (cmd_line_args$options[['detct']]) {
     rownames(data) <- paste(data[['Chr']], data[['Region start']],
                          data[['Region end']], data[["3' end position"]],
@@ -77,11 +95,8 @@ if (cmd_line_args$options[['detct']]) {
     rownames(data) <- data[['GeneID']]
 }
 
-counts <- data[ , grepl("normalised.count$", names(data)) ]
-names(counts) <- sub(".normalised.count", "", names(counts))
-
-# make sure counts samples are in same order as samples
-counts <- counts[ , rownames(samples) ]
+# get normalised count data
+counts <- get_counts(data, samples, normalised = TRUE)
 
 if (cmd_line_args$options[['transform']] == 'center_scale') {
     counts <- as.data.frame(t( scale( t(counts) ) ))
@@ -133,6 +148,61 @@ heatmap_plot <- ggplot() +
         theme_void() +
         NULL
 
+# load metadata if provided
+# The first column should be the sample ids/names (x axis, matching the samples file)
+# the y axis and fill variables are specified by metadata_ycol and metadata_fill
+if (!is.null(cmd_line_args$options[['metadata_file']])) {
+  if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) {
+    metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
+  } else {
+    metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
+  }
+}
+
+# subset metadata to samples
+metadata_for_plot <- filter(metadata_for_plot, sample %in% levels(plot_data$Sample))
+# order sample levels by clustering
+metadata_for_plot[['sample']] <-
+  factor(metadata_for_plot[['sample']],
+         levels = levels(plot_data$Sample))
+# reverse levels of y axis to make plot match
+ycol <- cmd_line_args$options[['metadata_ycol']]
+if (class(metadata_for_plot[[ycol]]) == 'character') {
+  metadata_for_plot[[ycol]] <-
+    factor(metadata_for_plot[[ycol]],
+            levels = rev(unique(metadata_for_plot[[ycol]])))
+} else if (class(metadata_for_plot[[ycol]]) == 'factor') {
+  metadata_for_plot[[ycol]] <-
+    factor(metadata_for_plot[[ycol]],
+           levels = rev(levels(metadata_for_plot[[ycol]])))
+}
+
+# sort out fill_palette
+fill_col <- cmd_line_args$options[['metadata_fill']]
+
+fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
+if (!is.null(fill_palette)) {
+  if (fill_palette %in% colnames(metadata_for_plot)) {
+    # make a named vector of levels to colours
+    if( length(unique(metadata_for_plot[[fill_palette]])) ==
+                        nlevels(metadata_for_plot[[fill_col]]) ) {
+      cat2colour <- metadata_for_plot[ , c(fill_col, fill_palette)] %>% unique()
+      fill_palette <- cat2colour[[fill_palette]]
+      names(fill_palette) <- cat2colour[[fill_col]]
+    }
+  }
+}
+
+metadata_plot <-
+  df_heatmap(metadata_for_plot, x = 'sample', y = ycol,
+             fill = fill_col, fill_palette = fill_palette,
+             colour = "black", size = 0.8,
+             xaxis_labels = FALSE, yaxis_labels = TRUE,
+             na.translate = FALSE
+  ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(colour = "black"))
+
 if (grepl('ps$', output_file)) {
   postscript(file = output_file, paper = "special", horizontal = FALSE,
               width = plot_width, height = plot_height )
@@ -141,7 +211,13 @@ if (grepl('ps$', output_file)) {
 } else { # default to pdf 
   pdf(file = output_file, width = plot_width, height = plot_height )
 }
-print(heatmap_plot)
+if (is.null(cmd_line_args$options[['metadata_file']])) {
+  print(heatmap_plot)
+} else {
+  print(heatmap_plot + metadata_plot +
+          plot_layout(ncol = 1, nrow = 2,
+                      heights = c(9,1)))
+}
 dev.off()
 
 # reverse counts matrix so it fits the heatmap
