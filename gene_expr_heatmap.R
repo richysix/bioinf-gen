@@ -78,10 +78,7 @@ for( package in packages ){
 }
 
 # load sample data
-samples <- read_tsv(cmd_line_args$args[1], col_names = c('sample', 'condition'))
-# set levels of condition to order in which they appear in the file
-samples$condition <- factor(samples$condition,
-                            levels = unique(samples$condition))
+samples <- read_tsv(cmd_line_args$args[1])
 
 #data <- read.delim(cmd_line_args$args[2], check.names = FALSE)
 data <- load_rnaseq_data(cmd_line_args$args[2])
