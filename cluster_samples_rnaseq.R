@@ -143,9 +143,13 @@ if (!is.null(fill_palette)) {
     # make a named vector of levels to colours
     if( length(unique(metadata_for_plot[[fill_palette]])) == 
                         nlevels(metadata_for_plot[[fill_col]]) ) {
-      fill_palette <- unique(metadata_for_plot[[fill_palette]])
-      names(fill_palette) <- levels(metadata_for_plot[[fill_col]])
+      cat2colour <- metadata_for_plot[ , c(fill_col, fill_palette)] %>% unique()
+      fill_palette <- cat2colour[[fill_palette]]
+      names(fill_palette) <- cat2colour[[fill_col]]
     }
+  } else {
+    warning('The fill_palette column name is not present in the metadata file')
+    fill_palette <- NULL
   }
 }
 
