@@ -171,9 +171,23 @@ cor_matrix <- cor_matrix[ clustering$clustering$order , clustering$clustering$or
 
 cor_matrix_plot <- 
   matrix_heatmap(cor_matrix, x_title = "Sample", y_title = "Sample",
-                 fill_title = "Spearman", fill_palette = "plasma",
+                 fill_title = cmd_line_args$options[['distance_measure']], fill_palette = "plasma",
                  xaxis_labels = TRUE, yaxis_labels = TRUE,
                  base_size = 10)
+
+# add boxes for clusters
+reversed_clusters <- rev(reordered_clusters)
+cluster_boxes <- data.frame(
+  xleft = sapply(unique(reordered_clusters), function(x){ min(which(reordered_clusters == x)) }) - 0.5,
+  xright = sapply(unique(reordered_clusters), function(x){ max(which(reordered_clusters == x)) }) + 0.5,
+  ybottom = sapply(unique(reordered_clusters), function(x){ min(which(reversed_clusters == x)) }) - 0.5,
+  ytop = sapply(unique(reordered_clusters), function(x){ max(which(reversed_clusters == x)) }) + 0.5
+)
+cor_matrix_plot <- cor_matrix_plot + 
+  geom_rect(data = cluster_boxes, 
+            aes(xmin = xleft, xmax = xright, 
+                ymin = ybottom, ymax = ytop), 
+            colour = "firebrick3", fill = NA)
 
 # output plots together
 svglite(file = cmd_line_args$options[['output_file']], 
