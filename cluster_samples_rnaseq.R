@@ -5,6 +5,8 @@ library('optparse')
 option_list <- list(
   make_option(c("-o", "--output_file"), action="store", default='sample_clustering.svg',
               help="Name of output file [default %default]"),
+  make_option("--cluster_file", action="store", default='clustering.tsv',
+              help="Name of output file for clustering [default %default]"),
   make_option("--plots_rda_file", action="store", default=NULL,
               help="Name of plots rda file [default %default]"),
   make_option("--distance_measure", action="store", default='spearman',
@@ -54,7 +56,7 @@ cmd_line_args <- parse_args(
 # )
  
 packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork',
-              'feather', 'svglite')
+              'feather', 'svglite', 'dynamicTreeCut')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
@@ -94,6 +96,27 @@ clustering <- cluster(as.matrix(count_data), scale = cmd_line_args$options[['cen
                       clustering = TRUE)
 # plot tree
 tree_plot <- dendro_plot(clustering$clustering)
+
+# split into clusters
+cluster_dist <- as.matrix(dist(t(scale(as.matrix(count_data))), method = "euclidean"))
+clusters <- cutreeHybrid(
+  clustering$clustering, cluster_dist,
+  cutHeight = NULL, minClusterSize = 5, deepSplit = 0)
+cluster_labels <- unname(clusters$labels)
+names(cluster_labels) <- clustering$clustering$labels
+# order by clustering
+cluster_labels <- cluster_labels[ colnames(clustering$matrix) ]
+# label clusters in order
+cluster_num <- 1
+reordered_clusters <- character(length = length(cluster_labels))
+for(num in unique(cluster_labels)) {
+  reordered_clusters[ cluster_labels == num ] <- sprintf('Cluster%03d', cluster_num)
+  cluster_num <- cluster_num + 1
+}
+names(reordered_clusters) <- names(cluster_labels)
+
+write.table(reordered_clusters, file = cmd_line_args$options[['cluster_file']],
+            quote = FALSE, sep = "\t", row.names = TRUE, col.names = FALSE)
 
 # load metadata if it exists
 # The first column should be the sample ids/names (x axis, matching the samples file)
