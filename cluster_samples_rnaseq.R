@@ -42,17 +42,17 @@ cmd_line_args <- parse_args(
 )
 
 # cmd_line_args <- list(
-#   options = list("output_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/sample_cor.svg',
-#                  "plots_rda_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/sample_cor.rda',
-#                  "metadata_file" = 'output/sample2organism-cell_pellet.ftr',
+#   options = list("output_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/sample-clust-cor-sp.svg',
+#                  "plots_rda_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/sample-clust-cor-sp.rda',
+#                  "metadata_file" = 'output/sample2organism-paxgene.ftr',
 #                  "metadata_ycol" = 'Organism',
 #                  "metadata_fill" = 'InfectionType',
-#                  "metadata_fill_palette" = NULL,
+#                  "metadata_fill_palette" = 'fill_colour',
 #                  "plot_width" = 12, "plot_height" = 30,
 #                  "distance_measure" = 'spearman',
 #                  "debug" = TRUE, "verbose" = TRUE),
 #   args = c('deseq2-noHb/all.tsv',
-#            'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/samples.tsv')
+#            'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/samples.tsv')
 # )
  
 packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork',
@@ -72,21 +72,8 @@ data <- load_rnaseq_data(data_file = cmd_line_args$args[1])
 # load sample data
 samples <- read_tsv(cmd_line_args$args[2])
 
-# get count data
-get_counts <- function(data, samples = NULL) {
-  count_data <- data[,grepl(".normalised.counts?$", names(data))]
-  names(count_data) <- gsub(".normalised.counts?$", "", names(count_data))
-  
-  # Subset and reorder count data
-  # TO ADD: check all samples exist in counts
-  # and if any are in counts that aren't in samples
-  if (!is.null(samples)) {
-    count_data <- count_data[, samples$sample ]
-  }
-  
-  return(count_data)
-}
-count_data <- get_counts(data, samples)
+# get normalised count data
+count_data <- get_counts(data, samples, normalised = TRUE)
 
 # cluster samples
 # POSSIBLE OPTION: method	(the agglomeration method to use)
