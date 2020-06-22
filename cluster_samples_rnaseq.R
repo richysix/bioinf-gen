@@ -9,6 +9,8 @@ option_list <- list(
               help="Name of plots rda file [default %default]"),
   make_option("--distance_measure", action="store", default='spearman',
               help="Measure to use to calculate the distance matrix [default %default]"),
+  make_option("--centre_and_scale", action="store", default=TRUE,
+              help="Whether to centre and scale the data or not [default %default]"),
   make_option("--metadata_file", action="store", default=NULL,
               help="Name of metadata file [default %default]"),
   make_option("--metadata_ycol", action="store", default='Category',
@@ -87,10 +89,9 @@ count_data <- get_counts(data, samples)
 # cluster samples
 # POSSIBLE OPTION: method	(the agglomeration method to use)
 # the cluster function will pass that through to hclust
-clustering <- cluster(as.matrix(count_data), scale = FALSE, 
+clustering <- cluster(as.matrix(count_data), scale = cmd_line_args$options[['centre_and_scale']], 
                       dist_method = cmd_line_args$options[['distance_measure']], 
                       clustering = TRUE)
-
 # plot tree
 tree_plot <- dendro_plot(clustering$clustering)
 
