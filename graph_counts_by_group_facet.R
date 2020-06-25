@@ -9,14 +9,16 @@ option_list <- list(
               help="File of gene/region ids to subset plots to [default %default]" ),
   make_option("--x_variable", type="character", default='condition',
               help="Name of column from samples file to plot on x-axis [default %default]" ),
-  make_option("--facet_variable", type="character", default=NULL,
-              help="Name of column from samples file to use for facetting [default %default]" ),
   make_option("--colour_variable", type="character", default='condition',
               help="Name of column from samples file to plot as colour [default %default]" ),
+  make_option("--colour_palette", type="character", default=NULL,
+              help=paste("comma-separated list of factor levels to colours (e.g. sib=blue,mut=red or sib=#0000ff,mut=#ff0000) [default %default]",
+                          "If NULL the colour-blind friendly palette from biovisr will be used unless there are too many categories",
+                          sep = "\n")),
   make_option("--shape_variable", type="character", default=NULL,
               help="Name of column from samples file to plot as shape [default %default]" ),
-  make_option("--colour_palette", type="character", default=NULL,
-              help="comma-separated list of factor levels to colours (e.g. sib=blue,mut=red or sib=#0000ff,mut=#ff0000) [default %default]" ),
+  make_option("--facet_variable", type="character", default=NULL,
+              help="Name of column from samples file to use for facetting [default %default]" ),
   make_option("--crossbar", type="character", default=NULL,
               help="Type of crossbar (mean/median) to add to each group [default %default]" ),
   make_option("--width", type="numeric", default=10,
@@ -35,7 +37,7 @@ option_list <- list(
 
 cmd_line_args <- parse_args(
   OptionParser(
-    option_list=option_list, prog = 'graph_counts_by_group.R',
+    option_list=option_list, prog = 'graph_counts_by_group_facet.R',
     usage = "Usage: %prog [options] samples_file count_file" ),
   positional_arguments = 2
 )
@@ -49,6 +51,9 @@ for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
 
+# set progress options
+options(readr.show_progress = FALSE)
+
 # Read samples
 if (debug) { cat("Samples\n") }
 samples_file <- cmd_line_args$args[1]
@@ -57,6 +62,8 @@ samples <- read.delim( samples_file, header=TRUE, row.names=1 )
 samples$sample <- rownames(samples)
 samples$sample <- factor(samples$sample,
                         levels = samples$sample)
+
+## NEED TO ADD CHECKING OF COLUMNS. DO SUPPLIED VARIABLES EXIST IN THE DATA
 
 # set levels of colour and shape variable
 x_var <- cmd_line_args$options[['x_variable']]
@@ -116,28 +123,17 @@ colnames(normalised_counts) <- sub(".normalised.count", "", colnames(normalised_
 # order counts by sample
 normalised_counts <- normalised_counts[ , c('region', rownames(samples)) ]
 
-# melt counts and join with sample info
 if (debug) { cat("Join\n") }
 # subset data to regions if necessary
 normalised_counts <- filter(normalised_counts, region %in% regions)
+# melt counts and join with sample info
 counts_for_plotting <-
     gather(normalised_counts, key = 'sample', value = 'count', -region)
 counts_for_plotting$sample <- factor(counts_for_plotting$sample,
                                     levels = unique(counts_for_plotting$sample))
 counts_for_plotting <- merge(samples, counts_for_plotting)
 
-# set up colour palette
-colour_blind_palette <- 
-  c( 'blue' = rgb(0,0.45,0.7),
-     'vermillion' = rgb(0.8, 0.4, 0),
-     'blue_green' = rgb(0, 0.6, 0.5),
-     'yellow' = rgb(0.95, 0.9, 0.25),
-     'sky_blue' = rgb(0.35, 0.7, 0.9),
-     'orange' = rgb(0.9, 0.6, 0),
-     'purple' = rgb(0.8, 0.6, 0.7),
-     'black' = rgb(0, 0, 0) )
 # make colour palette for the data
-num_levels <- nlevels(samples[[colour_var]])
 if (!is.null(cmd_line_args$options[['colour_palette']])) {
     # split by ',' then by '='
     if (grepl("=", cmd_line_args$options[['colour_palette']])) {
@@ -165,8 +161,8 @@ if (!is.null(cmd_line_args$options[['colour_palette']])) {
     if (length(colour_palette) < num_levels) {
         stop('Not enough colours in colour_palette option!')
     }
-} else if (nlevels(samples[[colour_var]]) <= length(colour_blind_palette)) {
-    colour_palette <- colour_blind_palette[seq_len(nlevels(samples[[colour_var]]))]
+} else if (nlevels(samples[[colour_var]]) <= length(cbf_palette())) {
+    colour_palette <- cbf_palette(nlevels(samples[[colour_var]]))
     names(colour_palette) <- levels(samples[[colour_var]])
 } else{
     num_levels <- nlevels(samples[[colour_var]])
@@ -234,7 +230,8 @@ plot_list <- lapply(regions,
             plot <- plot +
                 geom_jitter(aes_(fill = as.name(colour_var)),
                             size = 3, width = 0.3, height = 0, shape = 21,
-                            colour = 'black')
+                            colour = 'black') +
+                scale_fill_manual(values = colour_palette)
         } else {
             if (shape_palette[1] == 15) {
                 plot <- plot +
