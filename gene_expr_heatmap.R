@@ -3,6 +3,8 @@
 library('optparse')
 
 option_list <- list(
+  make_option("--genes_file", type="character", default=NULL,
+              help="File of Ensembl gene ids to subset heatmap to [default %default]" ),
   make_option("--metadata_file", type="character", default=NULL,
               help="feather file of metadata to plot with heatmap [default %default]" ),
   make_option("--metadata_ycol", action="store", default='Category',
@@ -33,6 +35,7 @@ option_list <- list(
 
 # cmd_line_args <- list(
 #   options = list(
+#     "genes_file" = "no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/pca/PC1/PC1-pos-genes.tsv",
 #     "metadata_file" = "output/sample2organism-paxgene.ftr",
 #     "metadata_ycol" = "Organism",
 #     "metadata_fill" = "InfectionType",
@@ -87,11 +90,19 @@ data <- load_rnaseq_data(cmd_line_args$args[2])
 
 # make unique rownames depending on DeTCT/RNA-seq 
 if (cmd_line_args$options[['detct']]) {
-    rownames(data) <- paste(data[['Chr']], data[['Region start']],
+    data$id <- paste(data[['Chr']], data[['Region start']],
                          data[['Region end']], data[["3' end position"]],
                          data[["3' end strand"]], sep=":")
 } else {
-    rownames(data) <- data[['GeneID']]
+    data$id <- data[['GeneID']]
+}
+
+# subset data to gene list if provided
+if (!is.null(cmd_line_args$options[['genes_file']])) {
+    genes <- read.delim(file = cmd_line_args$options[['genes_file']], header = FALSE)
+    # subset data to genes and arrange it in same order
+    data <- filter(data, GeneID %in% genes[[1]]) %>% 
+      arrange(match(GeneID, genes[[1]]))
 }
 
 # get normalised count data
@@ -124,6 +135,8 @@ if (nrow(counts) > 1) {
   }
   if (cluster_rows) {
       counts <- cluster(counts)
+      # arrange rows of data by counts
+      data <- arrange(data, rownames(counts))
   }
   if (cluster_columns) {
       counts <- as.data.frame(t( cluster(t(counts)) ))
