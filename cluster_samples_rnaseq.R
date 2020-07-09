@@ -21,10 +21,13 @@ option_list <- list(
               help="Column in metadata to plot as fill colour [default %default]"),
   make_option("--metadata_fill_palette", action="store", default=NULL,
               help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
-  make_option("--plot_width", action="store", default=12,
+  make_option("--plot_width", action="store", default=29,
               help="Width of plot [default %default]"),
-  make_option("--plot_height", action="store", default=20,
+  make_option("--plot_height", action="store", default=12,
               help="Height of plot [default %default]"),
+  make_option("--orientation", action="store", default='landscape',
+              help=paste("Orientation of the plot. landscape (tree, metadata, cor_matrix plotted in a row)",
+              "or portrait (tree, metadata, cor_matrix plotted in a column) [default %default]") ),
   make_option(c("-d", "--debug"), action="store_true", default=FALSE,
               help="Print debugging info [default %default]"),
   make_option(c("-v", "--verbose"), action="store_true", default=FALSE,
@@ -42,19 +45,22 @@ cmd_line_args <- parse_args(
 )
 
 # cmd_line_args <- list(
-#   options = list("output_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/sample-clust-cor-sp.svg',
-#                  "plots_rda_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/sample-clust-cor-sp.rda',
-#                  "metadata_file" = 'output/sample2organism-paxgene.ftr',
+#   options = list("output_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/sample-clust-scaled-eu-landscape.svg',
+#                  "cluster_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/sample-clust-scaled-eu-landscape.tsv',
+#                  "plots_rda_file" = 'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/sample-clust-scaled-eu-landscape.rda',
+#                  "distance_measure" = "euclidean",
+#                  "centre_and_scale" = TRUE,
+#                  "metadata_file" = 'output/sample2organism-cell_pellet.ftr',
 #                  "metadata_ycol" = 'Organism',
 #                  "metadata_fill" = 'InfectionType',
 #                  "metadata_fill_palette" = 'fill_colour',
-#                  "plot_width" = 12, "plot_height" = 30,
-#                  "distance_measure" = 'spearman',
+#                  "plot_width" = 29, "plot_height" = 12,
+#                  "orientation" = "landscape",
 #                  "debug" = TRUE, "verbose" = TRUE),
 #   args = c('deseq2-noHb/all.tsv',
-#            'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/samples.tsv')
+#            'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/samples.tsv')
 # )
- 
+
 packages <- c('rnaseqtools', 'biovisr', 'miscr', 'tidyverse', 'patchwork',
               'feather', 'svglite', 'dynamicTreeCut')
 for( package in packages ){
@@ -82,7 +88,11 @@ clustering <- cluster(as.matrix(count_data), scale = cmd_line_args$options[['cen
                       dist_method = cmd_line_args$options[['distance_measure']], 
                       clustering = TRUE)
 # plot tree
-tree_plot <- dendro_plot(clustering$clustering)
+if (cmd_line_args$options[['orientation']] == "portrait") {
+  tree_plot <- dendro_plot(clustering$clustering)
+} else {
+  tree_plot <- dendro_plot(clustering$clustering) + scale_y_reverse() + coord_flip()
+}
 
 # split into clusters
 cluster_dist <- as.matrix(dist(t(scale(as.matrix(count_data))), method = "euclidean"))
@@ -114,54 +124,65 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
   } else {
     metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
   }
-}
-# metadata plot
-# subset data to samples in samples file
-metadata_for_plot <- filter(metadata_for_plot, sample %in% samples$sample)
-# order levels by clustering
-metadata_for_plot[['sample']] <- 
-  factor(metadata_for_plot[['sample']],
-         levels = colnames(clustering$matrix))
-# reverse levels of y axis to make plot match
-ycol <- cmd_line_args$options[['metadata_ycol']]
-if (class(metadata_for_plot[[ycol]]) == 'character') {
-  metadata_for_plot[[ycol]] <- 
-    factor(metadata_for_plot[[ycol]],
-            levels = rev(unique(metadata_for_plot[[ycol]])))
-} else if (class(metadata_for_plot[[ycol]]) == 'factor') {
-  metadata_for_plot[[ycol]] <- 
-    factor(metadata_for_plot[[ycol]],
-           levels = rev(levels(metadata_for_plot[[ycol]])))
-}
-
-# sort out fill_palette
-fill_col <- cmd_line_args$options[['metadata_fill']]
-
-fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
-if (!is.null(fill_palette)) {
-  if (fill_palette %in% colnames(metadata_for_plot)) {
-    # make a named vector of levels to colours
-    if( length(unique(metadata_for_plot[[fill_palette]])) == 
-                        nlevels(metadata_for_plot[[fill_col]]) ) {
-      cat2colour <- metadata_for_plot[ , c(fill_col, fill_palette)] %>% unique()
-      fill_palette <- cat2colour[[fill_palette]]
-      names(fill_palette) <- cat2colour[[fill_col]]
-    }
-  } else {
-    warning('The fill_palette column name is not present in the metadata file')
-    fill_palette <- NULL
+  # metadata plot
+  # subset data to samples in samples file
+  metadata_for_plot <- filter(metadata_for_plot, sample %in% samples$sample)
+  # order levels by clustering
+  metadata_for_plot[['sample']] <- 
+    factor(metadata_for_plot[['sample']],
+           levels = colnames(clustering$matrix))
+  # reverse levels of y axis to make plot match
+  ycol <- cmd_line_args$options[['metadata_ycol']]
+  if (class(metadata_for_plot[[ycol]]) == 'character') {
+    metadata_for_plot[[ycol]] <- 
+      factor(metadata_for_plot[[ycol]],
+              levels = rev(unique(metadata_for_plot[[ycol]])))
+  } else if (class(metadata_for_plot[[ycol]]) == 'factor') {
+    metadata_for_plot[[ycol]] <- 
+      factor(metadata_for_plot[[ycol]],
+             levels = rev(levels(metadata_for_plot[[ycol]])))
   }
+  
+  # sort out fill_palette
+  fill_col <- cmd_line_args$options[['metadata_fill']]
+  
+  fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
+  if (!is.null(fill_palette)) {
+    if (fill_palette %in% colnames(metadata_for_plot)) {
+      # make a named vector of levels to colours
+      if( length(unique(metadata_for_plot[[fill_palette]])) == 
+                          nlevels(metadata_for_plot[[fill_col]]) ) {
+        cat2colour <- metadata_for_plot[ , c(fill_col, fill_palette)] %>% unique()
+        fill_palette <- cat2colour[[fill_palette]]
+        names(fill_palette) <- cat2colour[[fill_col]]
+      }
+    } else {
+      warning('The fill_palette column name is not present in the metadata file')
+      fill_palette <- NULL
+    }
+  }
+  
+  metadata_plot <- 
+    df_heatmap(metadata_for_plot, x = 'sample', y = ycol, 
+               fill = fill_col, fill_palette = fill_palette,
+               colour = "black", size = 0.8,
+               xaxis_labels = FALSE, yaxis_labels = TRUE,
+               na.translate = FALSE, base_size = 16
+    ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
+    theme(axis.title = element_blank(),
+          axis.text.y = element_text(colour = "black"))
+  
+  if (cmd_line_args$options[['orientation']] == "landscape") {
+    metadata_plot <- metadata_plot + 
+      scale_y_discrete(breaks = rev(levels(metadata_for_plot[[ycol]]))) +
+      coord_flip() + 
+      theme(axis.text.y = element_blank(), 
+            axis.text.x = element_text(colour = "black", angle = 45, 
+                                       hjust = 1, vjust = 1),
+            legend.position = "top")
+  }
+  
 }
-
-metadata_plot <- 
-  df_heatmap(metadata_for_plot, x = 'sample', y = ycol, 
-             fill = fill_col, fill_palette = fill_palette,
-             colour = "black", size = 0.8,
-             xaxis_labels = FALSE, yaxis_labels = TRUE,
-             na.translate = FALSE
-  ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
-  theme(axis.title = element_blank(),
-        axis.text.y = element_text(colour = "black"))
 
 # plot cor matrix
 # create correlation matrix and reorder
@@ -173,7 +194,15 @@ cor_matrix_plot <-
   matrix_heatmap(cor_matrix, x_title = "Sample", y_title = "Sample",
                  fill_title = cmd_line_args$options[['distance_measure']], fill_palette = "plasma",
                  xaxis_labels = TRUE, yaxis_labels = TRUE,
-                 base_size = 10)
+                 base_size = 16)
+if (cmd_line_args$options[['orientation']] == "landscape") {
+  cor_matrix_plot <- cor_matrix_plot + 
+    scale_x_discrete(position = "top") + coord_flip() + 
+    theme(legend.position = "top",
+          legend.key.size = unit(2, 'lines'),
+          legend.text = element_text(size = 12),
+          axis.text.y = element_text(size = 10))
+}
 
 # add boxes for clusters
 reversed_clusters <- rev(reordered_clusters)
@@ -194,10 +223,19 @@ svglite(file = cmd_line_args$options[['output_file']],
         width = cmd_line_args$options[['plot_width']], 
         height = cmd_line_args$options[['plot_height']])
 if (is.null(metadata_for_plot)) {
-  print(tree_plot + cor_matrix_plot + plot_layout(ncol = 1, nrow = 2))
+  if (cmd_line_args$options[['orientation']] == "landscape") {
+    print(tree_plot + cor_matrix_plot + plot_layout(ncol = 2, nrow = 1))
+  } else {
+    print(tree_plot + cor_matrix_plot + plot_layout(ncol = 1, nrow = 2))
+  }
 } else {
-  print(tree_plot + metadata_plot + cor_matrix_plot + 
-          plot_layout(ncol = 1, nrow = 3, heights = c(3,2,5)))
+  if (cmd_line_args$options[['orientation']] == "landscape") {
+    print(tree_plot + metadata_plot + cor_matrix_plot + 
+            plot_layout(ncol = 3, nrow = 1, widths = c(6,5,9)))
+  } else {
+    print(tree_plot + metadata_plot + cor_matrix_plot + 
+            plot_layout(ncol = 1, nrow = 3, heights = c(3,2,5)))
+  }
 }
 dev.off()
 
