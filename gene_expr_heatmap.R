@@ -72,7 +72,9 @@ if (!is.null(cmd_line_args$options[['fill_limits']])) {
 
 packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
-if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) { packages <- c(packages, 'feather') }
+if (!is.null(cmd_line_args$options[['metadata_file']])) {
+    if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) { packages <- c(packages, 'feather') }
+}
 for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
