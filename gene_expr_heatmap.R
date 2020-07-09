@@ -144,7 +144,7 @@ if (nrow(counts) > 1) {
 }
 
 # add id column
-counts$id <- factor(rownames(counts), levels = rownames(counts))
+counts$id <- factor(data$GeneID, levels = data$GeneID)
 
 # melt count df
 plot_data <- counts %>%
@@ -169,51 +169,51 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
   } else {
     metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
   }
-}
 
-# subset metadata to samples
-metadata_for_plot <- filter(metadata_for_plot, sample %in% levels(plot_data$Sample))
-# order sample levels by clustering
-metadata_for_plot[['sample']] <-
-  factor(metadata_for_plot[['sample']],
-         levels = levels(plot_data$Sample))
-# reverse levels of y axis to make plot match
-ycol <- cmd_line_args$options[['metadata_ycol']]
-if (class(metadata_for_plot[[ycol]]) == 'character') {
-  metadata_for_plot[[ycol]] <-
-    factor(metadata_for_plot[[ycol]],
-            levels = rev(unique(metadata_for_plot[[ycol]])))
-} else if (class(metadata_for_plot[[ycol]]) == 'factor') {
-  metadata_for_plot[[ycol]] <-
-    factor(metadata_for_plot[[ycol]],
-           levels = rev(levels(metadata_for_plot[[ycol]])))
-}
-
-# sort out fill_palette
-fill_col <- cmd_line_args$options[['metadata_fill']]
-
-fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
-if (!is.null(fill_palette)) {
-  if (fill_palette %in% colnames(metadata_for_plot)) {
-    # make a named vector of levels to colours
-    if( length(unique(metadata_for_plot[[fill_palette]])) ==
-                        nlevels(metadata_for_plot[[fill_col]]) ) {
-      cat2colour <- metadata_for_plot[ , c(fill_col, fill_palette)] %>% unique()
-      fill_palette <- cat2colour[[fill_palette]]
-      names(fill_palette) <- cat2colour[[fill_col]]
+  # subset metadata to samples
+  metadata_for_plot <- filter(metadata_for_plot, sample %in% levels(plot_data$Sample))
+  # order sample levels by clustering
+  metadata_for_plot[['sample']] <-
+    factor(metadata_for_plot[['sample']],
+           levels = levels(plot_data$Sample))
+  # reverse levels of y axis to make plot match
+  category_col <- cmd_line_args$options[['metadata_ycol']]
+  if (class(metadata_for_plot[[category_col]]) == 'character') {
+    metadata_for_plot[[category_col]] <-
+      factor(metadata_for_plot[[category_col]],
+              levels = rev(unique(metadata_for_plot[[category_col]])))
+  } else if (class(metadata_for_plot[[category_col]]) == 'factor') {
+    metadata_for_plot[[category_col]] <-
+      factor(metadata_for_plot[[category_col]],
+             levels = rev(levels(metadata_for_plot[[category_col]])))
+  }
+  
+  # sort out fill_palette
+  fill_col <- cmd_line_args$options[['metadata_fill']]
+  
+  fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
+  if (!is.null(fill_palette)) {
+    if (fill_palette %in% colnames(metadata_for_plot)) {
+      # make a named vector of levels to colours
+      if( length(unique(metadata_for_plot[[fill_palette]])) ==
+                          nlevels(metadata_for_plot[[fill_col]]) ) {
+        cat2colour <- metadata_for_plot[ , c(fill_col, fill_palette)] %>% unique()
+        fill_palette <- cat2colour[[fill_palette]]
+        names(fill_palette) <- cat2colour[[fill_col]]
+      }
     }
   }
+  
+  metadata_plot <-
+    df_heatmap(metadata_for_plot, x = 'sample', y = category_col,
+               fill = fill_col, fill_palette = fill_palette,
+               colour = "black", size = 0.8,
+               xaxis_labels = FALSE, yaxis_labels = TRUE,
+               na.translate = FALSE
+    ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
+    theme(axis.title = element_blank(),
+          axis.text.y = element_text(colour = "black"))
 }
-
-metadata_plot <-
-  df_heatmap(metadata_for_plot, x = 'sample', y = ycol,
-             fill = fill_col, fill_palette = fill_palette,
-             colour = "black", size = 0.8,
-             xaxis_labels = FALSE, yaxis_labels = TRUE,
-             na.translate = FALSE
-  ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
-  theme(axis.title = element_blank(),
-        axis.text.y = element_text(colour = "black"))
 
 if (grepl('ps$', output_file)) {
   postscript(file = output_file, paper = "special", horizontal = FALSE,
@@ -242,5 +242,5 @@ if (!is.null(cmd_line_args$options[['output_count_file']])) {
 }
 
 if (!is.null(cmd_line_args$options[['output_rda_file']])) {
-    save(counts, heatmap_plot, file = cmd_line_args$options[['output_rda_file']])
+    save(data, counts, heatmap_plot, file = cmd_line_args$options[['output_rda_file']])
 }
