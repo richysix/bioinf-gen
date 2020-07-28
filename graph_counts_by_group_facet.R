@@ -116,7 +116,9 @@ if (cmd_line_args$options[['detct']]) {
 
 if (!is.null(cmd_line_args$options[['regions_file']])) {
   ids <- read.delim(cmd_line_args$options[['regions_file']], header=TRUE)
-  regions <- filter(data, data$GeneID %in% ids$id) %>% 
+  # subset to Gene IDs and arrange in the same order
+  regions <- filter(data, data$GeneID %in% ids$id) %>%
+    arrange(., match(GeneID, ids$id)) %>% 
     select(region) %>% pull()
 } else {
   regions <- unique(data$region)
