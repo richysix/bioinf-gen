@@ -27,6 +27,8 @@ option_list <- list(
               help="height of plot (inches) [default %default]" ),
   make_option("--theme_base_size", type="numeric", default=12,
               help="theme_base_size of plot (inches) [default %default]" ),
+  make_option("--no_jitter", type="logical", action="store_true", default=FALSE,
+              help="Don't add jitter to the points  [default %default]" ),
   make_option("--seed", type="integer", default=25673,
               help="random seed to make the jitter reproducible [default %default]" ),
   make_option("--detct", type="logical", action="store_true", default=FALSE,
@@ -45,6 +47,7 @@ debug <- cmd_line_args$options[['debug']]
 plot_width <- cmd_line_args$options[['width']]
 plot_height <- cmd_line_args$options[['height']]
 theme_base_size <- cmd_line_args$options[['theme_base_size']]
+jitter <- !cmd_line_args$options[['no_jitter']]
 
 packages <- c('ggplot2', 'tidyverse', 'biovisr', 'rnaseqtools')
 for( package in packages ){
@@ -175,12 +178,12 @@ if (debug) {
 }
 
 if (!is.null(shape_var)) {
-    shape_palette <- 21:25
     make_shape_palette <- function(shape_palette, samples) {
         shape_palette <- shape_palette[seq_len(nlevels(samples[[shape_var]]))]
         names(shape_palette) <- levels(samples[[shape_var]])
         return(shape_palette)
     }
+    shape_palette <- 21:25
     if (nlevels(samples[[shape_var]]) <= length(shape_palette)) {
         shape_palette <- make_shape_palette(shape_palette, samples)
     } else {
@@ -192,7 +195,7 @@ if (!is.null(shape_var)) {
         }
     }
 }
-set.seed(cmd_line_args$options[['seed']])
+
 plot_list <- lapply(regions,
     function(region, counts_for_plotting, data) {
         if (debug) { cat(region, "\n") }
@@ -226,18 +229,23 @@ plot_list <- lapply(regions,
             }
         }
         
-        if (is.null(shape_var)) {
-            plot <- plot +
-                geom_jitter(aes_(fill = as.name(colour_var)),
-                            size = 3, width = 0.3, height = 0, shape = 21,
-                            colour = 'black') +
-                scale_fill_manual(values = colour_palette)
+        if (jitter) {
+          pos <- position_jitter(width = 0.3, height = 0, seed = cmd_line_args$options[['seed']])
         } else {
-            if (shape_palette[1] == 15) {
+          pos <- position_identity()
+        }
+        if (is.null(shape_var)) {
+          plot <- plot +
+            geom_point(aes_(fill = as.name(colour_var)),
+                       size = 3, shape = 21, colour = 'black',
+                       position = pos ) +
+            scale_fill_manual(values = colour_palette)
+        } else {
+          if (shape_palette[1] == 15) {
                 plot <- plot +
-                    geom_jitter(aes_(colour = as.name(colour_var),
+                    geom_point(aes_(colour = as.name(colour_var),
                                      shape = as.name(shape_var)), size = 3,
-                                width = 0.3, height = 0) +
+                                position = pos) +
                     scale_colour_manual(values = colour_palette,
                         guide = guide_legend(override.aes =
                                              list(shape = shape_palette[1]),
@@ -246,9 +254,9 @@ plot_list <- lapply(regions,
                                        guide = guide_legend(order = 2))
             } else {
                 plot <- plot +
-                    geom_jitter(aes_(fill = as.name(colour_var),
+                    geom_point(aes_(fill = as.name(colour_var),
                                      shape = as.name(shape_var)), size = 3,
-                                width = 0.3, height = 0) +
+                                position = pos ) +
                     scale_fill_manual(values = colour_palette,
                         guide = guide_legend(override.aes =
                                              list(shape = shape_palette[1]),
