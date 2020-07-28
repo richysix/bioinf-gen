@@ -27,6 +27,8 @@ option_list <- list(
               help="height of plot (inches) [default %default]" ),
   make_option("--theme_base_size", type="numeric", default=12,
               help="theme_base_size of plot (inches) [default %default]" ),
+  make_option("--rotate_xaxis_labels", type="logical", action="store_true", default=FALSE,
+              help="Rotate x-axis labels to 90 degrees [default %default]" ),
   make_option("--no_jitter", type="logical", action="store_true", default=FALSE,
               help="Don't add jitter to the points  [default %default]" ),
   make_option("--seed", type="integer", default=25673,
@@ -272,11 +274,12 @@ plot_list <- lapply(regions,
                 facet_wrap(as.name(facet_var), nrow = 1)
         }
         
-        plot <- plot +      
+        plot <- plot + 
             labs(title = title, y = "Normalised Counts") +
             theme_minimal(base_size = theme_base_size) +
             theme(strip.background = element_rect(fill = "grey90",
-                                                  colour = "grey90"))
+                                                  colour = "grey90"),
+                  axis.text.x = element_text(angle = ifelse(cmd_line_args$options[['rotate_xaxis_labels']], 90, 0)))
         return(plot)
     }, counts_for_plotting, data
 )
