@@ -21,6 +21,8 @@ option_list <- list(
               help="Column in metadata to plot as fill colour [default %default]"),
   make_option("--metadata_fill_palette", action="store", default=NULL,
               help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
+  make_option("--metadata_gridlines", action="store_true", default=FALSE,
+              help="Whether to add gridlines to metadata plot [default %default]"),
   make_option("--plot_width", action="store", default=29,
               help="Width of plot [default %default]"),
   make_option("--plot_height", action="store", default=12,
@@ -179,6 +181,11 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
             axis.text.x = element_text(colour = "black", angle = 45, 
                                        hjust = 1, vjust = 1),
             legend.position = "top")
+  }
+  
+  if (cmd_line_args$options[['metadata_gridlines']]) {
+    metadata_plot <- metadata_plot + 
+      theme(panel.grid.major = element_line(colour = "grey90"))
   }
   
 }
