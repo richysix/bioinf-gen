@@ -124,11 +124,9 @@ if (!is.null(cmd_line_args$options[['regions_file']])) {
   regions <- unique(data$region)
 }
 
-normalised_counts <- data[ , grepl("region|normalised", colnames(data)) ]
-colnames(normalised_counts) <- sub(".normalised.count", "", colnames(normalised_counts))
-
-# order counts by sample
-normalised_counts <- normalised_counts[ , c('region', rownames(samples)) ]
+# get normalised counts
+normalised_counts <- get_counts(data, samples = samples, normalised = TRUE) %>% 
+  mutate(region = data$region)
 
 if (debug) { cat("Join\n") }
 # subset data to regions if necessary
