@@ -23,6 +23,10 @@ option_list <- list(
               help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
   make_option("--metadata_gridlines", action="store_true", default=FALSE,
               help="Whether to add gridlines to metadata plot [default %default]"),
+  make_option("--relative_plot_sizes", action="store", default=NULL,
+              help=paste("The relative sizes of the plots as a comma-separated list",
+                         "will be treated as widths or heights depending on the value of",
+                         "--orientation [default %default]")),
   make_option("--plot_width", action="store", default=29,
               help="Width of plot [default %default]"),
   make_option("--plot_height", action="store", default=12,
@@ -57,6 +61,7 @@ cmd_line_args <- parse_args(
 #                  "metadata_fill" = 'InfectionType',
 #                  "metadata_fill_palette" = 'fill_colour',
 #                  "plot_width" = 29, "plot_height" = 12,
+#                  "relative_plot_sizes" = "5,7,8",
 #                  "orientation" = "landscape",
 #                  "debug" = TRUE, "verbose" = TRUE),
 #   args = c('deseq2-noHb/all.tsv',
@@ -72,6 +77,17 @@ for( package in packages ){
 # set verbose options
 if (!cmd_line_args$options[['verbose']]){
   options(readr.show_progress=FALSE)
+}
+
+# unpack relative_plot_sizes options
+if (is.null(cmd_line_args$options[['relative_plot_sizes']])) {
+  if (is.null(cmd_line_args$options[['metadata_file']])) {
+    relative_plot_sizes <- c(1,2)
+  } else {
+    relative_plot_sizes <- c(1,1,2)
+  }
+} else {
+  relative_plot_sizes <- as.integer(unlist(str_split(cmd_line_args$options[['relative_plot_sizes']], ",")))
 }
 
 # load RNAseq data
@@ -230,17 +246,19 @@ svglite(file = cmd_line_args$options[['output_file']],
         height = cmd_line_args$options[['plot_height']])
 if (is.null(metadata_for_plot)) {
   if (cmd_line_args$options[['orientation']] == "landscape") {
-    print(tree_plot + cor_matrix_plot + plot_layout(ncol = 2, nrow = 1))
+    print(tree_plot + cor_matrix_plot + 
+            plot_layout(ncol = 2, nrow = 1, widths = relative_plot_sizes))
   } else {
-    print(tree_plot + cor_matrix_plot + plot_layout(ncol = 1, nrow = 2))
+    print(tree_plot + cor_matrix_plot + 
+            plot_layout(ncol = 1, nrow = 2, heights = relative_plot_sizes))
   }
 } else {
   if (cmd_line_args$options[['orientation']] == "landscape") {
     print(tree_plot + metadata_plot + cor_matrix_plot + 
-            plot_layout(ncol = 3, nrow = 1, widths = c(6,5,9)))
+            plot_layout(ncol = 3, nrow = 1, widths = relative_plot_sizes))
   } else {
     print(tree_plot + metadata_plot + cor_matrix_plot + 
-            plot_layout(ncol = 1, nrow = 3, heights = c(3,2,5)))
+            plot_layout(ncol = 1, nrow = 3, heights = relative_plot_sizes))
   }
 }
 dev.off()
