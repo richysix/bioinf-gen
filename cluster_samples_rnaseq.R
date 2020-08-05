@@ -15,8 +15,8 @@ option_list <- list(
               help="Whether to centre and scale the data or not [default %default]"),
   make_option("--metadata_file", action="store", default=NULL,
               help="Name of metadata file [default %default]"),
-  make_option("--metadata_ycol", action="store", default='Category',
-              help="Column in metadata to plot on y-axis [default %default]"),
+  make_option("--metadata_category_col", action="store", default='Category',
+              help="Column in metadata to plot on non-sample axis [default %default]"),
   make_option("--metadata_fill", action="store", default='Value',
               help="Column in metadata to plot as fill colour [default %default]"),
   make_option("--metadata_fill_palette", action="store", default=NULL,
@@ -51,7 +51,7 @@ cmd_line_args <- parse_args(
 #                  "distance_measure" = "euclidean",
 #                  "centre_and_scale" = TRUE,
 #                  "metadata_file" = 'output/sample2organism-cell_pellet.ftr',
-#                  "metadata_ycol" = 'Organism',
+#                  "metadata_category_col" = 'Organism',
 #                  "metadata_fill" = 'InfectionType',
 #                  "metadata_fill_palette" = 'fill_colour',
 #                  "plot_width" = 29, "plot_height" = 12,
@@ -117,7 +117,7 @@ write.table(reordered_clusters, file = cmd_line_args$options[['cluster_file']],
 
 # load metadata if it exists
 # The first column should be the sample ids/names (x axis, matching the samples file)
-# the y axis and fill variables are specified by metadata_ycol and metadata_fill
+# the y axis and fill variables are specified by metadata_category_col and metadata_fill
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
   if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) {
     metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
@@ -132,15 +132,15 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
     factor(metadata_for_plot[['sample']],
            levels = colnames(clustering$matrix))
   # reverse levels of y axis to make plot match
-  ycol <- cmd_line_args$options[['metadata_ycol']]
-  if (class(metadata_for_plot[[ycol]]) == 'character') {
-    metadata_for_plot[[ycol]] <- 
-      factor(metadata_for_plot[[ycol]],
-              levels = rev(unique(metadata_for_plot[[ycol]])))
-  } else if (class(metadata_for_plot[[ycol]]) == 'factor') {
-    metadata_for_plot[[ycol]] <- 
-      factor(metadata_for_plot[[ycol]],
-             levels = rev(levels(metadata_for_plot[[ycol]])))
+  category_col <- cmd_line_args$options[['metadata_category_col']]
+  if (class(metadata_for_plot[[category_col]]) == 'character') {
+    metadata_for_plot[[category_col]] <- 
+      factor(metadata_for_plot[[category_col]],
+              levels = rev(unique(metadata_for_plot[[category_col]])))
+  } else if (class(metadata_for_plot[[category_col]]) == 'factor') {
+    metadata_for_plot[[category_col]] <- 
+      factor(metadata_for_plot[[category_col]],
+             levels = rev(levels(metadata_for_plot[[category_col]])))
   }
   
   # sort out fill_palette
@@ -163,7 +163,7 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
   }
   
   metadata_plot <- 
-    df_heatmap(metadata_for_plot, x = 'sample', y = ycol, 
+    df_heatmap(metadata_for_plot, x = 'sample', y = category_col, 
                fill = fill_col, fill_palette = fill_palette,
                colour = "black", size = 0.8,
                xaxis_labels = FALSE, yaxis_labels = TRUE,
@@ -171,10 +171,9 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
     theme(axis.title = element_blank(),
           axis.text.y = element_text(colour = "black"))
-  
   if (cmd_line_args$options[['orientation']] == "landscape") {
     metadata_plot <- metadata_plot + 
-      scale_y_discrete(breaks = rev(levels(metadata_for_plot[[ycol]]))) +
+      scale_y_discrete(breaks = rev(levels(metadata_for_plot[[category_col]]))) +
       coord_flip() + 
       theme(axis.text.y = element_blank(), 
             axis.text.x = element_text(colour = "black", angle = 45, 
