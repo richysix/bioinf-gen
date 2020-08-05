@@ -21,6 +21,9 @@ option_list <- list(
               help="Cluster rows, columns, both or none [default %default]"),
   make_option("--colour_palette", type="character", default='plasma',
               help="palette for colour scale [default %default]" ),
+  make_option("--relative_plot_sizes", action="store", default=NULL,
+              help=paste("The relative sizes of the plots as a comma-separated list",
+                         "will be treated as heights [default %default]")),
   make_option("--width", type="numeric", default=7,
               help="width of plot (inches) [default %default]" ),
   make_option("--height", type="numeric", default=10,
@@ -80,6 +83,13 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
 }
 for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
+}
+
+# unpack relative_plot_sizes options
+if (is.null(cmd_line_args$options[['relative_plot_sizes']])) {
+  relative_plot_sizes <- c(9,1)
+} else {
+  relative_plot_sizes <- as.integer(unlist(str_split(cmd_line_args$options[['relative_plot_sizes']], ",")))
 }
 
 # load sample data
@@ -228,7 +238,7 @@ if (is.null(cmd_line_args$options[['metadata_file']])) {
 } else {
   print(heatmap_plot + metadata_plot +
           plot_layout(ncol = 1, nrow = 2,
-                      heights = c(9,1)))
+                      heights = relative_plot_sizes))
 }
 dev.off()
 
