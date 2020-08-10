@@ -122,6 +122,9 @@ if (cmd_line_args$options[['transform']] == 'center_scale') {
     counts <- as.data.frame(t( scale( t(counts) ) ))
 }
 
+# add gene ids to rownames
+rownames(counts) <- data$GeneID
+
 # skip clustering if only 1 row
 if (nrow(counts) > 1) {
   # Clustering
@@ -145,8 +148,6 @@ if (nrow(counts) > 1) {
   }
   if (cluster_rows) {
       counts <- cluster(counts)
-      # arrange rows of data by counts
-      data <- arrange(data, rownames(counts))
   }
   if (cluster_columns) {
       counts <- as.data.frame(t( cluster(t(counts)) ))
@@ -154,7 +155,9 @@ if (nrow(counts) > 1) {
 }
 
 # add id column
-counts$id <- factor(data$GeneID, levels = data$GeneID)
+counts <- counts %>%
+  rownames_to_column(., var = "id") %>%
+  mutate(id = factor(id, levels = id))
 
 # melt count df
 plot_data <- counts %>%
@@ -243,8 +246,7 @@ if (is.null(cmd_line_args$options[['metadata_file']])) {
 dev.off()
 
 # reverse counts matrix so it fits the heatmap
-counts <- counts[ seq(nrow(counts), 1),
-                c('id', colnames(counts)[ !grepl("id", colnames(counts))] )]
+counts <- counts[ seq(nrow(counts), 1), ]
 
 if (!is.null(cmd_line_args$options[['output_count_file']])) {
     write.table(counts, file = cmd_line_args$options[['output_count_file']],
