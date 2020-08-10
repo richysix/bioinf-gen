@@ -203,6 +203,10 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
   
   # sort out fill_palette
   fill_col <- cmd_line_args$options[['metadata_fill']]
+  # set levels of fill column
+  metadata_for_plot[[fill_col]] <-
+    factor(metadata_for_plot[[fill_col]],
+            levels = unique(metadata_for_plot[[fill_col]]))  
   
   fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
   if (!is.null(fill_palette)) {
@@ -220,7 +224,7 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
   metadata_plot <-
     df_heatmap(metadata_for_plot, x = 'sample', y = category_col,
                fill = fill_col, fill_palette = fill_palette,
-               colour = "black", size = 0.8,
+               colour = "grey50", size = 0.5,
                xaxis_labels = FALSE, yaxis_labels = TRUE,
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
