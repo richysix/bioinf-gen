@@ -33,6 +33,8 @@ option_list <- list(
               help="Don't add jitter to the points  [default %default]" ),
   make_option("--seed", type="integer", default=25673,
               help="random seed to make the jitter reproducible [default %default]" ),
+  make_option("--no_pvalue", type="logical", action="store_true", default=FALSE,
+              help="Don't add a pvalue to the plots  [default %default]" ),
   make_option("--detct", type="logical", action="store_true", default=FALSE,
               help="Data is DeTCT data, not RNA-seq [default %default]" ),
   make_option("--debug", type="logical", default=FALSE, action="store_true",
@@ -97,7 +99,9 @@ data_file <- cmd_line_args$args[2]
 data <- load_rnaseq_data(data_file)
 
 # find adjusted pvalue column
-if (sum(grepl("adjp", names(data))) == 1 ) {
+if (cmd_line_args$options[['no_pvalue']]) {
+  adjp_col <- NULL
+} else if (sum(grepl("adjp", names(data))) == 1 ) {
   adjp_col <- names(data)[ grepl("adjp", names(data)) ]
 } else {
   adjp_col <- NULL
