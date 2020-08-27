@@ -170,14 +170,14 @@ if (!is.null(cmd_line_args$options[['colour_palette']])) {
     if (length(colour_palette) < num_levels) {
         stop('Not enough colours in colour_palette option!')
     }
-} else if (nlevels(samples[[colour_var]]) <= length(cbf_palette())) {
+} else if (nlevels(samples[[colour_var]]) <= 10) {
     colour_palette <- cbf_palette(nlevels(samples[[colour_var]]))
     names(colour_palette) <- levels(samples[[colour_var]])
 } else{
     num_levels <- nlevels(samples[[colour_var]])
     ord1 <- seq(1,num_levels,2)
     ord2 <- seq(2,num_levels,2)
-    colour_palette <- hue_pal()(num_levels)[ order(c(ord1,ord2)) ]
+    colour_palette <- scales::hue_pal()(num_levels)[ order(c(ord1,ord2)) ]
 }
 if (debug) {
     print(colour_palette)
