@@ -5,7 +5,7 @@ suppressPackageStartupMessages(library(DESeq2))
 options(readr.show_progress=FALSE)
 
 # Get samples
-samples <- read_tsv("samples.tsv")
+samples <- read_tsv("samples.txt")
 groups <- setdiff(colnames(samples), c("sample", "condition"))
 for (col in c('condition', groups)) {
   samples[[col]] <- factor(samples[[col]], levels = unique(samples[[col]]))

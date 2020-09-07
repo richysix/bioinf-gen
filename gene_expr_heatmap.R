@@ -206,7 +206,7 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
   # set levels of fill column
   metadata_for_plot[[fill_col]] <-
     factor(metadata_for_plot[[fill_col]],
-            levels = unique(metadata_for_plot[[fill_col]]))  
+            levels = unique(metadata_for_plot[[fill_col]]))
   
   fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
   if (!is.null(fill_palette)) {
