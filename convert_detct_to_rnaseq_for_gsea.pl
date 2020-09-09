@@ -65,7 +65,9 @@ while( my $line = <$in_fh> ){
         my $abs_log2fc = abs($cols[$log2fc_idx]);
         if (exists $min_pval_for{ $gene_id }) {
             if ($min_pval_for{ $gene_id } eq "NA") {
-                if ($abs_log2fc > $max_l2fc_for{ $gene_id }) {
+                if ($padj ne "NA") {
+                    $replace = 1;
+                } elsif ($abs_log2fc > $max_l2fc_for{ $gene_id }) {
                     $replace = 1;
                 }
             } else {
