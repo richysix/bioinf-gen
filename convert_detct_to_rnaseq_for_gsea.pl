@@ -16,7 +16,6 @@ my %options;
 get_and_check_options();
 
 # open DeTCT file
-# for each gene id find region with biggest log2fc
 open my $in_fh, '<', $ARGV[0];
 my $header = <$in_fh>;
 my @header = split /\t/, $header;
@@ -46,6 +45,7 @@ push @out_cols, @header[@count_cols], @header[@norm_count_cols];
 
 # Hash for keeping track of max absolute log2fc for each gene id
 my %max_l2fc_for; # $max_l2fc_for{ GENE_ID => LOG2FC }
+my %min_pval_for; # $min_pval_for{ GENE_ID => PVAL }
 # Hash for keeping track of the region to use for each gene id
 my %region_for; # $region_for{ GENE_ID => REGION }
 while( my $line = <$in_fh> ){
@@ -58,13 +58,33 @@ while( my $line = <$in_fh> ){
     
     # need to split gene id column by comma
     foreach my $gene_id ( split /,/, $cols[$gene_id_idx] ){
-        # check if log2fc is bigger than current largest
-        # and set max value and region if applicable
-        if (!defined $max_l2fc_for{ $gene_id } ||
-              abs($cols[$log2fc_idx]) > $max_l2fc_for{ $gene_id }) {
-           $max_l2fc_for{ $gene_id } = abs($cols[$log2fc_idx]);
-           $region_for{ $gene_id } = $region;
+        # check if pvalue is smaller than current smallest
+        # and set values and region if applicable
+        my $replace = 0;
+        my $padj = $cols[ $column_number_for->{"Adjusted p value"} ];
+        my $abs_log2fc = abs($cols[$log2fc_idx]);
+        if (exists $min_pval_for{ $gene_id }) {
+            if ($min_pval_for{ $gene_id } eq "NA") {
+                if ($abs_log2fc > $max_l2fc_for{ $gene_id }) {
+                    $replace = 1;
+                }
+            } else {
+                if ($padj ne "NA") {
+                    if ($padj < $min_pval_for{ $gene_id }) {
+                        $replace = 1;
+                    }
+                }
+            }
+        } else {
+            $replace = 1;
         }
+        
+        if ($replace) {
+            $min_pval_for{ $gene_id } = $padj;
+            $max_l2fc_for{ $gene_id } = $abs_log2fc;
+            $region_for{ $gene_id } = $region;
+        }
+        
     }
 }
 
@@ -211,7 +231,9 @@ This script converts a DeTCT output file to the same format as RNAseq data.
 This then allows convert_deseq2_to_gsea.pl to run to produce the files
 rquired for GSEA to run successfully. DeTCT output can have multiple
 regions per gene id whereas for GSEA there should only be ONE entry
-per gene. This script takes the region with the largest log2fc.
+per gene. This script takes the region with the smallest pvalue.
+If none of the regions have a p value it takes the one with the largest
+log2 fold change.
 
 =cut
 
