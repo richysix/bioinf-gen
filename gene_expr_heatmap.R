@@ -5,14 +5,6 @@ library('optparse')
 option_list <- list(
   make_option("--genes_file", type="character", default=NULL,
               help="File of Ensembl gene ids to subset heatmap to [default %default]" ),
-  make_option("--metadata_file", type="character", default=NULL,
-              help="feather file of metadata to plot with heatmap [default %default]" ),
-  make_option("--metadata_ycol", action="store", default='Category',
-              help="Column in metadata to plot on y-axis [default %default]"),
-  make_option("--metadata_fill", action="store", default='Value',
-              help="Column in metadata to plot as fill colour [default %default]"),
-  make_option("--metadata_fill_palette", action="store", default=NULL,
-              help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
   make_option("--detct", action="store_true", default=FALSE,
               help="Data is DeTCT data, not RNA-seq [default %default]"),
   make_option("--transform", action="store", type="character", default="none",
@@ -21,6 +13,20 @@ option_list <- list(
               help="Cluster rows, columns, both or none [default %default]"),
   make_option("--colour_palette", type="character", default='plasma',
               help="palette for colour scale [default %default]" ),
+  make_option("--cell_colour", type="character", default=NULL,
+              help="colour for the outlines of the cells [default %default]" ),
+  make_option("--gene_names", action="store_true", type="logical", default=FALSE,
+              help="print gene names [default %default]" ),
+  make_option("--sample_names", action="store_true", type="logical", default=FALSE,
+              help="print sample names [default %default]" ),
+  make_option("--metadata_file", type="character", default=NULL,
+              help="feather file of metadata to plot with heatmap [default %default]" ),
+  make_option("--metadata_ycol", action="store", default='Category',
+              help="Column in metadata to plot on y-axis [default %default]"),
+  make_option("--metadata_fill", action="store", default='Value',
+              help="Column in metadata to plot as fill colour [default %default]"),
+  make_option("--metadata_fill_palette", action="store", default=NULL,
+              help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
   make_option("--relative_plot_sizes", action="store", default=NULL,
               help=paste("The relative sizes of the plots as a comma-separated list",
                          "will be treated as heights [default %default]")),
@@ -67,6 +73,7 @@ cmd_line_args <- parse_args(
   positional_arguments = 3
 )
 output_file <- cmd_line_args$args[3]
+fill_palette <- cmd_line_args$options[['colour_palette']]
 plot_width <- cmd_line_args$options[['width']]
 plot_height <- cmd_line_args$options[['height']]
 if (!is.null(cmd_line_args$options[['fill_limits']])) {
@@ -165,12 +172,46 @@ plot_data <- counts %>%
 # set levels of Sample
 plot_data$Sample <- factor(plot_data$Sample, levels = unique(plot_data$Sample))
 
-heatmap_plot <- ggplot() +
-        geom_raster(data = plot_data, aes(x = Sample, y = id,
-                                           fill = Count)) +
-        scale_fill_viridis(option = cmd_line_args$options[['colour_palette']],
-                            limits = fill_limits) +
-        theme_void() +
+# if (cmd_line_args$options[['sample_names']]) {
+#   heatmap_theme <- heatmap_theme + theme(axis.text.x = element_text(colour = "black", angle = 90))
+# }
+
+if (is.null(cmd_line_args$options[['cell_colour']]) ) {
+  heatmap_plot <- ggplot() +
+    geom_tile(data = plot_data,
+              aes(x = Sample, y = id, fill = Count))
+} else {
+  heatmap_plot <- ggplot() +
+    geom_tile(data = plot_data, colour = cmd_line_args$options[['cell_colour']],
+              aes(x = Sample, y = id, fill = Count))
+}
+
+distiller_palettes <- c("BrBG", "PiYG", "PRGn", "PuOr", "RdBu", "RdGy", "RdYlBu", "RdYlGn", "Spectral",
+                        "Accent", "Dark2", "Paired", "Pastel1", "Pastel2", "Set1", "Set2", "Set3",
+                        "Blues", "BuGn", "BuPu", "GnBu", "Greens", "Greys", "Oranges", "OrRd", 
+                        "PuBu", "PuBuGn", "PuRd", "Purples", "RdPu", "Reds", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd")
+if (fill_palette %in% c('viridis', 'plasma', 'magma', 'inferno', 'cividis')) {
+  heatmap_plot <- heatmap_plot +
+    scale_fill_viridis(option = fill_palette, limits = fill_limits)
+} else if (fill_palette %in% distiller_palettes) {
+  heatmap_plot <- heatmap_plot +
+    scale_fill_distiller(palette = fill_palette, limits = fill_limits)
+} else {
+  stop("fill_palette is not recognised")
+}
+
+if (cmd_line_args$options[['gene_names']]) {
+  # make function to return a gene name for an Ensmbl id
+  ids2names <- function(ids) {
+    map_chr(ids, function(id, data){ data$Name[ data$GeneID == id] }, data)
+  }
+  heatmap_plot <- heatmap_plot + 
+    scale_y_discrete(name = NULL, labels = ids2names)
+}
+heatmap_plot <- heatmap_plot + 
+        biovisr::theme_heatmap(xaxis_labels = cmd_line_args$options[['gene_names']], 
+                               yaxis_labels = cmd_line_args$options[['sample_names']],
+                               base_size = 12) +
         NULL
 
 # load metadata if provided
@@ -258,5 +299,9 @@ if (!is.null(cmd_line_args$options[['output_count_file']])) {
 }
 
 if (!is.null(cmd_line_args$options[['output_rda_file']])) {
-    save(data, counts, heatmap_plot, file = cmd_line_args$options[['output_rda_file']])
+  object_list <- c('data', 'counts', 'plot_data', 'heatmap_plot')
+  if (!is.null(cmd_line_args$options[['metadata_file']])) {
+    object_list <- c(object_list, 'metadata_plot')
+  }
+  save(list = object_list, file = cmd_line_args$options[['output_rda_file']])
 }
