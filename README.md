@@ -30,7 +30,6 @@ There is some test toy GO data in the test_data directory of this repository.
 For example, run the script with defaults
 ```
 cd test_data
-../
 ../go_bubble_plot.R
 ```
 This will produce a bubble plot (go_bubble.pdf) with the top 5 terms by pvalue labelled.
