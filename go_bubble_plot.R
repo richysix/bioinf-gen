@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 library('optparse')
 
 option_list <- list(
@@ -11,9 +13,9 @@ option_list <- list(
               help="comma-separated list of GO.IDs indicating which points to label [default %default]" ),
   make_option("--no_labels", action="store_true", type="logical", default=FALSE,
               help="comma-separated list of GO.IDs indicating which points to label [default %default]" ),
-  make_option("--width", type="numeric", default=7,
+  make_option("--width", type="numeric", default=10,
               help="width of plot (inches) [default %default]" ),
-  make_option("--height", type="numeric", default=10,
+  make_option("--height", type="numeric", default=7,
               help="height of plot (inches) [default %default]" ),
   make_option("--debug", type="logical", default=FALSE, action="store_true",
               help="Turns on debugging statements [default %default]" )
@@ -30,7 +32,7 @@ desc <- paste(
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'go_bubble_plot.R',
-    usage = "Usage: %prog [options] ",
+    usage = "Usage: %prog [options]",
     description = desc ),
   positional_arguments = 0
 )
@@ -143,7 +145,7 @@ go_bubble_plot_highlighted <- ggplot(data = go_results, aes(x = GO.ID, y = log10
 # dev.off()
 
 # print plot to file
-output_plot(list(plot = go_bubble_plot, 
+output_plot(list(plot = go_bubble_plot_highlighted, 
                  filename = cmd_line_args$options[['output_file']]),
             width = cmd_line_args$options[['width']],
             height = cmd_line_args$options[['height']])
