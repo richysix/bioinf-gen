@@ -26,13 +26,6 @@ General Bioinformatics scripts
 
 ### go_bubble_plot.R
 
-*Required packages*
-* [tidyverse](https://www.tidyverse.org/)
-* [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
-* [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
-* [biovisr](https://github.com/richysix/biovisr)
-* [miscr](https://github.com/richysix/miscr)
-
 There is some test toy GO data in the test_data directory of this repository.
 For example, run the script with defaults
 ```
@@ -54,3 +47,10 @@ Or to label specific terms
 ```
 ../go_bubble_plot.R --no_labels
 ```
+
+**Required packages**
+* [tidyverse](https://www.tidyverse.org/)
+* [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
+* [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
+* [biovisr](https://github.com/richysix/biovisr)
+* [miscr](https://github.com/richysix/miscr)
