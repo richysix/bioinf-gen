@@ -60,6 +60,9 @@ Or to label specific terms
 This script runs a standard ClueGO analysis from the supplied gene lists. It assumes that the gene list
 has no header and is Ensembl gene ids in the first column. If more than one gene list is supplied,
 the script will produce two images, one coloured by group (Enriched Term) and one coloured by cluster (Gene List origin).
+At the moment the script runs the analysis and saves an image(s) and the output files, but I
+can't find a way to save the analysis as a ClueGO session. This must be done manually in Cytoscape.
+
 Cytoscape (>v3.6+) must be open and Cytoscape Apps 'yFiles Layout Algorithms' and 'ClueGO' mst be installed.
 
 *Example*
