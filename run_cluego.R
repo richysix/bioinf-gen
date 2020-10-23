@@ -7,6 +7,8 @@ library('optparse')
 option_list <- list(
   make_option("--output_image_file", type="character", default='go_network.svg', 
               help="Output file name (svg, png or pdf) [default %default]" ), 
+  make_option("--output_scale", type="numeric", default=NULL, 
+              help="Scale factor of network for output image [default Fit to screen]" ), 
   make_option("--output_basename", type="character", default='cluego', 
               help="Basename for output files [default %default]" ), 
   make_option("--organism", type="character", default='Danio rerio', 
@@ -57,8 +59,7 @@ cmd_line_args <- parse_args(
 #                       "cluego_version" = 'v2.5.7',
 #                       verbose = TRUE,
 #                       debug = TRUE),
-#        args = c('topgo/Mn_sib_vs_noMn_sib.go/up/sig_gene_list.txt',
-#                 'topgo/Mn_sib_vs_noMn_sib.go/down/sig_gene_list.txt'))
+#        args = c('overlap-Salmonella-6hpi-only-typhimurium-vs-mock/sig.genes'))
  
 # unpack options
 debug <- cmd_line_args$options[['debug']]
@@ -308,24 +309,35 @@ response <- PUT(url=paste(cytoscape_base_url, "ui", "panels", sep="/"),
                 body=toJSON(panel_info), encode = "json", content_type_json())
 stop_for_status(response, "Set panel info")
 
+# set scale factor
 # fit network to current window
 response <- GET(paste(cytoscape_base_url, "apply", "fit", current_network_suid, sep="/"))
 stop_for_status(response, "Fit network to window")
-
-# make 10% smaller to try and fit text in
 # get view id
 response <- GET(url = paste(cytoscape_base_url, "networks", "views", "currentNetworkView", sep = "/"))
 stop_for_status(response, "Get View id")
 view_id <- content(response, encode = "json")$data$networkViewSUID
-# get current scale factor
-response <- GET(url = paste(cytoscape_base_url, "networks", current_network_suid, "views", 
-                            view_id, "network", sep = "/"))
-stop_for_status(response, "Get Visual Properties for View")
-current_vis_prop <- content(response, encode = "json")
-current_scale_factor <- unlist(
-  lapply(current_vis_prop, function(x){ if (x$visualProperty == "NETWORK_SCALE_FACTOR"){ return(x$value) } }))
-# set scale factor to 90% of current
-vis_prop <- list( list("visualProperty" = "NETWORK_SCALE_FACTOR", "value" = round(0.9 * current_scale_factor, digits = 2)) )
+
+if (is.null(cmd_line_args$options[['output_scale']])) {
+  # make 10% smaller to try and fit text in
+  # get current scale factor
+  response <- GET(url = paste(cytoscape_base_url, "networks", current_network_suid, "views", 
+                              view_id, "network", sep = "/"))
+  stop_for_status(response, "Get Visual Properties for View")
+  current_vis_prop <- content(response, encode = "json")
+  current_scale_factor <- unlist(
+    lapply(current_vis_prop, function(x){ if (x$visualProperty == "NETWORK_SCALE_FACTOR"){ return(x$value) } }))
+  if (verbose) {
+    print(paste("Scale factor to fit network:", current_scale_factor))
+  }
+  # set scale factor to 90% of current
+  vis_prop <- list( list("visualProperty" = "NETWORK_SCALE_FACTOR", 
+                         "value" = round(0.9 * current_scale_factor, digits = 2)) )
+} else {
+  # set scale factor to output_scale option
+  vis_prop <- list( list("visualProperty" = "NETWORK_SCALE_FACTOR", 
+                         "value" = cmd_line_args$options[['output_scale']]) )
+}
 response <- PUT(url=paste(cytoscape_base_url, "networks", current_network_suid, "views", 
                           view_id, "network", sep = "/"), bypass = "false",
                 body = toJSON(vis_prop), encode = "json", content_type_json())
