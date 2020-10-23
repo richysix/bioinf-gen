@@ -53,7 +53,7 @@ plot_height <- cmd_line_args$options[['height']]
 theme_base_size <- cmd_line_args$options[['theme_base_size']]
 jitter <- !cmd_line_args$options[['no_jitter']]
 
-packages <- c('ggplot2', 'tidyverse', 'biovisr', 'rnaseqtools')
+packages <- c('tidyverse', 'biovisr', 'rnaseqtools')
 for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
@@ -143,6 +143,7 @@ counts_for_plotting$sample <- factor(counts_for_plotting$sample,
 counts_for_plotting <- merge(samples, counts_for_plotting)
 
 # make colour palette for the data
+num_levels <- nlevels(samples[[colour_var]])
 if (!is.null(cmd_line_args$options[['colour_palette']])) {
     # split by ',' then by '='
     if (grepl("=", cmd_line_args$options[['colour_palette']])) {
@@ -167,6 +168,9 @@ if (!is.null(cmd_line_args$options[['colour_palette']])) {
     }
     
     # check that number of colours match the number of levels
+    if (length(colour_palette) > num_levels) {
+      warning('There are more colours than necessary in colour_palette option')
+    }
     if (length(colour_palette) < num_levels) {
         stop('Not enough colours in colour_palette option!')
     }
@@ -174,7 +178,6 @@ if (!is.null(cmd_line_args$options[['colour_palette']])) {
     colour_palette <- cbf_palette(nlevels(samples[[colour_var]]))
     names(colour_palette) <- levels(samples[[colour_var]])
 } else{
-    num_levels <- nlevels(samples[[colour_var]])
     ord1 <- seq(1,num_levels,2)
     ord2 <- seq(2,num_levels,2)
     colour_palette <- scales::hue_pal()(num_levels)[ order(c(ord1,ord2)) ]
