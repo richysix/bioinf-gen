@@ -14,7 +14,7 @@ General Bioinformatics scripts
 * gene_lists_from_groups_cluego.pl
 * get_msigdb_geneset.R
 * [go_bubble_plot.R](https://github.com/richysix/bioinf-gen#go_bubble_plotr) - Produce a bubble plot from a topgo analysis
-* graph_counts_by_group_facet.R - jittered and facetted count plot
+* [graph_counts_by_group_facet.R](https://github.com/richysix/bioinf-gen#graph_counts_by_group_facetr) - jittered and facetted count plot
 * graph_counts_line.R
 * histogram.R
 * matrix_heatmap_plot.R
