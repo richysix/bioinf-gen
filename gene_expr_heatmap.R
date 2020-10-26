@@ -278,6 +278,8 @@ if (grepl('ps$', output_file)) {
               width = plot_width, height = plot_height )
 } else if (grepl('svg$', output_file)) {
   svglite(file = output_file, width = plot_width, height = plot_height )
+} else if (grepl('png$', output_file)) {
+  png(file = output_file, width = plot_width, height = plot_height )
 } else { # default to pdf 
   pdf(file = output_file, width = plot_width, height = plot_height )
 }
