@@ -53,7 +53,7 @@ plot_height <- cmd_line_args$options[['height']]
 theme_base_size <- cmd_line_args$options[['theme_base_size']]
 jitter <- !cmd_line_args$options[['no_jitter']]
 
-packages <- c('ggplot2', 'tidyverse', 'biovisr', 'rnaseqtools')
+packages <- c('ggplot2', 'tidyverse', 'biovisr', 'rnaseqtools', 'scales')
 for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
