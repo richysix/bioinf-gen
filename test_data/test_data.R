@@ -57,6 +57,12 @@ samples_df <- data.frame(
 )
 write_tsv(samples_df, path = 'test_samples.tsv')
 
+# pivot samples file to use as metadata
+samples_df_long <- samples_df %>% 
+  pivot_longer(., cols = condition:sex, names_to = "category",
+               values_to = "value")
+write_tsv(samples_df_long, path = 'test_samples_long.tsv')
+
 tmp <- DESeq(tmp)
 res <- results(tmp)
 tmp2 <- DESeq(tmp2)

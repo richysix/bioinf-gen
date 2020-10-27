@@ -10,7 +10,7 @@ General Bioinformatics scripts
 * create_geneset_file.R
 * create_rnaseq_rds.R
 * deseq2-multiple_groups.R
-* gene_expr_heatmap.R
+* [gene_expr_heatmap.R](https://github.com/richysix/bioinf-gen#gene_expr_heatmapr) - Gene expression heatmap
 * gene_lists_from_groups_cluego.pl
 * get_msigdb_geneset.R
 * [go_bubble_plot.R](https://github.com/richysix/bioinf-gen#go_bubble_plotr) - Produce a bubble plot from a topgo analysis
@@ -24,6 +24,40 @@ General Bioinformatics scripts
 * [run_cluego.R](https://github.com/richysix/bioinf-gen#run_cluegor) - Run a Cytoscape ClueGO analysis from gene list(s)
 * volcano_plot.R
 * xlsx_conditional_formatting.R
+
+### gene_expr_heatmap.R
+
+Script to produce a heatmap from RNAseq data. It expects a sample file and a count file (e.g. sig.tsv)
+and the name of the output image file.
+
+There is an example samples file and sig file in the test_data directory of this repository.
+For example
+```
+../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster rows \
+--colour_palette magma --cell_colour grey80 \
+--gene_names --sample_names \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap.pdf
+```
+
+![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination](test_data/rnaseq_heatmap.png "RNAseq heatmap")
+
+It is also possible to supply a list of gene ids to subset the heatmap to.
+A file of sample metadata can also be supplied and will be plotted as a heatmap
+under the expression heatmap.
+```
+../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster rows \
+--colour_palette magma --cell_colour grey80 \
+--gene_names --sample_names \
+--metadata_file test_samples_long.tsv \
+--metadata_ycol category \
+--metadata_fill value \
+--relative_plot_sizes 9,2 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_metadata.pdf
+```
+
+![Gene expression heatmap with metadata heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample](test_data/rnaseq_heatmap_with_metadata.png "RNAseq heatmap with metadata")
 
 ### go_bubble_plot.R
 

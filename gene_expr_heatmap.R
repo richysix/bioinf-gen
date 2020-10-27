@@ -7,8 +7,10 @@ option_list <- list(
               help="File of Ensembl gene ids to subset heatmap to [default %default]" ),
   make_option("--detct", action="store_true", default=FALSE,
               help="Data is DeTCT data, not RNA-seq [default %default]"),
-  make_option("--transform", action="store", type="character", default="none",
+  make_option("--transform", action="store", type="character", default="rlog",
               help="Transformation to apply to data [default %default]"),
+  make_option("--center_and_scale", action="store_true", type="logical", default=FALSE,
+              help="Center and scale the counts by row (genes) [default %default]"),
   make_option("--cluster", action="store", type="character", default="none",
               help="Cluster rows, columns, both or none [default %default]"),
   make_option("--colour_palette", type="character", default='plasma',
@@ -83,7 +85,7 @@ if (!is.null(cmd_line_args$options[['fill_limits']])) {
     fill_limits <- cmd_line_args$options[['fill_limits']]
 }
 
-packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork')
+packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
     if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) { packages <- c(packages, 'feather') }
@@ -114,23 +116,34 @@ if (cmd_line_args$options[['detct']]) {
     data$id <- data[['GeneID']]
 }
 
-# subset data to gene list if provided
-if (!is.null(cmd_line_args$options[['genes_file']])) {
-    genes <- read.delim(file = cmd_line_args$options[['genes_file']], header = FALSE)
-    # subset data to genes and arrange it in same order
-    data <- filter(data, GeneID %in% genes[[1]]) %>% 
-      arrange(match(GeneID, genes[[1]]))
+# get count data
+counts <- get_counts(data, samples, normalised = FALSE)
+# add gene ids to rownames
+rownames(counts) <- data$GeneID
+# Transform using DESeq2
+dds <- DESeqDataSetFromMatrix(counts, samples, design = ~ condition)
+dds <- estimateSizeFactors(dds)
+if (cmd_line_args$options[['transform']] == "rlog") {
+  dds <- rlogTransformation(dds, blind=TRUE)
+} else {
+  dds <- varianceStabilizingTransformation(dds, blind=TRUE)
 }
 
-# get normalised count data
-counts <- get_counts(data, samples, normalised = TRUE)
-
-if (cmd_line_args$options[['transform']] == 'center_scale') {
+counts <- assay(dds)
+if (cmd_line_args$options[['center_and_scale']]) {
     counts <- as.data.frame(t( scale( t(counts) ) ))
 }
 
-# add gene ids to rownames
-rownames(counts) <- data$GeneID
+# subset data to gene list if provided
+if (!is.null(cmd_line_args$options[['genes_file']])) {
+    genes <- read.delim(file = cmd_line_args$options[['genes_file']], 
+                        header = FALSE, stringsAsFactors = FALSE)
+    # subset data to genes and arrange it in same order
+    data <- filter(data, GeneID %in% genes[[1]]) %>% 
+      arrange(match(GeneID, genes[[1]]))
+    # and subset counts
+    counts <- counts[ genes[[1]], ]
+}
 
 # skip clustering if only 1 row
 if (nrow(counts) > 1) {
@@ -172,10 +185,6 @@ plot_data <- counts %>%
 # set levels of Sample
 plot_data$Sample <- factor(plot_data$Sample, levels = unique(plot_data$Sample))
 
-# if (cmd_line_args$options[['sample_names']]) {
-#   heatmap_theme <- heatmap_theme + theme(axis.text.x = element_text(colour = "black", angle = 90))
-# }
-
 if (is.null(cmd_line_args$options[['cell_colour']]) ) {
   heatmap_plot <- ggplot() +
     geom_tile(data = plot_data,
@@ -201,7 +210,7 @@ if (fill_palette %in% c('viridis', 'plasma', 'magma', 'inferno', 'cividis')) {
 }
 
 if (cmd_line_args$options[['gene_names']]) {
-  # make function to return a gene name for an Ensmbl id
+  # make function to return a gene name for an Ensembl id
   ids2names <- function(ids) {
     map_chr(ids, function(id, data){ data$Name[ data$GeneID == id] }, data)
   }
