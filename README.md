@@ -46,6 +46,22 @@ The available fill_palettes are those from [viridis](https://cran.r-project.org/
 ![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination](test_data/rnaseq_heatmap.png "RNAseq heatmap")
 
 It is also possible to supply a list of gene ids to subset the heatmap to.
+
+```
+# create a test ids file
+echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
+
+../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster rows \
+--colour_palette magma --cell_colour grey80 \
+--gene_names --sample_names \
+--genes_file test_genes.txt \
+--width 7 --height 2.5 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_subset.pdf
+```
+
+![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. Only three of the original rows are shown](test_data/rnaseq_heatmap_subset.png "RNAseq heatmap subset")
+
 A file of sample metadata can also be supplied and will be plotted as a heatmap
 under the expression heatmap.
 ```
@@ -143,7 +159,7 @@ only make plots for those gene ids in the data.
 The example below uses almost all the available options
 ```
 # create a test ids file
-echo -e "id\nZFG005\nZFG006" > test_genes.txt
+echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
 
 ../graph_counts_by_group_facet.R \
 --output_file=test-condition-sex-treatment.pdf \
