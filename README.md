@@ -40,6 +40,9 @@ For example
 test_samples.tsv test_rnaseq_data.tsv test_heatmap.pdf
 ```
 
+The available fill_palettes are those from [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html) and
+[ColorBrewer](https://ggplot2.tidyverse.org/reference/scale_brewer.html)
+
 ![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination](test_data/rnaseq_heatmap.png "RNAseq heatmap")
 
 It is also possible to supply a list of gene ids to subset the heatmap to.
