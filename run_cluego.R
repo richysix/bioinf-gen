@@ -97,7 +97,9 @@ host_address <- "localhost"
 cytoscape_base_url = paste("http://", host_address, ":", toString(port_number), "/v1", sep="")
 cluego_base_url = paste(cytoscape_base_url, "apps", "cluego", "cluego-manager", sep="/")
 
+analysis_name <- cmd_line_args$options[['analysis_name']]
 if (verbose) {
+  print(paste("Analysis: ", analysis_name, sep=""))
   print(paste("User Home Folder: ", home_folder, sep=""))
   print(paste("Cytoscape Base URL: ", cytoscape_base_url, sep=""))
   print(paste("ClueGO Base URL: ", cluego_base_url, sep=""))
@@ -279,8 +281,7 @@ stop_for_status(response, "Set grouping prameters")
 if (verbose) {
   print(paste("4.0 Run ClueGO Analysis", sep=""))
 }
-# Run the analysis an save log file
-analysis_name <- cmd_line_args$options[['analysis_name']]
+# Run the analysis and save log file
 analysis_option <- "Cancel and refine selection" # ("Continue analysis", "Skip the grouping", "Cancel and refine selection")  -> Analysis option in case there are more than 1000 terms found!
 response <- GET(paste(cluego_base_url, URLencode(analysis_name), URLencode(analysis_option), sep="/"))
 stop_for_status(response, "Run analysis")
