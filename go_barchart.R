@@ -87,19 +87,6 @@ go_info_top <- go_info %>%
 # output plots to pdf
 pdf(file = cmd_line_args$options[['output_file']],
     width = 10)
-# facetted barchart
-facetted_barchart <- ggplot(data = go_info_top) +
-  geom_col(aes(x = Term_name, y = FE, fill = cluster)) +
-  facet_wrap(vars(Response_Category)) +
-  scale_fill_manual(name = NULL,
-                    values = cbf_palette(nlevels(go_info_top$cluster)),
-                    labels = c('Up', 'Down')) +
-  coord_flip() + 
-  labs(y = "Fold Enrichment", x = "GO Term") +
-  theme(legend.position = "top",
-        text = element_text(family = "Arial"))
-print(facetted_barchart)
-
 # Coloured bar chart
 # change FE to -ve if cluster2
 go_info_top <- go_info_top %>% 
