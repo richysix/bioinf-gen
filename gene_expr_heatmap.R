@@ -107,6 +107,12 @@ samples <- read_tsv(cmd_line_args$args[1])
 #data <- read.delim(cmd_line_args$args[2], check.names = FALSE)
 data <- load_rnaseq_data(cmd_line_args$args[2])
 
+#open genes file if it is specfied so that if it doesn't exist the erro happens before the rlog/vst transform
+if (!is.null(cmd_line_args$options[['genes_file']])) {
+    genes <- read.delim(file = cmd_line_args$options[['genes_file']],
+                        header = FALSE, stringsAsFactors = FALSE)
+}
+
 # make unique rownames depending on DeTCT/RNA-seq 
 if (cmd_line_args$options[['detct']]) {
     data$id <- paste(data[['Chr']], data[['Region start']],
@@ -136,8 +142,6 @@ if (cmd_line_args$options[['center_and_scale']]) {
 
 # subset data to gene list if provided
 if (!is.null(cmd_line_args$options[['genes_file']])) {
-    genes <- read.delim(file = cmd_line_args$options[['genes_file']], 
-                        header = FALSE, stringsAsFactors = FALSE)
     # subset data to genes and arrange it in same order
     data <- filter(data, GeneID %in% genes[[1]]) %>% 
       arrange(match(GeneID, genes[[1]]))
