@@ -1,10 +1,11 @@
 outputs: test_heatmap.pdf test_heatmap_subset.pdf test_heatmap_with_metadata.pdf \
 go_bubble.pdf go_bubble_pval.pdf go_bubble_specific.pdf go_bubble_no_labels.pdf \
-counts.pdf test-condition-sex-treatment.pdf
+counts.pdf test-condition-sex-treatment.pdf \
+go_plot.pdf go_plot.svg
 
 # test data
 test_samples.tsv test_samples_long.tsv test_rnaseq_data.tsv \
-BP.sig.tsv CC.sig.tsv MF.sig.tsv:
+BP.sig.tsv CC.sig.tsv MF.sig.tsv test_data_go.tsv:
 	test_data.R
 
 # Gene expression heatmaps
@@ -74,10 +75,18 @@ test-condition-sex-treatment.pdf: ../graph_counts_by_group_facet.R test_genes.tx
 --no_pvalue \
 test_samples.tsv test_rnaseq_data.tsv
 
+# GO barcharts
+go_plot.pdf: ../go_barchart.R test_data_go.tsv
+	../go_barchart.R test_data_go.tsv
+ 
+go_plot.svg: ../go_barchart.R test_data_go.tsv
+	../go_barchart.R --fill_variable Category --top_terms 20 \
+--RData_file test_go_plot.rda --output_file go_plot.svg test_data_go.tsv 
+
 .PHONY : clean
 clean :
-	-rm *.pdf
+	-rm *.pdf *.svg
 
 .PHONY : clean_all
 clean_all :
-	-rm *.tsv *.pdf
+	-rm *.tsv *.rda *.pdf *.svg

@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 test_data/*pdf
+test_data/*.svg
+test_data/*.rda

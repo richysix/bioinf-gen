@@ -100,3 +100,17 @@ test_rnaseq_data <- cbind(
   norm_counts_2
 )
 write_tsv(test_rnaseq_data, path = 'test_rnaseq_data.tsv')
+
+# test data for GO barchart
+num_terms <- 30
+set.seed(682)
+go_bubble_plot_test_data <- tibble(
+  GO.ID = sprintf('GO:%07d', seq_len(num_terms)),
+  Term = sprintf('Term%d', seq_len(num_terms)),
+  FE = sample(seq(3,20), num_terms, replace = TRUE),
+  pval = 10^-(rnorm(num_terms, mean = 5, sd = 1)),
+  Category = sample(c('BP', 'CC', 'MF'), num_terms, replace = TRUE),
+  Set = sample(c('Expt1', 'Expt2', 'Expt3'), num_terms, replace = TRUE),
+  up_down = sample(c('Up', 'Down'), num_terms, replace = TRUE),
+)
+write_tsv(go_bubble_plot_test_data, path = 'test_data_go.tsv')
