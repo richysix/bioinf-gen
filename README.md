@@ -162,19 +162,19 @@ The example below uses almost all the available options
 echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
 
 ../graph_counts_by_group_facet.R \
---output_file=test-condition-sex-treatment.pdf \
---regions_file=test_genes.txt \
---x_variable=condition \
---colour_variable=condition \
---colour_palette=wt=#0000ff,mut=#ff0000 \
---shape_variable=sex \
---facet_variable=treatment \
---crossbar=median \
---width=12 \
---height=8 \
---theme_base_size=14 \
+--output_file test-condition-sex-treatment.pdf \
+--genes_file test_genes.txt \
+--x_variable condition \
+--colour_variable condition \
+--colour_palette wt=#0000ff,mut=#ff0000 \
+--shape_variable sex \
+--facet_variable treatment \
+--crossbar median \
+--width 12 \
+--height 8 \
+--theme_base_size 14 \
 --rotate_xaxis_labels \
---seed=7635 \
+--seed 7635 \
 --no_pvalue \
 test_samples.tsv test_rnaseq_data.tsv
 ```
@@ -215,7 +215,7 @@ run_cluego.R --verbose --analysis_name overlaps \
 set1.sig.genes set2.sig.genes
 ```
 
-I've had problems trying to run multiple analyses in sequence. If that happens you can try adding the --destroy_network option. 
+I've had problems trying to run multiple analyses in sequence. If that happens you can try adding the `--destroy_network` option. 
 That will destroy the network at the end of the script so you won't be able to save it as a ClueGO/Cytoscape network, but it means that you can produce a bunch of network pictures in one go.
 
 **Required packages**
