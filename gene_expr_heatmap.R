@@ -222,8 +222,8 @@ if (cmd_line_args$options[['gene_names']]) {
     scale_y_discrete(name = NULL, labels = ids2names)
 }
 heatmap_plot <- heatmap_plot + 
-        biovisr::theme_heatmap(xaxis_labels = cmd_line_args$options[['gene_names']], 
-                               yaxis_labels = cmd_line_args$options[['sample_names']],
+        biovisr::theme_heatmap(xaxis_labels = cmd_line_args$options[['sample_names']],
+                               yaxis_labels = cmd_line_args$options[['gene_names']],
                                base_size = 12) +
         NULL
 
