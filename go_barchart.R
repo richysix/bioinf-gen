@@ -3,7 +3,7 @@
 library('optparse')
 
 option_list <- list(
-  make_option("--output_file", type="character", default='go_plot.pdf',
+  make_option("--output_file", type="character", default='go_barchart.pdf',
               help="Output file name [default %default]" ),
   make_option("--x_variable", type="character", default='FE',
               help="Name of column to plot on the x axis [default %default]" ),

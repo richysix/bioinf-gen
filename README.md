@@ -96,6 +96,8 @@ cd test_data
 
 ![Bar chart of GO terms against Fold Enrichment. The bars are coloured by GO domain](test_data/go_barchart.png "Default GO bar chart")
 
+The column to use can be changed with the `--x_variable` option. In this
+example only the top 20 terms (by the x variable) are plotted.
 ```
 ../go_barchart.R --x_variable log10p --x_axis_title="-log10[pvalue]" \
 --fill_variable Set --top_terms 20 \
@@ -103,7 +105,7 @@ cd test_data
 test_data_go.tsv
 ```
 
-![Bar chart of GO terms against -log10\[pvalue\]. The bars are coloured by experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
+![Bar chart of GO terms against -log10pvalue. The bars are coloured by experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
 
 ### go_bubble_plot.R
 

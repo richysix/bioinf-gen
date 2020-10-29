@@ -80,8 +80,11 @@ go_plot.pdf: ../go_barchart.R test_data_go.tsv
 	../go_barchart.R test_data_go.tsv
  
 go_plot.svg: ../go_barchart.R test_data_go.tsv
-	../go_barchart.R --fill_variable Category --top_terms 20 \
---RData_file test_go_plot.rda --output_file go_plot.svg test_data_go.tsv 
+	../go_barchart.R --x_variable log10p --x_axis_title="-log10[pvalue]" \
+--fill_variable Set --top_terms 20 \
+--output_file go_barchart_top20.svg \
+test_data_go.tsv
+
 
 .PHONY : clean
 clean :
