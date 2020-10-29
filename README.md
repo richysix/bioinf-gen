@@ -13,6 +13,7 @@ General Bioinformatics scripts
 * [gene_expr_heatmap.R](https://github.com/richysix/bioinf-gen#gene_expr_heatmapr) - Gene expression heatmap
 * gene_lists_from_groups_cluego.pl
 * get_msigdb_geneset.R
+* [go_barchart.R](https://github.com/richysix/bioinf-gen#go_barchartr) - Produce a bar chart of GO results
 * [go_bubble_plot.R](https://github.com/richysix/bioinf-gen#go_bubble_plotr) - Produce a bubble plot from a topgo analysis
 * [graph_counts_by_group_facet.R](https://github.com/richysix/bioinf-gen#graph_counts_by_group_facetr) - jittered and facetted count plot
 * graph_counts_line.R
@@ -77,6 +78,32 @@ test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_metadata.pdf
 ```
 
 ![Gene expression heatmap with metadata heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample](test_data/rnaseq_heatmap_with_metadata.png "RNAseq heatmap with metadata")
+
+### go_barchart.R
+
+Script to produce a barchart from a file of GO enrichments. By default the
+script expects columns named GO.ID, Term, FE, Set and up_down, but these can be
+changed by setting options. The GO.IDs are plotted on the y axis and the
+horizontal bars represent the Fold Enrichment (FE). The bars are coloured by
+Set and depending os up_down are plotted to the left or right.
+
+There is an example file in the test_data directory of this repository.
+
+```
+cd test_data
+../go_barchart.R test_data_go.tsv
+```
+
+![Bar chart of GO terms against Fold Enrichment. The bars are coloured by GO domain](test_data/go_barchart.png "Default GO bar chart")
+
+```
+../go_barchart.R --x_variable log10p --x_axis_title="-log10[pvalue]" \
+--fill_variable Set --top_terms 20 \
+--output_file go_barchart_top20.svg \
+test_data_go.tsv
+```
+
+![Bar chart of GO terms against -log10\[pvalue\]. The bars are coloured by experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
 
 ### go_bubble_plot.R
 
