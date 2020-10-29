@@ -7,7 +7,9 @@ option_list <- list(
               help="Output file name [default %default]" ),
   make_option("--x_variable", type="character", default='FE',
               help="Name of column to plot on the x axis [default %default]" ),
-  make_option("--fill_variable", type="character", default='Set',
+  make_option("--x_axis_title", type="character", default='Fold Enrichment',
+              help="Title for the x axis [default %default]" ),
+  make_option("--fill_variable", type="character", default='Category',
               help="Name of column to plot as the bar fill colour [default %default]" ),
   make_option("--up_down_variable", type="character", default='up_down',
               help="Name of column to use to determine direction of bars [default %default]" ),
@@ -118,14 +120,14 @@ coloured_bar_chart <- ggplot(data = go_info) +
             aes(x = GO.ID, y = y, label = Term)) +
   scale_fill_manual(values = cbf_palette(nlevels(go_info[[ cmd_line_args$options[['fill_variable']] ]]))) +
   scale_y_continuous(labels = abs) +
-  coord_flip(clip = "off") +
+  labs(y = cmd_line_args$options[['x_axis_title']], x = "GO Term") +
   annotation_custom(up_label,
                     xmin = 0, xmax = -2,
                     ymin = 10, ymax = 20 ) +
   annotation_custom(down_label,
                     xmin = 0, xmax = -2,
                     ymin = -15, ymax = -5 ) +
-  labs(y = "Fold Enrichment", x = "GO Term") +
+  coord_flip(clip = "off") +
   theme_minimal() +
   theme(legend.position = "top", 
         text = element_text(family = "Arial"),
