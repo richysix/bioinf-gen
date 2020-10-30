@@ -146,3 +146,5 @@ for (term in gsea_report$NAME) {
   )
   write_tsv(gene_info, path = paste0(term, '.xls'))
 }
+write.table(gene_info$PROBE[sample(1:20, 10)], file = 'gsea-genes.txt', quote = FALSE,
+            col.names = FALSE, row.names = FALSE)

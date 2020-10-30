@@ -5,3 +5,4 @@
 test_data/*pdf
 test_data/*.svg
 test_data/*.rda
+test_data/*out.tsv

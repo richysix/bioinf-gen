@@ -1,7 +1,8 @@
 outputs: test_heatmap.pdf test_heatmap_subset.pdf test_heatmap_with_metadata.pdf \
 go_bubble.pdf go_bubble_pval.pdf go_bubble_specific.pdf go_bubble_no_labels.pdf \
 counts.pdf test-condition-sex-treatment.pdf \
-go_plot.pdf go_plot.svg
+go_barchart.pdf go_barchart_top20.svg \
+test-gsea_to_genes.out.tsv test-gsea_to_genes.sig.out.tsv
 
 # test data
 test_samples.tsv test_samples_long.tsv test_rnaseq_data.tsv \
@@ -76,15 +77,22 @@ test-condition-sex-treatment.pdf: ../graph_counts_by_group_facet.R test_genes.tx
 test_samples.tsv test_rnaseq_data.tsv
 
 # GO barcharts
-go_plot.pdf: ../go_barchart.R test_data_go.tsv
+go_barchart.pdf: ../go_barchart.R test_data_go.tsv
 	../go_barchart.R test_data_go.tsv
  
-go_plot.svg: ../go_barchart.R test_data_go.tsv
+go_barchart_top20.svg: ../go_barchart.R test_data_go.tsv
 	../go_barchart.R --x_variable log10p --x_axis_title="-log10[pvalue]" \
 --fill_variable Set --top_terms 20 \
 --output_file go_barchart_top20.svg \
 test_data_go.tsv
 
+test-gsea_to_genes.out.tsv: ../gsea_to_genes.py test_gsea_report.xls \
+Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls
+	../gsea_to_genes.py --comparison test test_gsea_report.xls > test-gsea_to_genes.out.tsv
+
+test-gsea_to_genes.sig.out.tsv: ../gsea_to_genes.py test_gsea_report.xls \
+Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls
+	../gsea_to_genes.py --genes_file gsea-genes.txt --comparison test test_gsea_report.xls > test-gsea_to_genes.sig.out.tsv
 
 .PHONY : clean
 clean :
@@ -92,4 +100,4 @@ clean :
 
 .PHONY : clean_all
 clean_all :
-	-rm *.tsv *.rda *.pdf *.svg
+	-rm *.tsv *.xls *.rda *.pdf *.svg
