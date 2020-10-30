@@ -10,9 +10,10 @@ General Bioinformatics scripts
 * create_geneset_file.R
 * create_rnaseq_rds.R
 * deseq2-multiple_groups.R
-* gene_expr_heatmap.R
+* [gene_expr_heatmap.R](https://github.com/richysix/bioinf-gen#gene_expr_heatmapr) - Gene expression heatmap
 * gene_lists_from_groups_cluego.pl
 * get_msigdb_geneset.R
+* [go_barchart.R](https://github.com/richysix/bioinf-gen#go_barchartr) - Produce a bar chart of GO results
 * [go_bubble_plot.R](https://github.com/richysix/bioinf-gen#go_bubble_plotr) - Produce a bubble plot from a topgo analysis
 * [graph_counts_by_group_facet.R](https://github.com/richysix/bioinf-gen#graph_counts_by_group_facetr) - jittered and facetted count plot
 * graph_counts_line.R
@@ -24,6 +25,87 @@ General Bioinformatics scripts
 * [run_cluego.R](https://github.com/richysix/bioinf-gen#run_cluegor) - Run a Cytoscape ClueGO analysis from gene list(s)
 * volcano_plot.R
 * xlsx_conditional_formatting.R
+
+### gene_expr_heatmap.R
+
+Script to produce a heatmap from RNAseq data. It expects a sample file and a count file (e.g. sig.tsv)
+and the name of the output image file.
+
+There is an example samples file and sig file in the test_data directory of this repository.
+For example
+```
+../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster rows \
+--colour_palette magma --cell_colour grey80 \
+--gene_names --sample_names \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap.pdf
+```
+
+The available fill_palettes are those from [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html) and
+[ColorBrewer](https://colorbrewer2.org/) via [scale_fill_distiller](https://ggplot2.tidyverse.org/reference/scale_brewer.html)
+
+![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination](test_data/rnaseq_heatmap.png "RNAseq heatmap")
+
+It is also possible to supply a list of gene ids to subset the heatmap to.
+
+```
+# create a test ids file
+echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
+
+../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster rows \
+--colour_palette magma --cell_colour grey80 \
+--gene_names --sample_names \
+--genes_file test_genes.txt \
+--width 7 --height 2.5 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_subset.pdf
+```
+
+![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. Only three of the original rows are shown](test_data/rnaseq_heatmap_subset.png "RNAseq heatmap subset")
+
+A file of sample metadata can also be supplied and will be plotted as a heatmap
+under the expression heatmap.
+```
+../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster rows \
+--colour_palette magma --cell_colour grey80 \
+--gene_names --sample_names \
+--metadata_file test_samples_long.tsv \
+--metadata_ycol category \
+--metadata_fill value \
+--relative_plot_sizes 9,2 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_metadata.pdf
+```
+
+![Gene expression heatmap with metadata heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample](test_data/rnaseq_heatmap_with_metadata.png "RNAseq heatmap with metadata")
+
+### go_barchart.R
+
+Script to produce a barchart from a file of GO enrichments. By default the
+script expects columns named GO.ID, Term, FE, Set and up_down, but these can be
+changed by setting options. The GO.IDs are plotted on the y axis and the
+horizontal bars represent the Fold Enrichment (FE). The bars are coloured by
+Set and depending os up_down are plotted to the left or right.
+
+There is an example file in the test_data directory of this repository.
+
+```
+cd test_data
+../go_barchart.R test_data_go.tsv
+```
+
+![Bar chart of GO terms against Fold Enrichment. The bars are coloured by GO domain](test_data/go_barchart.png "Default GO bar chart")
+
+The column to use can be changed with the `--x_variable` option. In this
+example only the top 20 terms (by the x variable) are plotted.
+```
+../go_barchart.R --x_variable log10p --x_axis_title="-log10[pvalue]" \
+--fill_variable Set --top_terms 20 \
+--output_file go_barchart_top20.svg \
+test_data_go.tsv
+```
+
+![Bar chart of GO terms against -log10pvalue. The bars are coloured by experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
 
 ### go_bubble_plot.R
 
@@ -106,22 +188,22 @@ only make plots for those gene ids in the data.
 The example below uses almost all the available options
 ```
 # create a test ids file
-echo -e "id\nZFG005\nZFG006" > test_genes.txt
+echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
 
 ../graph_counts_by_group_facet.R \
---output_file=test-condition-sex-treatment.pdf \
---regions_file=test_genes.txt \
---x_variable=condition \
---colour_variable=condition \
---colour_palette=wt=#0000ff,mut=#ff0000 \
---shape_variable=sex \
---facet_variable=treatment \
---crossbar=median \
---width=12 \
---height=8 \
---theme_base_size=14 \
+--output_file test-condition-sex-treatment.pdf \
+--genes_file test_genes.txt \
+--x_variable condition \
+--colour_variable condition \
+--colour_palette wt=#0000ff,mut=#ff0000 \
+--shape_variable sex \
+--facet_variable treatment \
+--crossbar median \
+--width 12 \
+--height 8 \
+--theme_base_size 14 \
 --rotate_xaxis_labels \
---seed=7635 \
+--seed 7635 \
 --no_pvalue \
 test_samples.tsv test_rnaseq_data.tsv
 ```
@@ -162,7 +244,7 @@ run_cluego.R --verbose --analysis_name overlaps \
 set1.sig.genes set2.sig.genes
 ```
 
-I've had problems trying to run multiple analyses in sequence. If that happens you can try adding the --destroy_network option. 
+I've had problems trying to run multiple analyses in sequence. If that happens you can try adding the `--destroy_network` option. 
 That will destroy the network at the end of the script so you won't be able to save it as a ClueGO/Cytoscape network, but it means that you can produce a bunch of network pictures in one go.
 
 **Required packages**

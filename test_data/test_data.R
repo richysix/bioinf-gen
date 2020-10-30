@@ -57,6 +57,12 @@ samples_df <- data.frame(
 )
 write_tsv(samples_df, path = 'test_samples.tsv')
 
+# pivot samples file to use as metadata
+samples_df_long <- samples_df %>% 
+  pivot_longer(., cols = condition:sex, names_to = "category",
+               values_to = "value")
+write_tsv(samples_df_long, path = 'test_samples_long.tsv')
+
 tmp <- DESeq(tmp)
 res <- results(tmp)
 tmp2 <- DESeq(tmp2)
@@ -94,3 +100,18 @@ test_rnaseq_data <- cbind(
   norm_counts_2
 )
 write_tsv(test_rnaseq_data, path = 'test_rnaseq_data.tsv')
+
+# test data for GO barchart
+num_terms <- 30
+set.seed(682)
+go_bubble_plot_test_data <- tibble(
+  GO.ID = sprintf('GO:%07d', seq_len(num_terms)),
+  Term = sprintf('Term%d', seq_len(num_terms)),
+  FE = sample(seq(3,20), num_terms, replace = TRUE),
+  log10p = rnorm(num_terms, mean = 5, sd = 1),
+  pval = 10^-log10p,
+  Category = sample(c('BP', 'CC', 'MF'), num_terms, replace = TRUE),
+  Set = sample(c('Expt1', 'Expt2', 'Expt3'), num_terms, replace = TRUE),
+  up_down = sample(c('Up', 'Down'), num_terms, replace = TRUE),
+)
+write_tsv(go_bubble_plot_test_data, path = 'test_data_go.tsv')

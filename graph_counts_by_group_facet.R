@@ -5,7 +5,7 @@ library('optparse')
 option_list <- list(
   make_option("--output_file", type="character", default='counts.pdf',
               help="Output file name [default %default]" ),
-  make_option("--regions_file", type="character", default=NULL,
+  make_option("--genes_file", type="character", default=NULL,
               help="File of gene/region ids to subset plots to [default %default]" ),
   make_option("--x_variable", type="character", default='condition',
               help="Name of column from samples file to plot on x-axis [default %default]" ),
@@ -118,15 +118,13 @@ if (cmd_line_args$options[['detct']]) {
                 data[['End']], data[['Strand']])
 }
 
-if (!is.null(cmd_line_args$options[['regions_file']])) {
-  ids <- read.delim(cmd_line_args$options[['regions_file']], header=TRUE)
+if (!is.null(cmd_line_args$options[['genes_file']])) {
+  genes <- read.delim(cmd_line_args$options[['genes_file']], header=FALSE)
   # subset to Gene IDs and arrange in the same order
-  regions <- filter(data, data$GeneID %in% ids$id) %>%
-    arrange(., match(GeneID, ids$id)) %>% 
-    select(region) %>% pull()
-} else {
-  regions <- unique(data$region)
+  data <- filter(data, GeneID %in% genes[[1]]) %>%
+    arrange(., match(GeneID, genes[[1]]))
 }
+regions <- unique(data$region)
 
 # get normalised counts
 normalised_counts <- get_counts(data, samples = samples, normalised = TRUE) %>% 
@@ -134,7 +132,7 @@ normalised_counts <- get_counts(data, samples = samples, normalised = TRUE) %>%
 
 if (debug) { cat("Join\n") }
 # subset data to regions if necessary
-normalised_counts <- filter(normalised_counts, region %in% regions)
+# normalised_counts <- filter(normalised_counts, region %in% regions)
 # melt counts and join with sample info
 counts_for_plotting <-
     gather(normalised_counts, key = 'sample', value = 'count', -region)
