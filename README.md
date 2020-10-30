@@ -17,6 +17,7 @@ General Bioinformatics scripts
 * [go_bubble_plot.R](https://github.com/richysix/bioinf-gen#go_bubble_plotr) - Produce a bubble plot from a topgo analysis
 * [graph_counts_by_group_facet.R](https://github.com/richysix/bioinf-gen#graph_counts_by_group_facetr) - jittered and facetted count plot
 * graph_counts_line.R
+* gsea_to_genes.py - Get the genes behind GSEA enrichments
 * histogram.R
 * matrix_heatmap_plot.R
 * merge_deseq_counts.pl - merge deseq counts from mutliple files
@@ -218,6 +219,25 @@ The other options are:
 * [tidyverse](https://www.tidyverse.org/)
 * [biovisr](https://github.com/richysix/biovisr)
 * [rnaseqtools](https://github.com/richysix/rnaseqtools)
+
+### gsea_to_genes.py
+
+This is a script to take GSEA output files and return the genes that are
+responsible for each enrichment.
+There are test file in the test_data directory of this repository.
+```
+cd test_data
+../gsea_to_genes.py --comparison test test_gsea_report.xls
+```
+Each line has the supplied comparison so that multiple of these output files
+can be concatenated.
+The `--genes_file` option allows the output to be limited to only genes in the
+supplied list (e.g. sig genes).
+```
+../gsea_to_genes.py --genes_file gsea-genes.txt --comparison test test_gsea_report.xls
+```
+The default is to output to STDOUT, but an output filename can be given after
+the input file name
 
 ### run_cluego.R
 
