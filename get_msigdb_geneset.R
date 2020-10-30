@@ -58,5 +58,5 @@ gmt <- split(m_df, m_df$gs_id) %>%
   do.call(rbind, .)
 
 # write out to file
-write.table(gmt, file = cmd_line_args$args[1], 
+write.table(gmt, file = cmd_line_args$args[1], sep = "\t",
             quote = FALSE, row.names = FALSE, col.names = FALSE)
