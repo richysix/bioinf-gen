@@ -1,4 +1,5 @@
-outputs: test_heatmap.pdf test_heatmap_subset.pdf test_heatmap_with_metadata.pdf \
+outputs: test_heatmap.pdf test_heatmap_subset.pdf \
+test_heatmap_with_metadata.pdf test_heatmap_with_trees.pdf \
 go_bubble.pdf go_bubble_pval.pdf go_bubble_specific.pdf go_bubble_no_labels.pdf \
 counts.pdf test-condition-sex-treatment.pdf \
 go_barchart.pdf go_barchart_top20.svg \
@@ -6,7 +7,7 @@ test-gsea_to_genes.out.tsv test-gsea_to_genes.sig.out.tsv
 
 # test data
 test_samples.tsv test_samples_long.tsv test_rnaseq_data.tsv \
-BP.sig.tsv CC.sig.tsv MF.sig.tsv test_data_go.tsv:
+BP.sig.tsv CC.sig.tsv MF.sig.tsv test_data_go.tsv: test_data.R
 	test_data.R
 
 # Gene expression heatmaps
@@ -37,8 +38,21 @@ test_heatmap_with_metadata.pdf: ../gene_expr_heatmap.R test_samples_long.tsv tes
 --metadata_file test_samples_long.tsv \
 --metadata_ycol category \
 --metadata_fill value \
---relative_plot_sizes 9,2 \
+--relative_heights 0,9,2 \
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_metadata.pdf
+
+test_heatmap_with_trees.pdf: ../gene_expr_heatmap.R test_samples_long.tsv test_samples.tsv test_rnaseq_data.tsv
+	../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster both \
+--colour_palette magma --cell_colour grey80 \
+--gene_tree --sample_tree \
+--gene_names --sample_names \
+--metadata_file test_samples_long.tsv \
+--metadata_ycol category \
+--metadata_fill value \
+--relative_heights 1,3,1 \
+--relative_widths 1,3 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees.pdf
 
 # GO bubble plots
 go_bubble.pdf: ../go_bubble_plot.R BP.sig.tsv CC.sig.tsv MF.sig.tsv
