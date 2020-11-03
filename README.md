@@ -80,6 +80,20 @@ test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_metadata.pdf
 
 ![Gene expression heatmap with metadata heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample](test_data/rnaseq_heatmap_with_metadata.png "RNAseq heatmap with metadata")
 
+```
+../gene_expr_heatmap.R --transform rlog \
+--centre_and_scale --cluster both \
+--colour_palette magma --cell_colour grey80 \
+--gene_tree --sample_tree --gene_names --sample_names \
+--metadata_file test_samples_long.tsv \
+--metadata_ycol category --metadata_fill value \
+--relative_heights 1,3,1 --relative_widths 1,3 \
+--width 480 --height 640 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees.png
+```
+
+![Gene expression heatmap with metadata heatmap and clustering trees. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample and the clustering trees for the genes and samples are shown above and to the left of the main expression heatmap](test_data/test_heatmap_with_trees.png "RNAseq heatmap with metadata and clustering trees")
+
 ### go_barchart.R
 
 Script to produce a barchart from a file of GO enrichments. By default the
