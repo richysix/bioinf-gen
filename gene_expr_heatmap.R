@@ -9,10 +9,16 @@ option_list <- list(
               help="Data is DeTCT data, not RNA-seq [default %default]"),
   make_option("--transform", action="store", type="character", default="rlog",
               help="Transformation to apply to data [default %default]"),
-  make_option("--center_and_scale", action="store_true", type="logical", default=FALSE,
+  make_option("--centre_and_scale", action="store_true", type="logical", default=FALSE,
+              help="Center and scale the counts by row (genes) [default %default]"),
+  make_option("--center_and_scale", action="store_true", type="logical", default=FALSE, dest = "centre_and_scale",
               help="Center and scale the counts by row (genes) [default %default]"),
   make_option("--cluster", action="store", type="character", default="none",
               help="Cluster rows, columns, both or none [default %default]"),
+  make_option("--gene_tree", action="store_true", type="logical", default=FALSE,
+              help="Plot dendrogram for gene clustering [default %default]"),
+  make_option("--sample_tree", action="store_true", type="logical", default=FALSE,
+              help="Plot dendrogram for sample clustering [default %default]"),
   make_option("--colour_palette", type="character", default='plasma',
               help="palette for colour scale [default %default]" ),
   make_option("--cell_colour", type="character", default=NULL,
@@ -29,9 +35,10 @@ option_list <- list(
               help="Column in metadata to plot as fill colour [default %default]"),
   make_option("--metadata_fill_palette", action="store", default=NULL,
               help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
-  make_option("--relative_plot_sizes", action="store", default=NULL,
-              help=paste("The relative sizes of the plots as a comma-separated list",
-                         "will be treated as heights [default %default]")),
+  make_option("--relative_widths", action="store", type="character", default="1,3",
+              help=paste("The relative widths of the plots as a comma-separated list. [default %default]")),
+  make_option("--relative_heights", action="store", type="character", default="1,3,1",
+              help=paste("The relative heights of the plots as a comma-separated list. [default %default]")),
   make_option("--width", type="numeric", default=7,
               help="width of plot (inches) [default %default]" ),
   make_option("--height", type="numeric", default=10,
@@ -46,15 +53,23 @@ option_list <- list(
 
 # cmd_line_args <- list(
 #   options = list(
-#     "genes_file" = "no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-cell_pellet/pca/PC1/PC1-pos-genes.tsv",
-#     "metadata_file" = "output/sample2organism-paxgene.ftr",
-#     "metadata_ycol" = "Organism",
-#     "metadata_fill" = "InfectionType",
-#     "metadata_fill_palette" = "fill_colour",
+#     "genes_file" = "test_data/test_genes.txt",
 #     "detct" = FALSE,
-#     "transform" = "center_scale",
+#     "transform" = "rlog",
+#     "centre_and_scale" = TRUE,
 #     "cluster" = "both",
+#     "gene_tree" = TRUE,
+#     "sample_tree" = TRUE,
 #     "colour_palette" = 'plasma',
+#     "cell_colour" = "grey80",
+#     "gene_names" = TRUE,
+#     "sample_names" = TRUE,
+#     "metadata_file" = "test_data/test_samples_long.tsv",
+#     "metadata_ycol" = "category",
+#     "metadata_fill" = "value",
+#     "metadata_fill_palette" = NULL,
+#     "relative_widths" = "1,3",
+#     "relative_heights" = "1,3,1",
 #     "width" = 7,
 #     "height" = 10,
 #     "fill_limits" = NULL,
@@ -62,9 +77,9 @@ option_list <- list(
 #     "output_rda_file" = NULL
 #   ),
 #   args = c(
-#     'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/samples.tsv',
-#     'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/sig.tsv',
-#     'no_icu_004-026_cell-icu_008-062_pax/deseq2-noHb-paxgene-icu_vs_hv/heatmap-genes_clustered-sig.pdf'
+#     'test_data/test_samples.tsv',
+#     'test_data/test_rnaseq_data.tsv',
+#     'test_data/test_heatmap_with_metadata.pdf'
 #   )
 # )
 
@@ -74,17 +89,8 @@ cmd_line_args <- parse_args(
     usage = "Usage: %prog [options] sample_file count_file output_file" ),
   positional_arguments = 3
 )
-output_file <- cmd_line_args$args[3]
-fill_palette <- cmd_line_args$options[['colour_palette']]
-plot_width <- cmd_line_args$options[['width']]
-plot_height <- cmd_line_args$options[['height']]
-if (!is.null(cmd_line_args$options[['fill_limits']])) {
-    fill_limits <-
-        strsplit(cmd_line_args$options[['fill_limits']], ",", fixed = TRUE)[[1]]
-} else {
-    fill_limits <- cmd_line_args$options[['fill_limits']]
-}
 
+output_file <- cmd_line_args$args[3]
 packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
@@ -94,11 +100,18 @@ for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
 
-# unpack relative_plot_sizes options
-if (is.null(cmd_line_args$options[['relative_plot_sizes']])) {
-  relative_plot_sizes <- c(9,1)
+fill_palette <- cmd_line_args$options[['colour_palette']]
+plot_width <- cmd_line_args$options[['width']]
+plot_height <- cmd_line_args$options[['height']]
+# unpack relative plot_sizes options
+relative_widths <- as.integer(unlist(str_split(cmd_line_args$options[['relative_widths']], ",")))
+relative_heights <- as.integer(unlist(str_split(cmd_line_args$options[['relative_heights']], ",")))
+
+if (!is.null(cmd_line_args$options[['fill_limits']])) {
+    fill_limits <-
+        strsplit(cmd_line_args$options[['fill_limits']], ",", fixed = TRUE)[[1]]
 } else {
-  relative_plot_sizes <- as.integer(unlist(str_split(cmd_line_args$options[['relative_plot_sizes']], ",")))
+    fill_limits <- cmd_line_args$options[['fill_limits']]
 }
 
 # load sample data
@@ -107,7 +120,7 @@ samples <- read_tsv(cmd_line_args$args[1])
 #data <- read.delim(cmd_line_args$args[2], check.names = FALSE)
 data <- load_rnaseq_data(cmd_line_args$args[2])
 
-#open genes file if it is specfied so that if it doesn't exist the erro happens before the rlog/vst transform
+#open genes file if it is specified so that if it doesn't exist the error happens before the rlog/vst transform
 if (!is.null(cmd_line_args$options[['genes_file']])) {
     genes <- read.delim(file = cmd_line_args$options[['genes_file']],
                         header = FALSE, stringsAsFactors = FALSE)
@@ -136,7 +149,7 @@ if (cmd_line_args$options[['transform']] == "rlog") {
 }
 
 counts <- assay(dds)
-if (cmd_line_args$options[['center_and_scale']]) {
+if (cmd_line_args$options[['centre_and_scale']]) {
     counts <- as.data.frame(t( scale( t(counts) ) ))
 }
 
@@ -150,6 +163,8 @@ if (!is.null(cmd_line_args$options[['genes_file']])) {
 }
 
 # skip clustering if only 1 row
+cluster_rows <- FALSE
+cluster_columns <- FALSE
 if (nrow(counts) > 1) {
   # Clustering
   cluster <- function(df) {
@@ -157,11 +172,9 @@ if (nrow(counts) > 1) {
       distance_matrix <- dist(df)
       clustering <- hclust(distance_matrix)
       df_ordered <- df[ clustering$order, ]
-      return(df_ordered)
+      return(list(df_clustered = df_ordered, clustering_obj = clustering))
   }
   
-  cluster_rows <- FALSE
-  cluster_columns <- FALSE
   if (cmd_line_args$options[['cluster']] == "rows") {
       cluster_rows <- TRUE
   } else if (cmd_line_args$options[['cluster']] == "columns") {
@@ -171,10 +184,14 @@ if (nrow(counts) > 1) {
       cluster_columns <- TRUE
   }
   if (cluster_rows) {
-      counts <- cluster(counts)
+      cluster_list <- cluster(counts)
+      counts <- cluster_list[['df_clustered']]
+      gene_tree <- cluster_list[['clustering_obj']]
   }
   if (cluster_columns) {
-      counts <- as.data.frame(t( cluster(t(counts)) ))
+      cluster_list <- cluster(t(counts))
+      counts <- as.data.frame(t( cluster_list[['df_clustered']] ))
+      sample_tree <- cluster_list[['clustering_obj']]
   }
 }
 
@@ -227,9 +244,21 @@ heatmap_plot <- heatmap_plot +
                                base_size = 12) +
         NULL
 
+# create tree plots if appropriate options are set
+gene_tree_plot <- plot_spacer()
+if (cluster_rows & cmd_line_args$options[['gene_tree']]) {
+  gene_tree_plot <- dendro_plot(gene_tree, categorical_scale = TRUE) + coord_flip() + scale_y_reverse()
+}
+
+sample_tree_plot <- plot_spacer()
+if (cluster_columns & cmd_line_args$options[['sample_tree']]) {
+  sample_tree_plot <- dendro_plot(sample_tree, categorical_scale = TRUE)
+}
+
 # load metadata if provided
 # The first column should be the sample ids/names (x axis, matching the samples file)
 # the y axis and fill variables are specified by metadata_ycol and metadata_fill
+metadata_plot <- plot_spacer()
 if (!is.null(cmd_line_args$options[['metadata_file']])) {
   if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) {
     metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
@@ -296,13 +325,28 @@ if (grepl('ps$', output_file)) {
 } else { # default to pdf 
   pdf(file = output_file, width = plot_width, height = plot_height )
 }
-if (is.null(cmd_line_args$options[['metadata_file']])) {
-  print(heatmap_plot)
-} else {
-  print(heatmap_plot + metadata_plot +
-          plot_layout(ncol = 1, nrow = 2,
-                      heights = relative_plot_sizes))
+
+plot_list <- list(plot_spacer(), sample_tree_plot, 
+                  gene_tree_plot, heatmap_plot,
+                  plot_spacer(), metadata_plot)
+if (any(class(sample_tree_plot) == "spacer")) {
+  relative_heights[1] <- 0
 }
+if (any(class(gene_tree_plot) == "spacer")) {
+  relative_widths[1] <- 0
+}
+if (any(class(metadata_plot) == "spacer")) {
+  relative_heights[3] <- 0
+}
+wrap_plots(
+  plot_list,
+  ncol = 2,
+  nrow = 3,
+  byrow = TRUE,
+  widths = relative_widths,
+  heights = relative_heights,
+  guides = 'collect'
+)
 dev.off()
 
 # reverse counts matrix so it fits the heatmap
