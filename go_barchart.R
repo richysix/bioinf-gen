@@ -91,7 +91,8 @@ go_info <- go_info %>%
   arrange(., !!x_var) %>% 
   mutate(GO.ID = factor(GO.ID, levels = unique(GO.ID)),
          up_down = factor(!!up_down_var),
-         !!fill_var := factor(!!fill_var))
+         !!fill_var := factor(!!fill_var,
+                              levels = unique(go_info[[ cmd_line_args$options[['fill_variable']] ]]) ) )
 
 # Text for labelling the x axis
 up_label <- grobTree(textGrob(label = "Up genes", gp = gpar(fontsize = 10, fontfamily = "Arial")))
