@@ -95,8 +95,8 @@ go_info <- go_info %>%
                               levels = unique(go_info[[ cmd_line_args$options[['fill_variable']] ]]) ) )
 
 # Text for labelling the x axis
-up_label <- grobTree(textGrob(label = "Up genes", gp = gpar(fontsize = 10, fontfamily = "Arial")))
-down_label <- grobTree(textGrob(label = "Down genes", gp = gpar(fontsize = 10, fontfamily = "Arial")))
+up_label <- grobTree(textGrob(label = "Up genes", gp = gpar(fontsize = 12, fontfamily = "Arial")))
+down_label <- grobTree(textGrob(label = "Down genes", gp = gpar(fontsize = 12, fontfamily = "Arial")))
 
 # vectors for labelling the bars
 up_term_labels <- go_info %>% 
@@ -115,21 +115,21 @@ coloured_bar_chart <- ggplot(data = go_info) +
   geom_col(aes(x = GO.ID, y = !!x_var, fill = !!fill_var),
            position = "dodge") +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_text(data = up_term_labels, hjust = 1, vjust = 0.5, size = 10/72*25.4,
+  geom_text(data = up_term_labels, hjust = 1, vjust = 0.5, size = 12/72*25.4,
             aes(x = GO.ID, y = y, label = Term)) +
-  geom_text(data = down_term_labels, hjust = 0, vjust = 0.5, size = 10/72*25.4,
+  geom_text(data = down_term_labels, hjust = 0, vjust = 0.5, size = 12/72*25.4,
             aes(x = GO.ID, y = y, label = Term)) +
   scale_fill_manual(values = cbf_palette(nlevels(go_info[[ cmd_line_args$options[['fill_variable']] ]]))) +
   scale_y_continuous(labels = abs) +
   labs(y = cmd_line_args$options[['x_axis_title']], x = "GO Term") +
   annotation_custom(up_label,
-                    xmin = 0, xmax = -2,
+                    xmin = -1, xmax = -3,
                     ymin = 10, ymax = 20 ) +
   annotation_custom(down_label,
-                    xmin = 0, xmax = -2,
+                    xmin = -1, xmax = -3,
                     ymin = -15, ymax = -5 ) +
   coord_flip(clip = "off") +
-  theme_minimal() +
+  theme_minimal(base_size = 15) +
   theme(legend.position = "top", 
         text = element_text(family = "Arial"),
         axis.text.y = element_blank(),
