@@ -18,10 +18,12 @@ cmd_line_args <- parse_args(
 )
 
 # load packages
-packages <- c('tidyverse', 'DESeq2')
+packages <- c('tidyverse', 'DESeq2', 'rprojroot')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
+
+root_path <- find_root(is_rstudio_project)
 
 # test data for go_bubble_plot.R
 set.seed(7531)
@@ -45,7 +47,7 @@ num_sig_genes <- 100
 sig <- tibble(
   Gene = paste0('gene', seq_len(num_sig_genes))
 )
-write_tsv(sig, path = 'sig.tsv')
+write_tsv(sig, path = file.path(root_path, 'test_data', 'sig.tsv'))
 num_terms <- 10
 sig_genes_per_term <- 50
 set.seed(637)
@@ -57,7 +59,7 @@ go_sig_genes <- tibble(
   mutate(., `p value` = case_when(Gene %in% sig$Gene ~ 1,
                                   TRUE ~ 0)) %>% 
   unique()
-write_tsv(go_sig_genes, path = 'BP.sig.genes.tsv')
+write_tsv(go_sig_genes, path = file.path(root_path, 'test_data', 'BP.sig.genes.tsv'))
 
 # test data for graph_counts_by_group_facet.R
 set.seed(583)
@@ -74,13 +76,13 @@ samples_df <- data.frame(
   treatment = rep(c('control', 'treated'), each = 12),
   sex = sample(c("F", "M"), 24, replace = TRUE)
 )
-write_tsv(samples_df, path = 'test_samples.tsv')
+write_tsv(samples_df, path = file.path(root_path, 'test_data', 'test_samples.tsv'))
 
 # pivot samples file to use as metadata
 samples_df_long <- samples_df %>% 
   pivot_longer(., cols = condition:sex, names_to = "category",
                values_to = "value")
-write_tsv(samples_df_long, path = 'test_samples_long.tsv')
+write_tsv(samples_df_long, path = file.path(root_path, 'test_data', 'test_samples_long.tsv'))
 
 tmp <- DESeq(tmp)
 res <- results(tmp)
@@ -112,7 +114,7 @@ gene_metadata <- select(test_all_data, GeneID, Class, GO_BP, GO_CC, GO_MF) %>%
   filter(., !is.na(value)) %>% 
   arrange(., category, value)
 
-write_tsv(gene_metadata, path = 'test_gene_metadata.tsv')
+write_tsv(gene_metadata, path = file.path(root_path, 'test_data', 'test_gene_metadata.tsv'))
 
 # create counts file
 counts_1 <- counts(tmp)
@@ -130,7 +132,7 @@ test_rnaseq_data <- cbind(
   norm_counts_1,
   norm_counts_2
 )
-write_tsv(test_rnaseq_data, path = 'test_rnaseq_data.tsv')
+write_tsv(test_rnaseq_data, path = file.path(root_path, 'test_data', 'test_rnaseq_data.tsv'))
 
 # test data for GO barchart
 num_terms <- 30
@@ -145,7 +147,7 @@ go_bubble_plot_test_data <- tibble(
   Set = sample(c('Expt1', 'Expt2', 'Expt3'), num_terms, replace = TRUE),
   up_down = sample(c('Up', 'Down'), num_terms, replace = TRUE),
 )
-write_tsv(go_bubble_plot_test_data, path = 'test_data_go.tsv')
+write_tsv(go_bubble_plot_test_data, path = file.path(root_path, 'test_data', 'test_data_go.tsv'))
 
 # test data for gsea_to_genes
 set.seed(241)
@@ -162,7 +164,7 @@ gsea_report <- tibble(
   `RANK AT MAX` = sample(500:2000, 5),
   `LEADING EDGE` = "notes"
 )
-write_tsv(gsea_report, path = 'test_gsea_report.xls')
+write_tsv(gsea_report, path = file.path(root_path, 'test_data', 'test_gsea_report.xls'))
 
 for (term in gsea_report$NAME) {
   gene_info <- tibble(
@@ -177,5 +179,6 @@ for (term in gsea_report$NAME) {
   )
   write_tsv(gene_info, path = paste0(term, '.xls'))
 }
-write.table(gene_info$PROBE[sample(1:20, 10)], file = 'gsea-genes.txt', quote = FALSE,
+write.table(gene_info$PROBE[sample(1:20, 10)], quote = FALSE,
+            file = file.path(root_path, 'test_data', 'gsea-genes.txt'), 
             col.names = FALSE, row.names = FALSE)
