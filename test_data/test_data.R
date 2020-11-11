@@ -43,7 +43,7 @@ for (domain in c('BP', 'CC', 'MF')) {
 # test data for graph_counts_by_group_facet.R
 set.seed(583)
 tmp <- makeExampleDESeqDataSet(n = 10, m = 12, betaSD = 2)
-tmp2 <- makeExampleDESeqDataSet(n = 10, m = 12, betaSD = 2, interceptMean = 10)
+tmp2 <- makeExampleDESeqDataSet(n = 10, m = 12, betaSD = 2, interceptMean = 3)
 # adjust sample names
 rownames(colData(tmp2)) <- paste0('sample', 13:24)
 # create samples file
@@ -71,17 +71,29 @@ num_rows <- 10
 set.seed(208)
 starts <- sample(1:10000, num_rows)
 test_all_data <- tibble(
-  'Gene ID' = sprintf('ZFG%03d', seq_len(num_rows)),
+  'GeneID' = sprintf('ZFG%03d', seq_len(num_rows)),
   'chr' = sample(1:25, num_rows, replace = TRUE),
   'start' = starts,
   'end' = as.integer(starts + 100),
   'strand' = sample(c('1', '-1'), num_rows, replace = TRUE),
   'p value' = res$pvalue,
   'Adjusted p value' = res$padj,
-  'Gene name' = paste0('gene-', seq_len(num_rows))
+  'Gene name' = paste0('gene-', seq_len(num_rows)),
+  'Class' = c(sample(c('TF', 'DNAPol', 'GPCR'), num_rows - 2, replace = TRUE), NA, NA),
+  'GO_BP' = c(rep(c('Translation', 'UPR'), each = 4), NA, 'Immune Response'),
+  'GO_CC' = c('Cytoplasm', rep('Nucleus', 5), 'Membrane', NA, NA, 'Cytoplasm'),
+  'GO_MF' = c(rep(c('Kinase activity', 'ATPase activity'), 4), NA, NA)
 )
 test_all_data$chr <- factor(test_all_data$chr, levels = unique(test_all_data$chr))
 test_all_data$strand <- factor(test_all_data$strand)
+
+# make gene metadata file
+gene_metadata <- select(test_all_data, GeneID, Class, GO_BP, GO_CC, GO_MF) %>% 
+  pivot_longer(., -GeneID, names_to = 'category') %>% 
+  filter(., !is.na(value)) %>% 
+  arrange(., category, value)
+
+write_tsv(gene_metadata, path = 'test_gene_metadata.tsv')
 
 # create counts file
 counts_1 <- counts(tmp)

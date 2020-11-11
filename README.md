@@ -71,28 +71,42 @@ under the expression heatmap.
 --center_and_scale --cluster rows \
 --colour_palette magma --cell_colour grey80 \
 --gene_names --sample_names \
---metadata_file test_samples_long.tsv \
---metadata_ycol category \
---metadata_fill value \
+--sample_metadata_file test_samples_long.tsv \
+--sample_metadata_ycol category \
+--sample_metadata_fill value \
 --relative_plot_sizes 9,2 \
-test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_metadata.pdf
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_sample_metadata.pdf
 ```
 
-![Gene expression heatmap with metadata heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample](test_data/rnaseq_heatmap_with_metadata.png "RNAseq heatmap with metadata")
+![Gene expression heatmap with sample metadata heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample](test_data/rnaseq_heatmap_with_sample_metadata.png "RNAseq heatmap with metadata")
 
 ```
 ../gene_expr_heatmap.R --transform rlog \
 --centre_and_scale --cluster both \
 --colour_palette magma --cell_colour grey80 \
 --gene_tree --sample_tree --gene_names --sample_names \
---metadata_file test_samples_long.tsv \
---metadata_ycol category --metadata_fill value \
+--sample_metadata_file test_samples_long.tsv \
+--sample_metadata_ycol category --sample_metadata_fill value \
 --relative_heights 1,3,1 --relative_widths 1,3 \
 --width 480 --height 640 \
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees.png
 ```
 
-![Gene expression heatmap with metadata heatmap and clustering trees. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample and the clustering trees for the genes and samples are shown above and to the left of the main expression heatmap](test_data/test_heatmap_with_trees.png "RNAseq heatmap with metadata and clustering trees")
+![Gene expression heatmap with sample metadata heatmap and clustering trees. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample and the clustering trees for the genes and samples are shown above and to the left of the main expression heatmap](test_data/test_heatmap_with_trees.png "RNAseq heatmap with sample metadata and clustering trees")
+
+```
+../gene_expr_heatmap.R --transform rlog \
+--centre_and_scale --cluster both \
+--colour_palette magma --cell_colour grey80 \
+--gene_tree --sample_tree --gene_names --sample_names \
+--sample_metadata_file test_samples_long.tsv \
+--sample_metadata_ycol category --sample_metadata_fill value \
+--gene_metadata_file test_gene_metadata.tsv \
+--gene_metadata_xcol category --gene_metadata_fill value \
+--relative_heights 1,3,1 --relative_widths 1,3,1 \
+--width 640 --height 480 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees-sample_gene_metadata.png
+```
 
 ### go_barchart.R
 

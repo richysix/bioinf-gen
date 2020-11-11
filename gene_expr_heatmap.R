@@ -27,15 +27,23 @@ option_list <- list(
               help="print gene names [default %default]" ),
   make_option("--sample_names", action="store_true", type="logical", default=FALSE,
               help="print sample names [default %default]" ),
-  make_option("--metadata_file", type="character", default=NULL,
-              help="feather file of metadata to plot with heatmap [default %default]" ),
-  make_option("--metadata_ycol", action="store", default='Category',
-              help="Column in metadata to plot on y-axis [default %default]"),
-  make_option("--metadata_fill", action="store", default='Value',
-              help="Column in metadata to plot as fill colour [default %default]"),
-  make_option("--metadata_fill_palette", action="store", default=NULL,
-              help="Fill palette for metadata plot [default colour-blind friendly palette from biovisr]"),
-  make_option("--relative_widths", action="store", type="character", default="1,3",
+  make_option("--sample_metadata_file", type="character", default=NULL,
+              help="File of sample metadata to plot below the heatmap [default %default]" ),
+  make_option("--sample_metadata_ycol", action="store", default='Category',
+              help="Column in sample metadata to plot on y-axis [default %default]"),
+  make_option("--sample_metadata_fill", action="store", default='Value',
+              help="Column in sample metadata to plot as fill colour [default %default]"),
+  make_option("--sample_metadata_fill_palette", action="store", default=NULL,
+              help="Fill palette for sample metadata plot [default colour-blind friendly palette from biovisr]"),
+  make_option("--gene_metadata_file", type="character", default=NULL,
+              help="File of gene metadata to plot to the right of the heatmap [default %default]" ),
+  make_option("--gene_metadata_xcol", action="store", default='Category',
+              help="Column in gene metadata to plot on x-axis [default %default]"),
+  make_option("--gene_metadata_fill", action="store", default='Value',
+              help="Column in gene metadata to plot as fill colour [default %default]"),
+  make_option("--gene_metadata_fill_palette", action="store", default=NULL,
+              help="Fill palette for gene metadata plot [default colour-blind friendly palette from biovisr]"),
+  make_option("--relative_widths", action="store", type="character", default="1,3,1",
               help=paste("The relative widths of the plots as a comma-separated list. [default %default]")),
   make_option("--relative_heights", action="store", type="character", default="1,3,1",
               help=paste("The relative heights of the plots as a comma-separated list. [default %default]")),
@@ -64,11 +72,15 @@ option_list <- list(
 #     "cell_colour" = "grey80",
 #     "gene_names" = TRUE,
 #     "sample_names" = TRUE,
-#     "metadata_file" = "test_data/test_samples_long.tsv",
-#     "metadata_ycol" = "category",
-#     "metadata_fill" = "value",
-#     "metadata_fill_palette" = NULL,
-#     "relative_widths" = "1,3",
+#     "sample_metadata_file" = "test_data/test_samples_long.tsv",
+#     "sample_metadata_ycol" = "category",
+#     "sample_metadata_fill" = "value",
+#     "sample_metadata_fill_palette" = NULL,
+#     "gene_metadata_file" = "test_data/test_gene_metadata.tsv",
+#     "gene_metadata_xcol" = "category",
+#     "gene_metadata_fill" = "value",
+#     "gene_metadata_fill_palette" = NULL,
+#     "relative_widths" = "1,3,1",
 #     "relative_heights" = "1,3,1",
 #     "width" = 7,
 #     "height" = 10,
@@ -93,8 +105,12 @@ cmd_line_args <- parse_args(
 output_file <- cmd_line_args$args[3]
 packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
-if (!is.null(cmd_line_args$options[['metadata_file']])) {
-    if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) { packages <- c(packages, 'feather') }
+metadata_files <- c(cmd_line_args$options[['sample_metadata_file']],
+                   cmd_line_args$options[['gene_metadata_file']])
+if (any( !sapply(metadata_files, is.null) )) {
+    if (any(grepl("\\.ftr$", metadata_files))) { 
+      packages <- c(packages, 'feather') 
+    }
 }
 for( package in packages ){
     suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
@@ -120,10 +136,27 @@ samples <- read_tsv(cmd_line_args$args[1])
 #data <- read.delim(cmd_line_args$args[2], check.names = FALSE)
 data <- load_rnaseq_data(cmd_line_args$args[2])
 
-#open genes file if it is specified so that if it doesn't exist the error happens before the rlog/vst transform
+# CHECK ALL FILES BEFORE DOING RLOG/VST TRANSFORM
+# open genes file if it is specified so that if it doesn't exist the error happens before the rlog/vst transform
 if (!is.null(cmd_line_args$options[['genes_file']])) {
     genes <- read.delim(file = cmd_line_args$options[['genes_file']],
                         header = FALSE, stringsAsFactors = FALSE)
+}
+gene_metadata <- NULL
+if (!is.null(cmd_line_args$options[['gene_metadata_file']])) {
+  if (grepl("\\.ftr$", cmd_line_args$options[['gene_metadata_file']])) {
+    gene_metadata <- read_feather(cmd_line_args$options[['gene_metadata_file']])
+  } else {
+    gene_metadata <- read_tsv(cmd_line_args$options[['gene_metadata_file']])
+  }
+}
+sample_metadata <- NULL
+if (!is.null(cmd_line_args$options[['sample_metadata_file']])) {
+  if (grepl("\\.ftr$", cmd_line_args$options[['sample_metadata_file']])) {
+    sample_metadata <- read_feather(cmd_line_args$options[['sample_metadata_file']])
+  } else {
+    sample_metadata <- read_tsv(cmd_line_args$options[['sample_metadata_file']])
+  }
 }
 
 # make unique rownames depending on DeTCT/RNA-seq 
@@ -165,6 +198,8 @@ if (!is.null(cmd_line_args$options[['genes_file']])) {
 # skip clustering if only 1 row
 cluster_rows <- FALSE
 cluster_columns <- FALSE
+gene_tree <- NULL
+sample_tree <- NULL
 if (nrow(counts) > 1) {
   # Clustering
   cluster <- function(df) {
@@ -239,9 +274,12 @@ if (cmd_line_args$options[['gene_names']]) {
     scale_y_discrete(name = NULL, labels = ids2names)
 }
 heatmap_plot <- heatmap_plot + 
-        biovisr::theme_heatmap(xaxis_labels = cmd_line_args$options[['sample_names']],
-                               yaxis_labels = cmd_line_args$options[['gene_names']],
-                               base_size = 12) +
+  scale_x_discrete(position = "top") +
+  biovisr::theme_heatmap( xaxis_labels = cmd_line_args$options[['sample_names']],
+                          yaxis_labels = cmd_line_args$options[['gene_names']],
+                          base_size = 12) +
+  theme(axis.title.x = element_blank(),
+        axis.text.x.top = element_text(hjust=0)) +
         NULL
 
 # create tree plots if appropriate options are set
@@ -255,64 +293,113 @@ if (cluster_columns & cmd_line_args$options[['sample_tree']]) {
   sample_tree_plot <- dendro_plot(sample_tree, categorical_scale = TRUE)
 }
 
-# load metadata if provided
-# The first column should be the sample ids/names (x axis, matching the samples file)
-# the y axis and fill variables are specified by metadata_ycol and metadata_fill
-metadata_plot <- plot_spacer()
-if (!is.null(cmd_line_args$options[['metadata_file']])) {
-  if (grepl("\\.ftr$", cmd_line_args$options[['metadata_file']])) {
-    metadata_for_plot <- read_feather(cmd_line_args$options[['metadata_file']])
-  } else {
-    metadata_for_plot <- read_tsv(cmd_line_args$options[['metadata_file']])
+# load gene metadata if provided
+gene_metadata_plot <- plot_spacer()
+if (!is.null(gene_metadata)) {
+  category_col <- cmd_line_args$options[['gene_metadata_xcol']]
+  category_var <- rlang::sym(category_col)
+  fill_col <- cmd_line_args$options[['gene_metadata_fill']]
+  fill_var <- rlang::sym(fill_col)
+  # make xaxis col a factor
+  if (class(gene_metadata[[category_col]]) == 'character') {
+    gene_metadata[[category_col]] <-
+      factor(gene_metadata[[category_col]],
+             levels = unique(gene_metadata[[category_col]]))
   }
-
-  # subset metadata to samples
-  metadata_for_plot <- filter(metadata_for_plot, sample %in% levels(plot_data$Sample))
-  # order sample levels by clustering
-  metadata_for_plot[['sample']] <-
-    factor(metadata_for_plot[['sample']],
-           levels = levels(plot_data$Sample))
-  # reverse levels of y axis to make plot match
-  category_col <- cmd_line_args$options[['metadata_ycol']]
-  if (class(metadata_for_plot[[category_col]]) == 'character') {
-    metadata_for_plot[[category_col]] <-
-      factor(metadata_for_plot[[category_col]],
-              levels = rev(unique(metadata_for_plot[[category_col]])))
-  } else if (class(metadata_for_plot[[category_col]]) == 'factor') {
-    metadata_for_plot[[category_col]] <-
-      factor(metadata_for_plot[[category_col]],
-             levels = rev(levels(metadata_for_plot[[category_col]])))
-  }
+  
+  # set levels of fill column
+  gene_metadata[[fill_col]] <-
+    factor(gene_metadata[[fill_col]],
+           levels = unique(gene_metadata[[fill_col]]))
+  
+  # subset gene_metadata to genes and order by current gene order
+  # and sort by category and then fill
+  gene_metadata <- left_join((select(plot_data, id) %>% unique()), 
+                             gene_metadata, by = c("id" = "GeneID"))
+  # set gene id levels by clustering
+  gene_metadata[['id']] <-
+    factor(gene_metadata[['id']],
+           levels = levels(plot_data$id))
+  gene_metadata[[category_col]][ is.na(gene_metadata[[category_col]]) ] <- levels(gene_metadata[[category_col]])[1]
   
   # sort out fill_palette
-  fill_col <- cmd_line_args$options[['metadata_fill']]
-  # set levels of fill column
-  metadata_for_plot[[fill_col]] <-
-    factor(metadata_for_plot[[fill_col]],
-            levels = unique(metadata_for_plot[[fill_col]]))
-  
-  fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
+  fill_palette <- cmd_line_args$options[['gene_metadata_fill_palette']]
   if (!is.null(fill_palette)) {
-    if (fill_palette %in% colnames(metadata_for_plot)) {
+    if (fill_palette %in% colnames(gene_metadata)) {
       # make a named vector of levels to colours
-      if( length(unique(metadata_for_plot[[fill_palette]])) ==
-                          nlevels(metadata_for_plot[[fill_col]]) ) {
-        cat2colour <- metadata_for_plot[ , c(fill_col, fill_palette)] %>% unique()
+      if( length(unique(gene_metadata[[fill_palette]])) ==
+          nlevels(gene_metadata[[fill_col]]) ) {
+        cat2colour <- gene_metadata[ , c(fill_col, fill_palette)] %>% unique() %>% 
+          filter(!is.na(!!fill_var))
         fill_palette <- cat2colour[[fill_palette]]
         names(fill_palette) <- cat2colour[[fill_col]]
       }
     }
   }
   
-  metadata_plot <-
-    df_heatmap(metadata_for_plot, x = 'sample', y = category_col,
+  gene_metadata_plot <-
+    df_heatmap(gene_metadata, x = category_col, y = 'id',
+               fill = fill_col, fill_palette = fill_palette,
+               # colour = "grey50", size = 0.5,
+               xaxis_labels = TRUE, yaxis_labels = cmd_line_args$options[['gene_names']],
+               na.translate = FALSE
+    ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
+    scale_x_discrete(position = "top") +
+    theme(axis.title = element_blank(),
+          axis.text.x.top = element_text(hjust = 0))
+}
+
+# load metadata if provided
+# The first column should be the sample ids/names (x axis, matching the samples file)
+# the y axis and fill variables are specified by metadata_ycol and metadata_fill
+sample_metadata_plot <- plot_spacer()
+if (!is.null(sample_metadata)) {
+  # subset metadata to samples
+  sample_metadata <- filter(sample_metadata, sample %in% levels(plot_data$Sample))
+  # order sample levels by clustering
+  sample_metadata[['sample']] <-
+    factor(sample_metadata[['sample']],
+           levels = levels(plot_data$Sample))
+  # reverse levels of y axis to make plot match
+  category_col <- cmd_line_args$options[['sample_metadata_ycol']]
+  if (class(sample_metadata[[category_col]]) == 'character') {
+    sample_metadata[[category_col]] <-
+      factor(sample_metadata[[category_col]],
+              levels = rev(unique(sample_metadata[[category_col]])))
+  } else if (class(sample_metadata[[category_col]]) == 'factor') {
+    sample_metadata[[category_col]] <-
+      factor(sample_metadata[[category_col]],
+             levels = rev(levels(sample_metadata[[category_col]])))
+  }
+  
+  # sort out fill_palette
+  fill_col <- cmd_line_args$options[['sample_metadata_fill']]
+  # set levels of fill column
+  sample_metadata[[fill_col]] <-
+    factor(sample_metadata[[fill_col]],
+            levels = unique(sample_metadata[[fill_col]]))
+  
+  fill_palette <- cmd_line_args$options[['sample_metadata_fill_palette']]
+  if (!is.null(fill_palette)) {
+    if (fill_palette %in% colnames(sample_metadata)) {
+      # make a named vector of levels to colours
+      if( length(unique(sample_metadata[[fill_palette]])) ==
+                          nlevels(sample_metadata[[fill_col]]) ) {
+        cat2colour <- sample_metadata[ , c(fill_col, fill_palette)] %>% unique()
+        fill_palette <- cat2colour[[fill_palette]]
+        names(fill_palette) <- cat2colour[[fill_col]]
+      }
+    }
+  }
+  
+  sample_metadata_plot <-
+    df_heatmap(sample_metadata, x = 'sample', y = category_col,
                fill = fill_col, fill_palette = fill_palette,
                colour = "grey50", size = 0.5,
                xaxis_labels = FALSE, yaxis_labels = TRUE,
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
-    theme(axis.title = element_blank(),
-          axis.text.y = element_text(colour = "black"))
+    theme(axis.title = element_blank())
 }
 
 if (grepl('ps$', output_file)) {
@@ -326,21 +413,24 @@ if (grepl('ps$', output_file)) {
   pdf(file = output_file, width = plot_width, height = plot_height )
 }
 
-plot_list <- list(plot_spacer(), sample_tree_plot, 
-                  gene_tree_plot, heatmap_plot,
-                  plot_spacer(), metadata_plot)
+plot_list <- list(plot_spacer(), sample_tree_plot, plot_spacer(),
+                  gene_tree_plot, heatmap_plot, gene_metadata_plot,
+                  plot_spacer(), sample_metadata_plot, plot_spacer())
 if (any(class(sample_tree_plot) == "spacer")) {
   relative_heights[1] <- 0
 }
 if (any(class(gene_tree_plot) == "spacer")) {
   relative_widths[1] <- 0
 }
-if (any(class(metadata_plot) == "spacer")) {
+if (any(class(gene_metadata_plot) == "spacer")) {
+  relative_widths[3] <- 0
+}
+if (any(class(sample_metadata_plot) == "spacer")) {
   relative_heights[3] <- 0
 }
 wrap_plots(
   plot_list,
-  ncol = 2,
+  ncol = 3,
   nrow = 3,
   byrow = TRUE,
   widths = relative_widths,
@@ -360,7 +450,7 @@ if (!is.null(cmd_line_args$options[['output_count_file']])) {
 if (!is.null(cmd_line_args$options[['output_rda_file']])) {
   object_list <- c('data', 'counts', 'plot_data', 'heatmap_plot')
   if (!is.null(cmd_line_args$options[['metadata_file']])) {
-    object_list <- c(object_list, 'metadata_plot')
+    object_list <- c(object_list, 'sample_metadata_plot')
   }
   save(list = object_list, file = cmd_line_args$options[['output_rda_file']])
 }

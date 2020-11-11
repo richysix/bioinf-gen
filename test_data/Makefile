@@ -1,5 +1,6 @@
 outputs: test_heatmap.pdf test_heatmap_subset.pdf \
 test_heatmap_with_metadata.pdf test_heatmap_with_trees.pdf \
+test_heatmap_with_trees-sample_gene_metadata.png \
 go_bubble.pdf go_bubble_pval.pdf go_bubble_specific.pdf go_bubble_no_labels.pdf \
 counts.pdf test-condition-sex-treatment.pdf \
 go_barchart.pdf go_barchart_top20.svg \
@@ -35,9 +36,9 @@ test_heatmap_with_metadata.pdf: ../gene_expr_heatmap.R test_samples_long.tsv tes
 --center_and_scale --cluster rows \
 --colour_palette magma --cell_colour grey80 \
 --gene_names --sample_names \
---metadata_file test_samples_long.tsv \
---metadata_ycol category \
---metadata_fill value \
+--sample_metadata_file test_samples_long.tsv \
+--sample_metadata_ycol category \
+--sample_metadata_fill value \
 --relative_heights 0,9,2 \
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_metadata.pdf
 
@@ -47,12 +48,26 @@ test_heatmap_with_trees.pdf: ../gene_expr_heatmap.R test_samples_long.tsv test_s
 --colour_palette magma --cell_colour grey80 \
 --gene_tree --sample_tree \
 --gene_names --sample_names \
---metadata_file test_samples_long.tsv \
---metadata_ycol category \
---metadata_fill value \
+--sample_metadata_file test_samples_long.tsv \
+--sample_metadata_ycol category \
+--sample_metadata_fill value \
 --relative_heights 1,3,1 \
 --relative_widths 1,3 \
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees.pdf
+
+test_heatmap_with_trees-sample_gene_metadata.png: ../gene_expr_heatmap.R \
+test_samples.tsv test_rnaseq_data.tsv
+	../gene_expr_heatmap.R --transform rlog \
+--centre_and_scale --cluster both \
+--colour_palette magma --cell_colour grey80 \
+--gene_tree --sample_tree --gene_names --sample_names \
+--sample_metadata_file test_samples_long.tsv \
+--sample_metadata_ycol category --sample_metadata_fill value \
+--gene_metadata_file test_gene_metadata.tsv \
+--gene_metadata_xcol value --gene_metadata_fill category \
+--relative_heights 1,3,1 --relative_widths 1,3,1 \
+--width 640 --height 480 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees-sample_gene_metadata.png
 
 # GO bubble plots
 go_bubble.pdf: ../go_bubble_plot.R BP.sig.tsv CC.sig.tsv MF.sig.tsv

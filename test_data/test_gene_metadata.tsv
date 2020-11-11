@@ -1,0 +1,34 @@
+GeneID	category	value
+ZFG001	Class	DNAPol
+ZFG002	Class	GPCR
+ZFG005	Class	GPCR
+ZFG006	Class	GPCR
+ZFG007	Class	GPCR
+ZFG003	Class	TF
+ZFG004	Class	TF
+ZFG008	Class	TF
+ZFG010	GO_BP	Immune Response
+ZFG001	GO_BP	Translation
+ZFG002	GO_BP	Translation
+ZFG003	GO_BP	Translation
+ZFG004	GO_BP	Translation
+ZFG005	GO_BP	UPR
+ZFG006	GO_BP	UPR
+ZFG007	GO_BP	UPR
+ZFG008	GO_BP	UPR
+ZFG001	GO_CC	Cytoplasm
+ZFG010	GO_CC	Cytoplasm
+ZFG007	GO_CC	Membrane
+ZFG002	GO_CC	Nucleus
+ZFG003	GO_CC	Nucleus
+ZFG004	GO_CC	Nucleus
+ZFG005	GO_CC	Nucleus
+ZFG006	GO_CC	Nucleus
+ZFG002	GO_MF	ATPase activity
+ZFG004	GO_MF	ATPase activity
+ZFG006	GO_MF	ATPase activity
+ZFG008	GO_MF	ATPase activity
+ZFG001	GO_MF	Kinase activity
+ZFG003	GO_MF	Kinase activity
+ZFG005	GO_MF	Kinase activity
+ZFG007	GO_MF	Kinase activity
