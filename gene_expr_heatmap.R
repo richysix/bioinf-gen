@@ -279,7 +279,7 @@ heatmap_plot <- heatmap_plot +
                           yaxis_labels = cmd_line_args$options[['gene_names']],
                           base_size = 12) +
   theme(axis.title.x = element_blank(),
-        axis.text.x.top = element_text(hjust=0)) +
+        axis.text.x.top = element_text(angle = 45, hjust=0)) +
         NULL
 
 # create tree plots if appropriate options are set
@@ -341,12 +341,12 @@ if (!is.null(gene_metadata)) {
     df_heatmap(gene_metadata, x = category_col, y = 'id',
                fill = fill_col, fill_palette = fill_palette,
                # colour = "grey50", size = 0.5,
-               xaxis_labels = TRUE, yaxis_labels = cmd_line_args$options[['gene_names']],
+               xaxis_labels = TRUE, yaxis_labels = FALSE,
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
     scale_x_discrete(position = "top") +
     theme(axis.title = element_blank(),
-          axis.text.x.top = element_text(hjust = 0))
+          axis.text.x.top = element_text(angle = 45, hjust = 0))
 }
 
 # load metadata if provided
@@ -449,8 +449,23 @@ if (!is.null(cmd_line_args$options[['output_count_file']])) {
 
 if (!is.null(cmd_line_args$options[['output_rda_file']])) {
   object_list <- c('data', 'counts', 'plot_data', 'heatmap_plot')
-  if (!is.null(cmd_line_args$options[['metadata_file']])) {
+  if (cluster_rows) {
+    object_list <- c(object_list, 'gene_tree')
+    if (cmd_line_args$options[['gene_tree']]) {
+      object_list <- c(object_list, 'gene_tree_plot')
+    }
+  }
+  if (cluster_columns) {
+    object_list <- c(object_list, 'sample_tree')
+    if (cmd_line_args$options[['sample_tree']]) {
+      object_list <- c(object_list, 'sample_tree_plot')
+    }
+  }
+  if (!is.null(cmd_line_args$options[['sample_metadata_file']])) {
     object_list <- c(object_list, 'sample_metadata_plot')
+  }
+  if (!is.null(cmd_line_args$options[['gene_metadata_file']])) {
+    object_list <- c(object_list, 'gene_metadata_plot')
   }
   save(list = object_list, file = cmd_line_args$options[['output_rda_file']])
 }
