@@ -7,9 +7,12 @@ go_barchart.pdf go_barchart_top20.svg \
 test-gsea_to_genes.out.tsv test-gsea_to_genes.sig.out.tsv
 
 # test data
-test_samples.tsv test_samples_long.tsv test_rnaseq_data.tsv \
-BP.sig.tsv CC.sig.tsv MF.sig.tsv test_data_go.tsv: test_data.R
-	test_data.R
+BP.sig.tsv CC.sig.tsv MF.sig.tsv \
+test_samples.tsv test_samples_long.tsv \
+test_gene_metadata.tsv test_rnaseq_data.tsv \
+test_data_go.tsv test_gsea_report.xls\
+Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls gsea-genes.txt: test_data.R
+	./test_data.R
 
 # Gene expression heatmaps
 test_heatmap.pdf: ../gene_expr_heatmap.R test_samples.tsv test_rnaseq_data.tsv
