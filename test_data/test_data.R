@@ -40,6 +40,25 @@ for (domain in c('BP', 'CC', 'MF')) {
   write_tsv(data, path = paste0(domain, '.sig.tsv'))
 }
 
+# test data for GO kappa scores
+num_sig_genes <- 100
+sig <- tibble(
+  Gene = paste0('gene', seq_len(num_sig_genes))
+)
+write_tsv(sig, path = 'sig.tsv')
+num_terms <- 10
+sig_genes_per_term <- 50
+set.seed(637)
+go_sig_genes <- tibble(
+  GO.ID = rep(sprintf('GO:%07d', seq_len(num_terms)), each = sig_genes_per_term),
+  Term = rep(sprintf('Term%d', seq_len(num_terms)), each = sig_genes_per_term),
+  Gene = sample(paste0('gene', seq_len(num_sig_genes)*2), num_terms*50, replace = TRUE)
+) %>% 
+  mutate(., `p value` = case_when(Gene %in% sig$Gene ~ 1,
+                                  TRUE ~ 0)) %>% 
+  unique()
+write_tsv(go_sig_genes, path = 'BP.sig.genes.tsv')
+
 # test data for graph_counts_by_group_facet.R
 set.seed(583)
 tmp <- makeExampleDESeqDataSet(n = 10, m = 12, betaSD = 2)
