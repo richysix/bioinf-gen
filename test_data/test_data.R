@@ -108,6 +108,11 @@ test_all_data <- tibble(
 test_all_data$chr <- factor(test_all_data$chr, levels = unique(test_all_data$chr))
 test_all_data$strand <- factor(test_all_data$strand)
 
+# subset to 3 genes
+test_all_data %>% filter(., GeneID %in% c('ZFG005', 'ZFG006', 'ZFG009')) %>% 
+  select(., GeneID, Name = `Gene name`) %>% 
+  write_tsv(., path = file.path(root_path, 'test_data', 'test_genes_to_label.txt'))
+
 # make gene metadata file
 gene_metadata <- select(test_all_data, GeneID, Class, GO_BP, GO_CC, GO_MF) %>% 
   pivot_longer(., -GeneID, names_to = 'category') %>% 

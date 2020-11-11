@@ -25,6 +25,8 @@ option_list <- list(
               help="colour for the outlines of the cells [default %default]" ),
   make_option("--gene_names", action="store_true", type="logical", default=FALSE,
               help="print gene names [default %default]" ),
+  make_option("--genes_to_label", action="store", type="character", default=NULL,
+              help="Only add labels to specific genes included in the supplied file [default %default]" ),
   make_option("--sample_names", action="store_true", type="logical", default=FALSE,
               help="print sample names [default %default]" ),
   make_option("--sample_metadata_file", type="character", default=NULL,
@@ -67,6 +69,7 @@ option_list <- list(
 #     "centre_and_scale" = TRUE,
 #     "cluster" = "both",
 #     "gene_tree" = TRUE,
+#     "genes_to_label" = "test_data/test_genes.txt",
 #     "sample_tree" = TRUE,
 #     "colour_palette" = 'plasma',
 #     "cell_colour" = "grey80",
@@ -77,8 +80,8 @@ option_list <- list(
 #     "sample_metadata_fill" = "value",
 #     "sample_metadata_fill_palette" = NULL,
 #     "gene_metadata_file" = "test_data/test_gene_metadata.tsv",
-#     "gene_metadata_xcol" = "category",
-#     "gene_metadata_fill" = "value",
+#     "gene_metadata_xcol" = "value",
+#     "gene_metadata_fill" = "category",
 #     "gene_metadata_fill_palette" = NULL,
 #     "relative_widths" = "1,3,1",
 #     "relative_heights" = "1,3,1",
@@ -103,7 +106,7 @@ cmd_line_args <- parse_args(
 )
 
 output_file <- cmd_line_args$args[3]
-packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2')
+packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2', 'ggrepel')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
 metadata_files <- c(cmd_line_args$options[['sample_metadata_file']],
                    cmd_line_args$options[['gene_metadata_file']])
@@ -156,6 +159,15 @@ if (!is.null(cmd_line_args$options[['sample_metadata_file']])) {
     sample_metadata <- read_feather(cmd_line_args$options[['sample_metadata_file']])
   } else {
     sample_metadata <- read_tsv(cmd_line_args$options[['sample_metadata_file']])
+  }
+}
+
+if (!is.null(cmd_line_args$options[['genes_to_label']])) {
+  cmd_line_args$options[['gene_names']] <- FALSE
+  genes_to_label <- read_tsv(cmd_line_args$options[['genes_to_label']])
+  # genes to label file must contain a GeneID column and a Name column
+  if (any(!(c('GeneID', 'Name') %in% colnames(genes_to_label)))) {
+    stop('genes_to_label file must contains columns labelled GeneID and Name')
   }
 }
 
@@ -265,7 +277,21 @@ if (fill_palette %in% c('viridis', 'plasma', 'magma', 'inferno', 'cividis')) {
   stop("fill_palette is not recognised")
 }
 
-if (cmd_line_args$options[['gene_names']]) {
+labels_plot <- plot_spacer()
+if (!is.null(cmd_line_args$options[['genes_to_label']])) {
+  # set x value to first level of x variable
+  genes_to_label <- genes_to_label %>% 
+    mutate(Sample = levels(plot_data$Sample)[1])
+  # make separate plot with labels 
+  labels_plot <- ggplot(data = filter(plot_data, Sample == levels(Sample)[1]),
+                        aes(x = Sample)) + 
+    geom_point(aes(y = id), shape = NA) +
+    geom_text_repel(data = genes_to_label, 
+                    aes(x = Sample, y = GeneID, label = Name),
+                    nudge_x = -0.2, 
+                    direction = "y", hjust = 1) +
+    theme_void()
+} else if (cmd_line_args$options[['gene_names']]) {
   # make function to return a gene name for an Ensembl id
   ids2names <- function(ids) {
     map_chr(ids, function(id, data){ data$Name[ data$GeneID == id] }, data)
@@ -278,7 +304,7 @@ heatmap_plot <- heatmap_plot +
   biovisr::theme_heatmap( xaxis_labels = cmd_line_args$options[['sample_names']],
                           yaxis_labels = cmd_line_args$options[['gene_names']],
                           base_size = 12) +
-  theme(axis.title.x = element_blank(),
+  theme(axis.title = element_blank(),
         axis.text.x.top = element_text(hjust=0)) +
         NULL
 
@@ -414,7 +440,7 @@ if (grepl('ps$', output_file)) {
 }
 
 plot_list <- list(plot_spacer(), sample_tree_plot, plot_spacer(),
-                  gene_tree_plot, heatmap_plot, gene_metadata_plot,
+                  gene_tree_plot, heatmap_plot_2, gene_metadata_plot,
                   plot_spacer(), sample_metadata_plot, plot_spacer())
 if (any(class(sample_tree_plot) == "spacer")) {
   relative_heights[1] <- 0
