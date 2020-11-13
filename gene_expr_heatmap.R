@@ -145,8 +145,12 @@ data <- load_rnaseq_data(cmd_line_args$args[2])
 # CHECK ALL FILES BEFORE DOING RLOG/VST TRANSFORM
 # open genes file if it is specified so that if it doesn't exist the error happens before the rlog/vst transform
 if (!is.null(cmd_line_args$options[['genes_file']])) {
-    genes <- read.delim(file = cmd_line_args$options[['genes_file']],
-                        header = FALSE, stringsAsFactors = FALSE)
+    genes <- read_tsv(file = cmd_line_args$options[['genes_file']],
+                      col_names = FALSE)
+    if (!grepl("ENS[A-Z]*[0-9]+", genes[1,1])){
+      # assume there's a header
+      genes <- read_tsv(file = cmd_line_args$options[['genes_file']])
+    }
 }
 gene_metadata <- NULL
 if (!is.null(cmd_line_args$options[['gene_metadata_file']])) {
