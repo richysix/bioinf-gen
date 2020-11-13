@@ -252,13 +252,16 @@ plot_data <- counts %>%
 plot_data$Sample <- factor(plot_data$Sample, levels = unique(plot_data$Sample))
 
 if (is.null(cmd_line_args$options[['cell_colour']]) ) {
-  heatmap_plot <- ggplot() +
-    geom_tile(data = plot_data,
-              aes(x = Sample, y = id, fill = Count))
+  heatmap_plot <- 
+    ggplot(data = plot_data,
+           aes(x = Sample, y = id)) +
+    geom_tile(aes(fill = Count))
 } else {
-  heatmap_plot <- ggplot() +
-    geom_tile(data = plot_data, colour = cmd_line_args$options[['cell_colour']],
-              aes(x = Sample, y = id, fill = Count))
+  heatmap_plot <- 
+    ggplot(data = plot_data,
+           aes(x = Sample, y = id)) +
+    geom_tile(aes(fill = Count),
+              colour = cmd_line_args$options[['cell_colour']])
 }
 
 distiller_palettes <- c("BrBG", "PiYG", "PRGn", "PuOr", "RdBu", "RdGy", "RdYlBu", "RdYlGn", "Spectral",
@@ -288,7 +291,7 @@ heatmap_plot <- heatmap_plot +
   biovisr::theme_heatmap( xaxis_labels = cmd_line_args$options[['sample_names']],
                           yaxis_labels = cmd_line_args$options[['gene_names']],
                           base_size = 12) +
-  theme(axis.title.x = element_blank(),
+  theme(axis.title = element_blank(),
         axis.text.x.top = element_text(angle = 45, hjust=0)) +
         NULL
 
