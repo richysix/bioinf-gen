@@ -347,11 +347,10 @@ if (!is.null(gene_metadata)) {
              levels = unique(gene_metadata[[category_col]]))
   }
   
-  # set levels of fill column
-  gene_metadata[[fill_col]] <-
-    factor(gene_metadata[[fill_col]],
-           levels = unique(gene_metadata[[fill_col]]))
-  
+  # make new column for fill variable in case category and fill are the same
+  gene_metadata <- gene_metadata %>% 
+    mutate(., fill = factor(!!fill_var, levels = unique(!!fill_var)))
+
   # subset gene_metadata to genes and order by current gene order
   # and sort by category and then fill
   gene_metadata <- left_join((select(plot_data, id) %>% unique()), 
@@ -368,18 +367,17 @@ if (!is.null(gene_metadata)) {
     if (fill_palette %in% colnames(gene_metadata)) {
       # make a named vector of levels to colours
       if( length(unique(gene_metadata[[fill_palette]])) ==
-          nlevels(gene_metadata[[fill_col]]) ) {
-        cat2colour <- gene_metadata[ , c(fill_col, fill_palette)] %>% unique() %>% 
-          filter(!is.na(!!fill_var))
+          nlevels(gene_metadata[['fill']]) ) {
+        cat2colour <- gene_metadata[ , c('fill', fill_palette)] %>% unique()
         fill_palette <- cat2colour[[fill_palette]]
-        names(fill_palette) <- cat2colour[[fill_col]]
+        names(fill_palette) <- cat2colour[['fill']]
       }
     }
   }
   
   gene_metadata_plot <-
     df_heatmap(gene_metadata, x = category_col, y = 'id',
-               fill = fill_col, fill_palette = fill_palette,
+               fill = 'fill', fill_palette = fill_palette,
                # colour = "grey50", size = 0.5,
                xaxis_labels = TRUE, yaxis_labels = FALSE,
                na.translate = FALSE
