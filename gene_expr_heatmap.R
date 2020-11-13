@@ -15,6 +15,12 @@ option_list <- list(
               help="Center and scale the counts by row (genes) [default %default]"),
   make_option("--cluster", action="store", type="character", default="none",
               help="Cluster rows, columns, both or none [default %default]"),
+  make_option("--output_clusters", action="store_true", type="logical", default=FALSE,
+              help="Output each cluster as a gene list [default %default]"),
+  make_option("--cluster_files_base", action="store", type="character", default="clusters-",
+              help="Base name for the cluster gene list filenames [default %default]"),
+  make_option(c("-k", "--cluster_number"), action="store", type="integer", default=3,
+              help="Number of clusters to output (max = 26) [default %default]"),
   make_option("--gene_tree", action="store_true", type="logical", default=FALSE,
               help="Plot dendrogram for gene clustering [default %default]"),
   make_option("--sample_tree", action="store_true", type="logical", default=FALSE,
@@ -291,6 +297,33 @@ if (cluster_rows & cmd_line_args$options[['gene_tree']]) {
 sample_tree_plot <- plot_spacer()
 if (cluster_columns & cmd_line_args$options[['sample_tree']]) {
   sample_tree_plot <- dendro_plot(sample_tree, categorical_scale = TRUE)
+}
+
+if (cluster_rows & cmd_line_args$options[['output_clusters']]) {
+  groups <- cutree(gene_tree, k = cmd_line_args$options[['cluster_number']])
+  clusters <- tibble(GeneID = names(groups), cluster = letters[groups]) %>% 
+    mutate(., GeneID = factor(GeneID, levels = levels(plot_data$id))) %>% 
+    arrange(., GeneID) %>% 
+    mutate(., cluster = factor(cluster, levels = unique(cluster)))
+  clusters_list <- split(clusters, clusters$cluster)
+  # function to output a gene id file for a cluster
+  output_genes <- function(cluster, file_base) {
+    filename <- paste0(file_base, cluster$cluster[1], '.txt')
+    write.table(cluster$GeneID, file = filename, 
+                quote = FALSE, sep = "\t", row.names=FALSE,
+                col.names = FALSE)
+  }
+  lapply(clusters_list, output_genes, cmd_line_args$options[['cluster_files_base']])
+  
+  if (cmd_line_args$options[['gene_tree']]) {
+    gene_tree_plot <- gene_tree_plot + 
+      geom_tile(data = clusters, aes(x = GeneID, y = -1, fill = factor(cluster))) +
+      scale_fill_manual(values = biovisr::cbf_palette(nlevels(factor(clusters$cluster))),
+                        guide = guide_legend(reverse = TRUE),
+                        name = "Cluster") + 
+      theme(legend.position = "left")
+  }
+  
 }
 
 # load gene metadata if provided
