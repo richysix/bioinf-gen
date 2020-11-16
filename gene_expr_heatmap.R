@@ -31,6 +31,8 @@ option_list <- list(
               help="colour for the outlines of the cells [default %default]" ),
   make_option("--gene_names", action="store_true", type="logical", default=FALSE,
               help="print gene names [default %default]" ),
+  make_option("--genes_to_label", action="store", type="character", default=NULL,
+              help="Only add labels to specific genes included in the supplied file [default %default]" ),
   make_option("--sample_names", action="store_true", type="logical", default=FALSE,
               help="print sample names [default %default]" ),
   make_option("--sample_metadata_file", type="character", default=NULL,
@@ -68,11 +70,14 @@ option_list <- list(
 # cmd_line_args <- list(
 #   options = list(
 #     "genes_file" = "test_data/test_genes.txt",
+#     "genes_to_label" = "test_data/test_genes_to_label.txt",
 #     "detct" = FALSE,
 #     "transform" = "rlog",
 #     "centre_and_scale" = TRUE,
 #     "cluster" = "both",
+#     "output_clusters" = FALSE,
 #     "gene_tree" = TRUE,
+#     "genes_to_label" = "test_data/test_genes.txt",
 #     "sample_tree" = TRUE,
 #     "colour_palette" = 'plasma',
 #     "cell_colour" = "grey80",
@@ -83,10 +88,10 @@ option_list <- list(
 #     "sample_metadata_fill" = "value",
 #     "sample_metadata_fill_palette" = NULL,
 #     "gene_metadata_file" = "test_data/test_gene_metadata.tsv",
-#     "gene_metadata_xcol" = "category",
-#     "gene_metadata_fill" = "value",
+#     "gene_metadata_xcol" = "value",
+#     "gene_metadata_fill" = "category",
 #     "gene_metadata_fill_palette" = NULL,
-#     "relative_widths" = "1,3,1",
+#     "relative_widths" = "1,3,1,1",
 #     "relative_heights" = "1,3,1",
 #     "width" = 7,
 #     "height" = 10,
@@ -109,7 +114,7 @@ cmd_line_args <- parse_args(
 )
 
 output_file <- cmd_line_args$args[3]
-packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2')
+packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2', 'ggrepel')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
 metadata_files <- c(cmd_line_args$options[['sample_metadata_file']],
                    cmd_line_args$options[['gene_metadata_file']])
@@ -166,6 +171,15 @@ if (!is.null(cmd_line_args$options[['sample_metadata_file']])) {
     sample_metadata <- read_feather(cmd_line_args$options[['sample_metadata_file']])
   } else {
     sample_metadata <- read_tsv(cmd_line_args$options[['sample_metadata_file']])
+  }
+}
+
+if (!is.null(cmd_line_args$options[['genes_to_label']])) {
+  cmd_line_args$options[['gene_names']] <- FALSE
+  genes_to_label <- read_tsv(cmd_line_args$options[['genes_to_label']])
+  # genes to label file must contain a GeneID column and a Name column
+  if (any(!(c('GeneID', 'Name') %in% colnames(genes_to_label)))) {
+    stop('genes_to_label file must contains columns labelled GeneID and Name')
   }
 }
 
@@ -278,22 +292,48 @@ if (fill_palette %in% c('viridis', 'plasma', 'magma', 'inferno', 'cividis')) {
   stop("fill_palette is not recognised")
 }
 
-if (cmd_line_args$options[['gene_names']]) {
+labels_plot <- plot_spacer()
+if (!is.null(cmd_line_args$options[['genes_to_label']])) {
+  # set x value to last level of x variable
+  last_level <- tail(levels(plot_data$Sample),1)
+  # join to plot_data to get levels of genes
+  genes_to_label <- genes_to_label %>% 
+    mutate(Sample = last_level) 
+    
+  # make separate plot with labels 
+  labels_plot <- ggplot(data = filter(plot_data, Sample == last_level),
+                        aes(x = Sample)) + 
+    geom_point(aes(y = id), shape = NA) +
+    geom_text_repel(data = genes_to_label, 
+                    aes(x = Sample, y = GeneID, label = Name),
+                    min.segment.length = grid::unit(0, "pt"),
+                    nudge_x = 0.1, 
+                    direction = "y", hjust = 0) +
+    scale_x_discrete(limits = c(last_level, last_level),
+                     expand = c(0,0)) +
+    theme_void() +
+    NULL
+} else if (cmd_line_args$options[['gene_names']]) {
   # make function to return a gene name for an Ensembl id
+  # also can subset
+  #subset_ids <- sprintf('ZFG%03d', c(5,6,9))
   ids2names <- function(ids) {
-    map_chr(ids, function(id, data){ data$Name[ data$GeneID == id] }, data)
+    names <- map_chr(ids, function(id, data){ data$Name[ data$GeneID == id] }, data)
+    #names[ !(ids %in% subset_ids) ] <- ""
+    return(names)
   }
   heatmap_plot <- heatmap_plot + 
-    scale_y_discrete(name = NULL, labels = ids2names)
-}
+    scale_y_discrete(name = NULL, labels = ids2names, position = "right")
+} 
 heatmap_plot <- heatmap_plot + 
   scale_x_discrete(position = "top") +
   biovisr::theme_heatmap( xaxis_labels = cmd_line_args$options[['sample_names']],
                           yaxis_labels = cmd_line_args$options[['gene_names']],
                           base_size = 12) +
   theme(axis.title = element_blank(),
-        axis.text.x.top = element_text(angle = 45, hjust=0)) +
-        NULL
+        axis.text.x.top = element_text(angle = 45, hjust=0),
+        axis.text.y.right = element_text(hjust=0)) +
+  NULL
 
 # create tree plots if appropriate options are set
 gene_tree_plot <- plot_spacer()
@@ -303,7 +343,9 @@ if (cluster_rows & cmd_line_args$options[['gene_tree']]) {
 
 sample_tree_plot <- plot_spacer()
 if (cluster_columns & cmd_line_args$options[['sample_tree']]) {
-  sample_tree_plot <- dendro_plot(sample_tree, categorical_scale = TRUE)
+  sample_tree_plot <- dendro_plot(sample_tree, categorical_scale = TRUE) +
+    # scale_x_discrete(expand = expand_scale(add = c(text_size,0))) +
+    NULL
 }
 
 if (cluster_rows & cmd_line_args$options[['output_clusters']]) {
@@ -362,22 +404,22 @@ if (!is.null(gene_metadata)) {
   gene_metadata[[category_col]][ is.na(gene_metadata[[category_col]]) ] <- levels(gene_metadata[[category_col]])[1]
   
   # sort out fill_palette
-  fill_palette <- cmd_line_args$options[['gene_metadata_fill_palette']]
-  if (!is.null(fill_palette)) {
-    if (fill_palette %in% colnames(gene_metadata)) {
+  gene_metadata_fill_palette <- cmd_line_args$options[['gene_metadata_fill_palette']]
+  if (!is.null(gene_metadata_fill_palette)) {
+    if (gene_metadata_fill_palette %in% colnames(gene_metadata)) {
       # make a named vector of levels to colours
-      if( length(unique(gene_metadata[[fill_palette]])) ==
-          nlevels(gene_metadata[['fill']]) ) {
-        cat2colour <- gene_metadata[ , c('fill', fill_palette)] %>% unique()
-        fill_palette <- cat2colour[[fill_palette]]
-        names(fill_palette) <- cat2colour[['fill']]
+      if( length(unique(gene_metadata[[gene_metadata_fill_palette]])) ==
+          nlevels(gene_metadata[[fill_col]]) ) {
+        cat2colour <- gene_metadata[ , c(fill_col, gene_metadata_fill_palette)] %>% unique()
+        gene_metadata_fill_palette <- cat2colour[[gene_metadata_fill_palette]]
+        names(gene_metadata_fill_palette) <- cat2colour[[fill_col]]
       }
     }
   }
   
   gene_metadata_plot <-
     df_heatmap(gene_metadata, x = category_col, y = 'id',
-               fill = 'fill', fill_palette = fill_palette,
+               fill = fill_col, fill_palette = gene_metadata_fill_palette,
                # colour = "grey50", size = 0.5,
                xaxis_labels = TRUE, yaxis_labels = FALSE,
                na.translate = FALSE
@@ -387,10 +429,11 @@ if (!is.null(gene_metadata)) {
           axis.text.x.top = element_text(angle = 45, hjust = 0))
 }
 
-# load metadata if provided
+# load sample metadata if provided
 # The first column should be the sample ids/names (x axis, matching the samples file)
 # the y axis and fill variables are specified by metadata_ycol and metadata_fill
 sample_metadata_plot <- plot_spacer()
+sample_metadata_labels_plot <- plot_spacer()
 if (!is.null(sample_metadata)) {
   # subset metadata to samples
   sample_metadata <- filter(sample_metadata, sample %in% levels(plot_data$Sample))
@@ -400,6 +443,7 @@ if (!is.null(sample_metadata)) {
            levels = levels(plot_data$Sample))
   # reverse levels of y axis to make plot match
   category_col <- cmd_line_args$options[['sample_metadata_ycol']]
+  category_var <- rlang::sym(category_col)
   if (class(sample_metadata[[category_col]]) == 'character') {
     sample_metadata[[category_col]] <-
       factor(sample_metadata[[category_col]],
@@ -417,27 +461,50 @@ if (!is.null(sample_metadata)) {
     factor(sample_metadata[[fill_col]],
             levels = unique(sample_metadata[[fill_col]]))
   
-  fill_palette <- cmd_line_args$options[['sample_metadata_fill_palette']]
-  if (!is.null(fill_palette)) {
-    if (fill_palette %in% colnames(sample_metadata)) {
+  sample_metadata_fill_palette <- cmd_line_args$options[['sample_metadata_fill_palette']]
+  if (!is.null(sample_metadata_fill_palette)) {
+    if (sample_metadata_fill_palette %in% colnames(sample_metadata)) {
       # make a named vector of levels to colours
-      if( length(unique(sample_metadata[[fill_palette]])) ==
+      if( length(unique(sample_metadata[[sample_metadata_fill_palette]])) ==
                           nlevels(sample_metadata[[fill_col]]) ) {
-        cat2colour <- sample_metadata[ , c(fill_col, fill_palette)] %>% unique()
-        fill_palette <- cat2colour[[fill_palette]]
-        names(fill_palette) <- cat2colour[[fill_col]]
+        cat2colour <- sample_metadata[ , c(fill_col, sample_metadata_fill_palette)] %>% unique()
+        sample_metadata_fill_palette <- cat2colour[[sample_metadata_fill_palette]]
+        names(sample_metadata_fill_palette) <- cat2colour[[fill_col]]
       }
     }
   }
   
+  if (!is.null(cmd_line_args$options[['genes_to_label']])) {
+    # make a labels plot as well
+    sample_metadata_yaxis_labels <- FALSE
+    # set x value to last level of x variable
+    last_level <- tail(levels(sample_metadata$sample),1)
+    # join to plot_data to get levels of genes
+    sample_metadata_labels <- filter(sample_metadata, sample == last_level)
+    
+    # make separate plot with labels 
+    sample_metadata_labels_plot <- 
+      ggplot(data = sample_metadata_labels,
+             aes(x = sample, !!category_var)) + 
+      geom_point(shape = NA) +
+      geom_text(aes(label = !!category_var), hjust = 0) +
+      scale_x_discrete(limits = c(last_level, last_level),
+                       expand = c(0,0)) +
+      theme_void() +
+      NULL
+  } else {
+    sample_metadata_yaxis_labels <- TRUE
+  }
   sample_metadata_plot <-
     df_heatmap(sample_metadata, x = 'sample', y = category_col,
-               fill = fill_col, fill_palette = fill_palette,
+               fill = fill_col, fill_palette = sample_metadata_fill_palette,
                colour = "grey50", size = 0.5,
-               xaxis_labels = FALSE, yaxis_labels = TRUE,
+               xaxis_labels = FALSE, yaxis_labels = sample_metadata_yaxis_labels,
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
-    theme(axis.title = element_blank())
+    scale_y_discrete(position = "right") +
+    theme(axis.title = element_blank(),
+          axis.text.y.right = element_text(hjust=0))
 }
 
 if (grepl('ps$', output_file)) {
@@ -451,24 +518,27 @@ if (grepl('ps$', output_file)) {
   pdf(file = output_file, width = plot_width, height = plot_height )
 }
 
-plot_list <- list(plot_spacer(), sample_tree_plot, plot_spacer(),
-                  gene_tree_plot, heatmap_plot, gene_metadata_plot,
-                  plot_spacer(), sample_metadata_plot, plot_spacer())
+plot_list <- list(plot_spacer(), sample_tree_plot, plot_spacer(), plot_spacer(),
+                  gene_tree_plot, heatmap_plot, labels_plot, gene_metadata_plot,
+                  plot_spacer(), sample_metadata_plot, sample_metadata_labels_plot, plot_spacer())
 if (any(class(sample_tree_plot) == "spacer")) {
   relative_heights[1] <- 0
 }
 if (any(class(gene_tree_plot) == "spacer")) {
   relative_widths[1] <- 0
 }
-if (any(class(gene_metadata_plot) == "spacer")) {
+if (any(class(labels_plot) == "spacer")) {
   relative_widths[3] <- 0
+}
+if (any(class(gene_metadata_plot) == "spacer")) {
+  relative_widths[4] <- 0
 }
 if (any(class(sample_metadata_plot) == "spacer")) {
   relative_heights[3] <- 0
 }
 wrap_plots(
   plot_list,
-  ncol = 3,
+  ncol = 4,
   nrow = 3,
   byrow = TRUE,
   widths = relative_widths,

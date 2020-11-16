@@ -64,6 +64,16 @@ test_samples.tsv test_rnaseq_data.tsv test_heatmap_subset.pdf
 
 ![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. Only three of the original rows are shown](test_data/rnaseq_heatmap_subset.png "RNAseq heatmap subset")
 
+Or only label the supplied genes
+```
+../gene_expr_heatmap.R --transform rlog \
+--center_and_scale --cluster rows \
+--colour_palette magma --cell_colour grey80 \
+--sample_names --genes_to_label test_genes.txt \
+--width 7 --height 2.5 \
+test_samples.tsv test_rnaseq_data.tsv test_heatmap_subset.pdf
+```
+
 A file of sample metadata can also be supplied and will be plotted as a heatmap
 under the expression heatmap.
 ```
