@@ -374,19 +374,19 @@ if (!is.null(gene_metadata)) {
     if (gene_metadata_fill_palette %in% colnames(gene_metadata)) {
       # make a named vector of levels to colours
       if( length(unique(gene_metadata[[gene_metadata_fill_palette]])) ==
-          nlevels(gene_metadata[['fill']]) ) {
-        cat2colour <- gene_metadata[ , c('fill', gene_metadata_fill_palette)] %>% unique()
+          nlevels(gene_metadata[[fill_col]]) ) {
+        cat2colour <- gene_metadata[ , c(fill_col, gene_metadata_fill_palette)] %>% unique()
         gene_metadata_fill_palette <- cat2colour[[gene_metadata_fill_palette]]
-        names(gene_metadata_fill_palette) <- cat2colour[['fill']]
+        names(gene_metadata_fill_palette) <- cat2colour[[fill_col]]
       }
     }
   }
   
   gene_metadata_plot <-
     df_heatmap(gene_metadata, x = category_col, y = 'id',
-               fill = 'fill', fill_palette = gene_metadata_fill_palette,
+               fill = fill_col, fill_palette = gene_metadata_fill_palette,
                # colour = "grey50", size = 0.5,
-               xaxis_labels = TRUE, yaxis_labels = cmd_line_args$options[['gene_names']],
+               xaxis_labels = TRUE, yaxis_labels = FALSE,
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
     scale_x_discrete(position = "top") +
@@ -398,6 +398,7 @@ if (!is.null(gene_metadata)) {
 # The first column should be the sample ids/names (x axis, matching the samples file)
 # the y axis and fill variables are specified by metadata_ycol and metadata_fill
 sample_metadata_plot <- plot_spacer()
+sample_metadata_labels_plot <- plot_spacer()
 if (!is.null(sample_metadata)) {
   # subset metadata to samples
   sample_metadata <- filter(sample_metadata, sample %in% levels(plot_data$Sample))
@@ -407,6 +408,7 @@ if (!is.null(sample_metadata)) {
            levels = levels(plot_data$Sample))
   # reverse levels of y axis to make plot match
   category_col <- cmd_line_args$options[['sample_metadata_ycol']]
+  category_var <- rlang::sym(category_col)
   if (class(sample_metadata[[category_col]]) == 'character') {
     sample_metadata[[category_col]] <-
       factor(sample_metadata[[category_col]],
@@ -437,11 +439,32 @@ if (!is.null(sample_metadata)) {
     }
   }
   
+  if (!is.null(cmd_line_args$options[['genes_to_label']])) {
+    # make a labels plot as well
+    sample_metadata_yaxis_labels <- FALSE
+    # set x value to last level of x variable
+    last_level <- tail(levels(sample_metadata$sample),1)
+    # join to plot_data to get levels of genes
+    sample_metadata_labels <- filter(sample_metadata, sample == last_level)
+    
+    # make separate plot with labels 
+    sample_metadata_labels_plot <- 
+      ggplot(data = sample_metadata_labels,
+             aes(x = sample, !!category_var)) + 
+      geom_point(shape = NA) +
+      geom_text(aes(label = !!category_var), hjust = 0) +
+      scale_x_discrete(limits = c(last_level, last_level),
+                       expand = c(0,0)) +
+      theme_void() +
+      NULL
+  } else {
+    sample_metadata_yaxis_labels <- TRUE
+  }
   sample_metadata_plot <-
     df_heatmap(sample_metadata, x = 'sample', y = category_col,
                fill = fill_col, fill_palette = sample_metadata_fill_palette,
                colour = "grey50", size = 0.5,
-               xaxis_labels = FALSE, yaxis_labels = TRUE,
+               xaxis_labels = FALSE, yaxis_labels = sample_metadata_yaxis_labels,
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
     # scale_x_discrete( expand = expand_scale(add = c(text_size,0)) ) +
@@ -461,7 +484,7 @@ if (grepl('ps$', output_file)) {
 
 plot_list <- list(plot_spacer(), sample_tree_plot, plot_spacer(), plot_spacer(),
                   gene_tree_plot, heatmap_plot, labels_plot, gene_metadata_plot,
-                  plot_spacer(), sample_metadata_plot, plot_spacer(), plot_spacer())
+                  plot_spacer(), sample_metadata_plot, sample_metadata_labels_plot, plot_spacer())
 if (any(class(sample_tree_plot) == "spacer")) {
   relative_heights[1] <- 0
 }
