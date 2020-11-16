@@ -314,16 +314,16 @@ if (!is.null(cmd_line_args$options[['genes_to_label']])) {
     return(names)
   }
   heatmap_plot <- heatmap_plot + 
-    scale_y_discrete(name = NULL, labels = ids2names)
-}
-
+    scale_y_discrete(name = NULL, labels = ids2names, position = "right")
+} 
 heatmap_plot <- heatmap_plot + 
   scale_x_discrete(position = "top") +
   biovisr::theme_heatmap( xaxis_labels = cmd_line_args$options[['sample_names']],
                           yaxis_labels = cmd_line_args$options[['gene_names']],
                           base_size = 12) +
   theme(axis.title = element_blank(),
-        axis.text.x.top = element_text(angle = 45, hjust=0)) +
+        axis.text.x.top = element_text(angle = 45, hjust=0),
+        axis.text.y.right = element_text(hjust=0)) +
   NULL
 
 # create tree plots if appropriate options are set
@@ -467,8 +467,9 @@ if (!is.null(sample_metadata)) {
                xaxis_labels = FALSE, yaxis_labels = sample_metadata_yaxis_labels,
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
-    # scale_x_discrete( expand = expand_scale(add = c(text_size,0)) ) +
-    theme(axis.title = element_blank())
+    scale_y_discrete(position = "right") +
+    theme(axis.title = element_blank(),
+          axis.text.y.right = element_text(hjust=0))
 }
 
 if (grepl('ps$', output_file)) {
