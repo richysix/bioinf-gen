@@ -39,7 +39,7 @@ for (domain in c('BP', 'CC', 'MF')) {
   data <- go_bubble_plot_test_data %>% 
     filter(., cat == domain) %>% 
     select(., -cat)
-  write_tsv(data, path = paste0(domain, '.sig.tsv'))
+  write_tsv(data, path = file.path(root_path, 'test_data', paste0(domain, '.sig.tsv')))
 }
 
 # test data for GO kappa scores
@@ -92,7 +92,7 @@ num_rows <- 10
 set.seed(208)
 starts <- sample(1:10000, num_rows)
 test_all_data <- tibble(
-  'GeneID' = sprintf('ZFG%03d', seq_len(num_rows)),
+  'GeneID' = sprintf('ENSTEST%03d', seq_len(num_rows)),
   'chr' = sample(1:25, num_rows, replace = TRUE),
   'start' = starts,
   'end' = as.integer(starts + 100),
@@ -109,7 +109,7 @@ test_all_data$chr <- factor(test_all_data$chr, levels = unique(test_all_data$chr
 test_all_data$strand <- factor(test_all_data$strand)
 
 # subset to 3 genes
-test_all_data %>% filter(., GeneID %in% c('ZFG005', 'ZFG006', 'ZFG009')) %>% 
+test_all_data %>% filter(., GeneID %in% c('ENSTEST005', 'ENSTEST006', 'ENSTEST009')) %>% 
   select(., GeneID, Name = `Gene name`) %>% 
   write_tsv(., path = file.path(root_path, 'test_data', 'test_genes_to_label.txt'))
 
@@ -120,6 +120,10 @@ gene_metadata <- select(test_all_data, GeneID, Class, GO_BP, GO_CC, GO_MF) %>%
   arrange(., category, value)
 
 write_tsv(gene_metadata, path = file.path(root_path, 'test_data', 'test_gene_metadata.tsv'))
+
+set.seed(912)
+sample_n(test_all_data, 3) %>% select(., GeneID) %>% 
+  write_tsv(., path = file.path(root_path, 'test_data', 'test_genes.txt'))
 
 # create counts file
 counts_1 <- counts(tmp)
@@ -182,7 +186,7 @@ for (term in gsea_report$NAME) {
     `RUNNING ES` = runif(20),
     `CORE ENRICHMENT` = rep(c('Yes', 'No'), each = 10)
   )
-  write_tsv(gene_info, path = paste0(term, '.xls'))
+  write_tsv(gene_info, path = file.path(root_path, 'test_data', paste0(term, '.xls')))
 }
 write.table(gene_info$PROBE[sample(1:20, 10)], quote = FALSE,
             file = file.path(root_path, 'test_data', 'gsea-genes.txt'), 
