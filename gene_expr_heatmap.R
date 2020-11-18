@@ -51,7 +51,7 @@ option_list <- list(
               help="Column in gene metadata to plot as fill colour [default %default]"),
   make_option("--gene_metadata_fill_palette", action="store", default=NULL,
               help="Fill palette for gene metadata plot [default colour-blind friendly palette from biovisr]"),
-  make_option("--relative_widths", action="store", type="character", default="1,3,1",
+  make_option("--relative_widths", action="store", type="character", default="1,3,1,3",
               help=paste("The relative widths of the plots as a comma-separated list. [default %default]")),
   make_option("--relative_heights", action="store", type="character", default="1,3,1",
               help=paste("The relative heights of the plots as a comma-separated list. [default %default]")),
@@ -136,7 +136,7 @@ relative_heights <- as.integer(unlist(str_split(cmd_line_args$options[['relative
 
 if (!is.null(cmd_line_args$options[['fill_limits']])) {
     fill_limits <-
-        strsplit(cmd_line_args$options[['fill_limits']], ",", fixed = TRUE)[[1]]
+        as.numeric(strsplit(cmd_line_args$options[['fill_limits']], ",", fixed = TRUE)[[1]])
 } else {
     fill_limits <- cmd_line_args$options[['fill_limits']]
 }
@@ -331,8 +331,8 @@ heatmap_plot <- heatmap_plot +
                           yaxis_labels = cmd_line_args$options[['gene_names']],
                           base_size = 12) +
   theme(axis.title = element_blank(),
-        axis.text.x.top = element_text(angle = 45, hjust=0),
-        axis.text.y.right = element_text(hjust=0)) +
+        #axis.text.x.top = element_text(angle = 45, hjust=0),
+        axis.text.y.right = element_text(hjust=0, face = "italic")) +
   NULL
 
 # create tree plots if appropriate options are set
@@ -556,7 +556,7 @@ if (!is.null(cmd_line_args$options[['output_count_file']])) {
 }
 
 if (!is.null(cmd_line_args$options[['output_rda_file']])) {
-  object_list <- c('data', 'counts', 'plot_data', 'heatmap_plot')
+  object_list <- c('data', 'samples', 'counts', 'plot_data', 'heatmap_plot')
   if (cluster_rows) {
     object_list <- c(object_list, 'gene_tree')
     if (cmd_line_args$options[['gene_tree']]) {
