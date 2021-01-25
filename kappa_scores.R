@@ -44,6 +44,7 @@ go_terms_matrix <-
   mutate(., GO.ID = case_when(is.na(GO.ID) ~ go_sig_genes$GO.ID[1], 
                                 TRUE ~ GO.ID),
            pvalue = case_when(is.na(`p value`) ~ FALSE, 
+                              `p value` == 0 ~ FALSE,
                               `p value` == 1 ~ TRUE)) %>% 
   select(., Gene, GO.ID, pvalue) %>% 
   pivot_wider(., names_from = GO.ID, values_from = pvalue,
