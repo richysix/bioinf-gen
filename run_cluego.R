@@ -25,8 +25,8 @@ option_list <- list(
               help="Adjusted pvalue threshold [default %default]" ), 
   make_option("--kappa_score_level", type="numeric", default=0.4, 
               help="Kappa score level for merging groups [default %default]" ), 
-  make_option("--cluego_version", type="character", default='v2.5.7', 
-              help="Version of ClueGO to use [default %default]" ), 
+  # make_option("--cluego_version", type="character", default='v2.5.7', 
+  #             help="Version of ClueGO to use [default %default]" ), 
   make_option("--verbose", type="logical", default=FALSE, action="store_true", 
               help="Turns on verbose output [default %default]" ), 
   make_option("--debug", type="logical", default=FALSE, action="store_true", 
@@ -47,7 +47,7 @@ cmd_line_args <- parse_args(
 )
 
 # cmd_line_args <-
-#   list(options = list('output_image_file' = 'go_network.pdf',
+#   list(options = list('output_image_file' = 'go_network.svg',
 #                       "output_basename" = 'cluego',
 #                       'organism' = 'Danio rerio',
 #                       "analysis_name" = 'cluego',
@@ -56,10 +56,9 @@ cmd_line_args <- parse_args(
 #                       "max_go_tree_level" = 8,
 #                       "pvalue_threshold" = 0.05,
 #                       "kappa_score_level" = 0.4,
-#                       "cluego_version" = 'v2.5.7',
 #                       verbose = TRUE,
 #                       debug = TRUE),
-#        args = c('overlap-Salmonella-6hpi-only-typhimurium-vs-mock/sig.genes'))
+#        args = c('sig-genes.tsv'))
  
 # unpack options
 debug <- cmd_line_args$options[['debug']]
@@ -67,7 +66,7 @@ verbose <- cmd_line_args$options[['verbose']]
 output_basename <- cmd_line_args$options[['output_basename']]
 
 # load packages
-packages <- c('xml2', 'RJSONIO', 'httr', 'biovisr')
+packages <- c('tidyverse', 'xml2', 'RJSONIO', 'httr', 'biovisr')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
@@ -89,7 +88,6 @@ text_to_data_frame <- function(table.text) {
   return(table)
 }
 
-home_folder <- Sys.getenv("HOME")
 port_number <- 1234
 host_address <- "localhost"
 
@@ -100,7 +98,6 @@ cluego_base_url = paste(cytoscape_base_url, "apps", "cluego", "cluego-manager", 
 analysis_name <- cmd_line_args$options[['analysis_name']]
 if (verbose) {
   print(paste("Analysis: ", analysis_name, sep=""))
-  print(paste("User Home Folder: ", home_folder, sep=""))
   print(paste("Cytoscape Base URL: ", cytoscape_base_url, sep=""))
   print(paste("ClueGO Base URL: ", cluego_base_url, sep=""))
 }
@@ -186,7 +183,8 @@ for (cluster_index in seq_len(length(cmd_line_args$args))) {
 # go through again and load gene lists
 for (cluster_index in seq_len(length(cmd_line_args$args))) {
   file <- cmd_line_args$args[cluster_index]
-  gene_list <- toJSON(read.table(file, as.is = TRUE, header=FALSE)[[1]])
+  gene_info <- read_tsv(file)
+  gene_list <- toJSON(gene_info$Gene)
   response <- PUT(url=paste(cluego_base_url, "cluster", "upload-ids-list", URLencode(as.character(cluster_index)), sep="/"), 
                   body=gene_list, encode = "json", content_type_json())
   stop_for_status(response, "Upload gene lists")
@@ -284,6 +282,9 @@ if (verbose) {
 # Run the analysis and save log file
 analysis_option <- "Cancel and refine selection" # ("Continue analysis", "Skip the grouping", "Cancel and refine selection")  -> Analysis option in case there are more than 1000 terms found!
 response <- GET(paste(cluego_base_url, URLencode(analysis_name), URLencode(analysis_option), sep="/"))
+if (response$status_code == 404) {
+  print(content(response, encode = "json")[["message"]])
+}
 stop_for_status(response, "Run analysis")
 log_file_name = paste(output_basename, "analysis-log.txt", sep = "-")
 writeLines(content(response, encoding="UTF-8"), log_file_name)
