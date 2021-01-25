@@ -181,9 +181,24 @@ for (cluster_index in seq_len(length(cmd_line_args$args))) {
 }
 
 # go through again and load gene lists
+identifiers <- list(
+  'Homo Sapiens' = 'ENSG[0-9]{11}',
+  'Mus Musculus' = 'ENSMUSG[0-9]{11}',
+  'Danio rerio' = 'ENSDARG[0-9]{11}'
+)
 for (cluster_index in seq_len(length(cmd_line_args$args))) {
   file <- cmd_line_args$args[cluster_index]
   gene_info <- read_tsv(file)
+  # check gene ids match
+  if (is.null(identifiers[[organism_name]])) {
+    warning("No identifier regex for species, ", organism_name)
+  }else {
+    if (!all(grepl(identifiers[[organism_name]], gene_info$Gene))) {
+      stop(paste0("Gene ids do not match expected format: species = ", organism_name, 
+                  ", id format = ", identifiers[[organism_name]], "\n",
+                  "ids = ", paste0(head(gene_info$Gene), collapse = ", ")))
+    }
+  }
   gene_list <- toJSON(gene_info$Gene)
   response <- PUT(url=paste(cluego_base_url, "cluster", "upload-ids-list", URLencode(as.character(cluster_index)), sep="/"), 
                   body=gene_list, encode = "json", content_type_json())
