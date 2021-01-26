@@ -25,8 +25,8 @@ option_list <- list(
               help="Adjusted pvalue threshold [default %default]" ), 
   make_option("--kappa_score_level", type="numeric", default=0.4, 
               help="Kappa score level for merging groups [default %default]" ), 
-  # make_option("--cluego_version", type="character", default='v2.5.7', 
-  #             help="Version of ClueGO to use [default %default]" ), 
+  make_option("--get_ontologies", type="logical", default=FALSE, action="store_true",
+              help="Return possible ontologies for species and exit [default %default]" ),
   make_option("--verbose", type="logical", default=FALSE, action="store_true", 
               help="Turns on verbose output [default %default]" ), 
   make_option("--debug", type="logical", default=FALSE, action="store_true", 
@@ -120,6 +120,19 @@ if (verbose) {
 response <- PUT(url=paste(cluego_base_url, "organisms", "set-organism", 
                           URLencode(organism_name), sep="/"), encode = "json")
 stop_for_status(response, "Set species")
+
+# print all available ontologies and exit if --get_ontologies set
+if (cmd_line_args$options[['get_ontologies']]) {
+  response <- GET(url=paste(cluego_base_url, "ontologies", "get-ontology-info", sep="/"), encode = "json")
+  stop_for_status(response, "Get Ontologies")
+  content_list <- content(response, encode = "json")
+  ontologies <- sapply(names(content_list), 
+                       function(x, content_list){ sprintf("Index = %s, %s", x, content_list[[x]]) },
+                       content_list)
+  names(ontologies) <- NULL
+  cat(ontologies, sep = "\n")
+  quit(save = "no")
+}
 
 ## [optional functions and settings, un comment and modify if needed]
 # 1.1 Get all ClueGO organisms
