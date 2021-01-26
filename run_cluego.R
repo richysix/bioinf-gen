@@ -13,6 +13,11 @@ option_list <- list(
               help="Basename for output files [default %default]" ), 
   make_option("--organism", type="character", default='Danio rerio', 
               help="Version of ClueGO to use [default %default]" ), 
+  make_option("--ontologies", type="character", default="1;Ellipse,2;Hexagon,4;Rectangle,5;Diamond", 
+              help=paste("Comma separated list of ontologies to pick.",
+              "Each entry must be the index of the ontology",
+              "followed by a shape separated by a semi-colon",
+              "[default %default]" )), 
   make_option("--analysis_name", type="character", default='cluego', 
               help="Name of the analysis [default %default]" ), 
   make_option("--destroy_network", action="store_true", type="logical", default=FALSE, 
@@ -50,6 +55,7 @@ cmd_line_args <- parse_args(
 #   list(options = list('output_image_file' = 'go_network.svg',
 #                       "output_basename" = 'cluego',
 #                       'organism' = 'Danio rerio',
+#                       'ontologies' = "1;Ellipse,2;Hexagon,4;Rectangle,5;Diamond",
 #                       "analysis_name" = 'cluego',
 #                       "destroy_network" = FALSE,
 #                       "min_go_tree_level" = 3,
@@ -59,11 +65,12 @@ cmd_line_args <- parse_args(
 #                       verbose = TRUE,
 #                       debug = TRUE),
 #        args = c('sig-genes.tsv'))
- 
+  
 # unpack options
 debug <- cmd_line_args$options[['debug']]
 verbose <- cmd_line_args$options[['verbose']]
 output_basename <- cmd_line_args$options[['output_basename']]
+ontologies_to_select <- unlist(strsplit(cmd_line_args$options[['ontologies']], ",", fixed = TRUE))
 
 # load packages
 packages <- c('tidyverse', 'xml2', 'RJSONIO', 'httr', 'biovisr')
@@ -230,9 +237,9 @@ if (verbose) {
   print(paste("3.0 Select Ontologies", sep=""))
 }
 # Possible node shapes are "Ellipse", "Diamond", "Hexagon", "Octagon", "Parallelogram", "Rectangle", "Round Rectangle", "Triangle", "V"
-selected_ontologies <- toJSON(c("1;Ellipse", "2;Hexagon", "4;Rectangle", "5;Diamond")) # (run "3.1 Get all available Ontologies" to get all options)
+# set option --get_ontologies to get available options
 response <- PUT(url=paste(cluego_base_url, "ontologies", "set-ontologies", sep="/"), 
-                body=selected_ontologies, encode = "json", content_type_json())
+                body=toJSON(ontologies_to_select), encode = "json", content_type_json())
 stop_for_status(response, "Select ontologies and set shape")
 
 ## [optional functions and settings, un comment and modify if needed]
