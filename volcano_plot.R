@@ -30,7 +30,7 @@ deseq_results_file <- cmd_line_args$args[1]
 output_file <- cmd_line_args$args[2]
 
 # load packages 
-packages <- c('tidyverse', 'viridis', 'ggrepel')
+packages <- c('tidyverse', 'viridis', 'ggrepel', 'ggrastr')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
 for( package in packages ){
     suppressPackageStartupMessages(
@@ -68,7 +68,7 @@ if (cmd_line_args$options[['labels']]) {
 # label highest changers
 volcano_plot <-
     ggplot(data = deseq_results, aes(x = log2fc, y = log10p, colour = up_or_down)) +
-        geom_point()
+        rasterise(geom_point(), dpi = 300)
 if (cmd_line_args$options[['labels']]) {
   volcano_plot <- volcano_plot +
         geom_text_repel(data = biggest_changers, aes(label = Name)) 
