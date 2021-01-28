@@ -27,6 +27,9 @@ if (input_file == '-') {
 metadata <- read_tsv(input_file)
 
 metadata <- metadata %>%
-    pivot_longer(., cols = -sample, names_to = "category", values_to = "value")
+  pivot_longer(., cols = -sample, names_to = "category", values_to = "value") %>% 
+  mutate(., category = factor(category, levels = unique(category))) %>% 
+  arrange(., category, value) %>% 
+  mutate(., value = factor(value, levels = unique(value)))
 
 write_tsv(metadata, cmd_line_args$args[2])
