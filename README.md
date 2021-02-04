@@ -43,7 +43,8 @@ cd test_data
 bubble_continuous.tsv
 ```
 
-![Test bubble plot. It shows bubbles of different sizes and colours plotted at random positions on the x and y axes.](test_data/test_bubble_cont.png "Test bubble plot")
+![Test bubble plot. It shows bubbles of different sizes and colours plotted
+at random positions on the x and y axes.](test_data/test_bubble_cont.png "Test bubble plot")
 
 Or for categorical data. This example shows some of the possible options.
 ```
@@ -55,7 +56,9 @@ Or for categorical data. This example shows some of the possible options.
 go-3expts.tsv
 ```
 
-![Test categorical bubble plot. It shows bubbles of different sizes and colours. The x axis represents different experiments and the y axis represents enriched Gene Ontology terms.](test_data/test_bubble_cat.png "Test Categorical bubble plot")
+![Test categorical bubble plot. It shows bubbles of different sizes and colours.
+The x axis represents different experiments and the y axis represents enriched
+Gene Ontology terms.](test_data/test_bubble_cat.png "Test Categorical bubble plot")
 
 ### gene_expr_heatmap.R
 
@@ -75,7 +78,9 @@ test_samples.tsv test_rnaseq_data.tsv test_heatmap.pdf
 The available fill_palettes are those from [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html) and
 [ColorBrewer](https://colorbrewer2.org/) via [scale_fill_distiller](https://ggplot2.tidyverse.org/reference/scale_brewer.html)
 
-![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination](test_data/rnaseq_heatmap.png "RNAseq heatmap")
+![Gene expression heatmap. Genes are displayed in rows with the samples in the
+columns. Each box is coloured according to the expression of the gene/sample
+combination](test_data/rnaseq_heatmap.png "RNAseq heatmap")
 
 It is also possible to supply a list of gene ids to subset the heatmap to.
 
@@ -92,7 +97,9 @@ echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_subset.pdf
 ```
 
-![Gene expression heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. Only three of the original rows are shown](test_data/rnaseq_heatmap_subset.png "RNAseq heatmap subset")
+![Gene expression heatmap. Genes are displayed in rows with the samples in the
+columns. Each box is coloured according to the expression of the gene/sample
+combination. Only three of the original rows are shown](test_data/rnaseq_heatmap_subset.png "RNAseq heatmap subset")
 
 Or only label the supplied genes
 ```
@@ -118,7 +125,10 @@ under the expression heatmap.
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_sample_metadata.pdf
 ```
 
-![Gene expression heatmap with sample metadata heatmap. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. A second heatmap shows the metadata associated with each sample](test_data/rnaseq_heatmap_with_sample_metadata.png "RNAseq heatmap with metadata")
+![Gene expression heatmap with sample metadata heatmap. Genes are displayed in
+rows with the samples in the columns. Each box is coloured according to the
+expression of the gene/sample combination. A second heatmap shows the metadata
+associated with each sample](test_data/rnaseq_heatmap_with_sample_metadata.png "RNAseq heatmap with metadata")
 
 ```
 ../gene_expr_heatmap.R --transform rlog \
@@ -153,11 +163,11 @@ left of the main expression heatmap](test_data/test_heatmap_with_trees.png "RNAs
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees-sample_gene_metadata.png
 ```
 
-!["Gene expression heatmap with gene and sample metadata heatmaps and clustering trees. 
+![Gene expression heatmap with gene and sample metadata heatmaps and clustering trees. 
 Genes are displayed in rows with the samples in the columns. Each box is coloured 
 according to the expression of the gene/sample combination. Two more heatmaps show the 
 metadata associated with each gene and sample and the clustering trees for the genes and 
-samples are shown above and to the left of the main expression heatmap"](test_data/test_heatmap_with_trees-sample_gene_metadata.png "RNAseq heatmap with gene and sample metadata and clustering trees")
+samples are shown above and to the left of the main expression heatmap](test_data/test_heatmap_with_trees-sample_gene_metadata.png "RNAseq heatmap with gene and sample metadata and clustering trees")
 
 ### go_barchart.R
 
@@ -174,7 +184,8 @@ cd test_data
 ../go_barchart.R test_data_go.tsv
 ```
 
-![Bar chart of GO terms against Fold Enrichment. The bars are coloured by GO domain](test_data/go_barchart.png "Default GO bar chart")
+![Bar chart of GO terms against Fold Enrichment. The bars are coloured by GO
+domain](test_data/go_barchart.png "Default GO bar chart")
 
 The column to use can be changed with the `--x_variable` option. In this
 example only the top 20 terms (by the x variable) are plotted.
@@ -185,7 +196,8 @@ example only the top 20 terms (by the x variable) are plotted.
 test_data_go.tsv
 ```
 
-![Bar chart of GO terms against -log10pvalue. The bars are coloured by experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
+![Bar chart of GO terms against -log10pvalue. The bars are coloured by
+experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
 
 ### go_bubble_plot.R
 
@@ -201,14 +213,16 @@ cd test_data
 ```
 This will produce a bubble plot (go_bubble.pdf) with the top 5 terms by pvalue labelled.
 
-![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO domain and the top 5 are labelled](test_data/go_bubble_plot_default.png "Default GO bubble plot")
+![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO
+domain and the top 5 are labelled](test_data/go_bubble_plot_default.png "Default GO bubble plot")
 
 To set a p value cut off for labelling
 ```
 ../go_bubble_plot.R --label_p_cutoff 1e-6
 ```
 
-![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO domain and points with pvalues below 1e-6 are labelled](test_data/go_bubble_plot_pval_threshold.png "GO bubble plot, terms with pvalue less than 1e-6 labelled")
+![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO
+domain and points with pvalues below 1e-6 are labelled](test_data/go_bubble_plot_pval_threshold.png "GO bubble plot, terms with pvalue less than 1e-6 labelled")
 
 Or to label specific terms. The GO IDs are used to specify which terms to label,
 but the actual term descriptions are used as the labels.
@@ -217,7 +231,8 @@ but the actual term descriptions are used as the labels.
 --labels="GO:0000001,GO:0000002,GO:0000003,GO:0000004,GO:0000005"
 ```
 
-![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO domain and the first 5 terms are labelled](test_data/go_bubble_plot_specific_labels.png "GO bubble plot, with terms 1 to 5 labelled")
+![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO
+domain and the first 5 terms are labelled](test_data/go_bubble_plot_specific_labels.png "GO bubble plot, with terms 1 to 5 labelled")
 
 --no_labels will remove labels altogether
 ```
@@ -253,7 +268,8 @@ cd test_data
 test_samples.tsv test_rnaseq_data.tsv
 ```
 
-![Basic count plot showing the normalised counts for the wt condition as blue circles and the mutant condition as orange circles](test_data/count_plot_basic.png "Basic count plot")
+![Basic count plot showing the normalised counts for the wt condition as blue
+circles and the mutant condition as orange circles](test_data/count_plot_basic.png "Basic count plot")
 
 By default it tries to use a column named condition in the samples file as the
 x variable. The default is to colour the points by condition as well.
@@ -288,7 +304,9 @@ echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
 test_samples.tsv test_rnaseq_data.tsv
 ```
 
-![Count plot showing the normalised counts for the wt condition in blue and the mutant condition in red. The points are split by the control or treated. Sex is displayed as circle for female and squares for male](test_data/count_plot_everything.png "Count plot by condition by treatment")
+![Count plot showing the normalised counts for the wt condition in blue and the
+mutant condition in red. The points are split by the control or treated. Sex is
+displayed as circle for female and squares for male](test_data/count_plot_everything.png "Count plot by condition by treatment")
 
 The other options are:
 * --no_jitter - removes the jitter from the points
