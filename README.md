@@ -35,7 +35,8 @@ pdf, png, ps and svg
 
 Script to produce a bubble plot from continuous or categorical data. It expects 1 input file.
 There is some test data in the test_data directory of this repository.
-For example
+The script defaults to using columns named `x`, `y`, `fill` and `size` in the
+data file. For example ...
 ```
 cd test_data
 ../bubble_plot.R \
@@ -46,7 +47,7 @@ bubble_continuous.tsv
 ![Test bubble plot. It shows bubbles of different sizes and colours plotted
 at random positions on the x and y axes.](test_data/test_bubble_cont.png "Test bubble plot")
 
-Or for categorical data. This example shows some of the possible options.
+Or for categorical data. This example also shows some of the possible options.
 ```
 ../bubble_plot.R --x_var Expt --y_var GO.ID \
 --fill_var log10p --size_var Enrichment \
@@ -130,6 +131,8 @@ rows with the samples in the columns. Each box is coloured according to the
 expression of the gene/sample combination. A second heatmap shows the metadata
 associated with each sample](test_data/rnaseq_heatmap_with_sample_metadata.png "RNAseq heatmap with metadata")
 
+The `--gene_tree` and `--sample_tree` options plot trees for the gene/sample clustering.
+
 ```
 ../gene_expr_heatmap.R --transform rlog \
 --centre_and_scale --cluster both \
@@ -148,6 +151,9 @@ coloured according to the expression of the gene/sample combination.
 A second heatmap shows the metadata associated with each sample and the 
 clustering trees for the genes and samples are shown above and to the 
 left of the main expression heatmap](test_data/test_heatmap_with_trees.png "RNAseq heatmap with sample metadata and clustering trees")
+
+A file of gene metadata can also be supplied and will be plotted as a heatmap
+to the right of the expression heatmap.
 
 ```
 ../gene_expr_heatmap.R --transform rlog \
