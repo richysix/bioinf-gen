@@ -55,7 +55,7 @@ Or for categorical data. This example shows some of the possible options.
 go-3expts.tsv
 ```
 
-![Test categorical bubble plot. It shows bubbles of different sizes and colours. The x axis represents different experiments and the y axis represents enriched Gene Ontology terms.](test_data/test_bubble_cat.png "Test bubble plot")
+![Test categorical bubble plot. It shows bubbles of different sizes and colours. The x axis represents different experiments and the y axis represents enriched Gene Ontology terms.](test_data/test_bubble_cat.png "Test Categorical bubble plot")
 
 ### gene_expr_heatmap.R
 
@@ -147,6 +147,8 @@ test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees.png
 --width 640 --height 480 \
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees-sample_gene_metadata.png
 ```
+
+![Gene expression heatmap with gene and sample metadata heatmaps and clustering trees. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. Two more heatmaps show the metadata associated with each gene and sample and the clustering trees for the genes and samples are shown above and to the left of the main expression heatmap](test_data/test_heatmap_with_trees.png "RNAseq heatmap with gene and sample metadata and clustering trees")
 
 ### go_barchart.R
 
