@@ -10,9 +10,25 @@ test-gsea_to_genes.out.tsv test-gsea_to_genes.sig.out.tsv
 BP.sig.tsv CC.sig.tsv MF.sig.tsv \
 test_samples.tsv test_samples_long.tsv \
 test_gene_metadata.tsv test_rnaseq_data.tsv \
-test_data_go.tsv test_gsea_report.xls\
-Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls gsea-genes.txt: test_data.R
+test_data_go.tsv test_gsea_report.xls \
+Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls gsea-genes.txt \
+go-3expts.tsv bubble_continuous.tsv: test_data.R
 	./test_data.R
+
+# bubble plots
+test_bubble_cont.pdf: ../bubble_plot.R go-3expts.tsv
+	../bubble_plot.R \
+	--output_file test_bubble_cont.pdf \
+	bubble_continuous.tsv
+
+test_bubble_cat.pdf: ../bubble_plot.R go-3expts.tsv
+	../bubble_plot.R --x_var Expt --y_var GO.ID \
+	--fill_var log10p --size_var Enrichment \
+	--y_labels Name --reverse_y \
+	--width 4 --height 4 \
+	--output_file test_bubble_cat.pdf \
+	go-3expts.tsv
+
 
 # Gene expression heatmaps
 test_heatmap.pdf: ../gene_expr_heatmap.R test_samples.tsv test_rnaseq_data.tsv

@@ -5,6 +5,7 @@ General Bioinformatics scripts
 ## Scripts
 
 * aggregate_zfa.R - aggregate ZFA terms by another column
+* [bubble_plot.R](https://github.com/richysix/bioinf-gen#bubble_plotr) - Generic bubble plot
 * cluster_samples_rnaseq.R
 * convert_detct_to_rnaseq_for_gsea.pl
 * create_geneset_file.R
@@ -26,6 +27,35 @@ General Bioinformatics scripts
 * [run_cluego.R](https://github.com/richysix/bioinf-gen#run_cluegor) - Run a Cytoscape ClueGO analysis from gene list(s)
 * volcano_plot.R
 * xlsx_conditional_formatting.R
+
+The plot scripts (gene_expr_heatmap.R, go_barchart.R, go_bubble_plot.R) support outputting plot files as
+pdf, png, ps and svg
+
+### bubble_plot.R
+
+Script to produce a bubble plot from continuous or categorical data. It expects 1 input file.
+There is some test data in the test_data directory of this repository.
+For example
+```
+cd test_data
+../bubble_plot.R \
+--output_file test_bubble_cont.pdf \
+bubble_continuous.tsv
+```
+
+![Test bubble plot. It shows bubbles of different sizes and colours plotted at random positions on the x and y axes.](test_data/test_bubble_cont.png "Test bubble plot")
+
+Or for categorical data. This example shows some of the possible options.
+```
+../bubble_plot.R --x_var Expt --y_var GO.ID \
+--fill_var log10p --size_var Enrichment \
+--y_labels Name --reverse_y \
+--width 4 --height 4 \
+--output_file test_bubble_cat.pdf \
+go-3expts.tsv
+```
+
+![Test categorical bubble plot. It shows bubbles of different sizes and colours. The x axis represents different experiments and the y axis represents enriched Gene Ontology terms.](test_data/test_bubble_cat.png "Test bubble plot")
 
 ### gene_expr_heatmap.R
 
