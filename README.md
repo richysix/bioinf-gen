@@ -148,7 +148,11 @@ test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees.png
 test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees-sample_gene_metadata.png
 ```
 
-![Gene expression heatmap with gene and sample metadata heatmaps and clustering trees. Genes are displayed in rows with the samples in the columns. Each box is coloured according to the expression of the gene/sample combination. Two more heatmaps show the metadata associated with each gene and sample and the clustering trees for the genes and samples are shown above and to the left of the main expression heatmap](test_data/test_heatmap_with_trees.png "RNAseq heatmap with gene and sample metadata and clustering trees")
+!["Gene expression heatmap with gene and sample metadata heatmaps and clustering trees. 
+Genes are displayed in rows with the samples in the columns. Each box is coloured 
+according to the expression of the gene/sample combination. Two more heatmaps show the 
+metadata associated with each gene and sample and the clustering trees for the genes and 
+samples are shown above and to the left of the main expression heatmap"](test_data/test_heatmap_with_trees-sample_gene_metadata.png "RNAseq heatmap with gene and sample metadata and clustering trees")
 
 ### go_barchart.R
 
