@@ -6,9 +6,9 @@ library('optparse')
 option_list <- list(
   make_option("--labels", action="store_true", type="logical", default=FALSE,
               help="Label the points which are above the logfc and pvalue thresholds [default %default]" ),
-  make_option("--log2fc_threshold", type="numeric", default=2,
+  make_option("--log2fc_threshold", type="numeric", default=NULL,
               help="Log2 FC threshold above which to label the points [default %default]" ),
-  make_option("--pval_threshold", type="numeric", default=0.05,
+  make_option("--pval_threshold", type="numeric", default=NULL,
               help="P value cut-off to use to colour/label the points [default %default]" )
 )
 
@@ -38,13 +38,14 @@ for( package in packages ){
 }
 
 # load data
-deseq_results <- read.delim(deseq_results_file)
+deseq_results <- read.delim(deseq_results_file) %>% 
+  filter(., !is.na(adjp)) # remove gene with adjp == NA
 
 # make -log10p column
 deseq_results$log10p <- -log10(deseq_results$adjp)
 
 # make factor for up and down genes
-deseq_results$sig <- !is.na(deseq_results$adjp) & deseq_results$adjp < 0.05
+deseq_results$sig <- deseq_results$adjp < 0.05
 deseq_results$up_or_down <- rep(NA, nrow(deseq_results))
 deseq_results$up_or_down[ deseq_results$sig & deseq_results$log2fc > 0 ] <- 'up'
 deseq_results$up_or_down[ deseq_results$sig & deseq_results$log2fc < 0 ] <- 'down'
@@ -57,10 +58,24 @@ deseq_results <- arrange(deseq_results, desc(adjp))
 # highlight specific genes
 # label genes with abs(fold change) > 2
 if (cmd_line_args$options[['labels']]) {
-  biggest_changers <- 
-    filter(deseq_results, 
-           abs(log2fc) > cmd_line_args$options[['log2fc_threshold']], 
-           adjp < cmd_line_args$options[['pval_threshold']] )
+  # set defaults if not set
+  if (is.null(cmd_line_args$options[['log2fc_threshold']]) &
+      is.null(cmd_line_args$options[['pval_threshold']])) {
+    cmd_line_args$options[['log2fc_threshold']] <- 2
+    cmd_line_args$options[['pval_threshold']] <- 1e-5
+  }
+  if (!is.null(cmd_line_args$options[['log2fc_threshold']])) {
+    biggest_changers <- 
+      filter(deseq_results, 
+             abs(log2fc) > cmd_line_args$options[['log2fc_threshold']])
+  } else {
+    biggest_changers <- deseq_results
+  }
+  if (!is.null(cmd_line_args$options[['pval_threshold']])) {
+    biggest_changers <- 
+      filter(deseq_results, 
+             adjp < cmd_line_args$options[['pval_threshold']] )
+  }
 }
 
 # plot adjusted pvalue against log2 fold change
