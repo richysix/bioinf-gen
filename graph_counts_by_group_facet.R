@@ -21,6 +21,8 @@ option_list <- list(
               help="Name of column from samples file to use for facetting [default %default]" ),
   make_option("--crossbar", type="character", default=NULL,
               help="Type of crossbar (mean/median) to add to each group [default %default]" ),
+  make_option("--log10", type="logical", action="store_true", default=FALSE,
+              help="Use a log10 scaled y-axis [default %default]" ),
   make_option("--width", type="numeric", default=10,
               help="width of plot (inches) [default %default]" ),
   make_option("--height", type="numeric", default=7,
@@ -140,6 +142,10 @@ counts_for_plotting$sample <- factor(counts_for_plotting$sample,
                                     levels = unique(counts_for_plotting$sample))
 counts_for_plotting <- merge(samples, counts_for_plotting)
 
+if (cmd_line_args$options[['log10']]) {
+  counts_for_plotting$log10 <- log10(counts_for_plotting$count + 1)
+}
+
 # make colour palette for the data
 num_levels <- nlevels(samples[[colour_var]])
 if (!is.null(cmd_line_args$options[['colour_palette']])) {
@@ -219,8 +225,8 @@ plot_list <- lapply(regions,
         }
         
         plot <- ggplot(data = counts, aes_(x = as.name(x_var),
-                                           y = as.name('count')))
-        
+                                            y = as.name('count')))
+
         # add crossbars
         if (!is.null(cmd_line_args$options[['crossbar']])) {
             if (cmd_line_args$options[['crossbar']] == 'mean') {
@@ -273,6 +279,13 @@ plot_list <- lapply(regions,
             }
         }
         
+        if (cmd_line_args$options[['log10']]) {
+          plot <- plot + scale_y_continuous(trans = scales::pseudo_log_trans()) +
+            labs(title = title, y = expression(log[10] * '(Normalised Counts)') )
+        } else {
+          plot <- plot + labs(title = title, y = "Normalised Counts")
+        }
+        
         # add facets
         if (!is.null(facet_var)) {
             plot <- plot +
@@ -280,7 +293,6 @@ plot_list <- lapply(regions,
         }
         
         plot <- plot + 
-            labs(title = title, y = "Normalised Counts") +
             theme_minimal(base_size = theme_base_size) +
             theme(strip.background = element_rect(fill = "grey90",
                                                   colour = "grey90"),
