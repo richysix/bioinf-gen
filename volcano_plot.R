@@ -9,7 +9,10 @@ option_list <- list(
   make_option("--log2fc_threshold", type="numeric", default=NULL,
               help="Log2 FC threshold above which to label the points [default %default]" ),
   make_option("--pval_threshold", type="numeric", default=NULL,
-              help="P value cut-off to use to colour/label the points [default %default]" )
+              help="P value cut-off to use to colour/label the points [default %default]" ),
+  make_option("--log2fc_or_pval", action="store_true", type="logical", default=FALSE,
+              help=paste0("Change labelling to be points over either threshold [default %default]\n",
+              "The default behaviour if both thresholds are set is to labels points over both thresholds\n") )
 )
 
 cmd_line_args <- parse_args(
@@ -37,8 +40,13 @@ for( package in packages ){
         suppressWarnings( library(package, character.only = TRUE) ) )
 }
 
+if (!is.null(cmd_line_args$options[['log2fc_threshold']]) |
+      !is.null(cmd_line_args$options[['pval_threshold']])) {
+    cmd_line_args$options[['labels']] <- TRUE
+}
+
 # load data
-deseq_results <- read.delim(deseq_results_file) %>% 
+deseq_results <- read_tsv(deseq_results_file) %>% 
   filter(., !is.na(adjp)) # remove gene with adjp == NA
 
 # make -log10p column
@@ -64,18 +72,23 @@ if (cmd_line_args$options[['labels']]) {
     cmd_line_args$options[['log2fc_threshold']] <- 2
     cmd_line_args$options[['pval_threshold']] <- 1e-5
   }
+  deseq_results$name_label <- ""
   if (!is.null(cmd_line_args$options[['log2fc_threshold']])) {
-    biggest_changers <- 
-      filter(deseq_results, 
-             abs(log2fc) > cmd_line_args$options[['log2fc_threshold']])
+      if (!is.null(cmd_line_args$options[['pval_threshold']])) {
+        if (cmd_line_args$options[['log2fc_or_pval']]) {
+            to_label <- abs(deseq_results$log2fc) > cmd_line_args$options[['log2fc_threshold']] |
+                            deseq_results$adjp < cmd_line_args$options[['pval_threshold']]
+        } else {
+            to_label <- abs(deseq_results$log2fc) > cmd_line_args$options[['log2fc_threshold']] &
+                            deseq_results$adjp < cmd_line_args$options[['pval_threshold']]
+        }
+      } else {
+        to_label <- abs(deseq_results$log2fc) > cmd_line_args$options[['log2fc_threshold']]
+      }
   } else {
-    biggest_changers <- deseq_results
+    to_label <- deseq_results$adjp < cmd_line_args$options[['pval_threshold']]
   }
-  if (!is.null(cmd_line_args$options[['pval_threshold']])) {
-    biggest_changers <- 
-      filter(deseq_results, 
-             adjp < cmd_line_args$options[['pval_threshold']] )
-  }
+  deseq_results$name_label[ to_label ] <- deseq_results$Name[ to_label ]
 }
 
 # plot adjusted pvalue against log2 fold change
@@ -83,10 +96,11 @@ if (cmd_line_args$options[['labels']]) {
 # label highest changers
 volcano_plot <-
     ggplot(data = deseq_results, aes(x = log2fc, y = log10p, colour = up_or_down)) +
+        #geom_point()
         rasterise(geom_point(), dpi = 300)
 if (cmd_line_args$options[['labels']]) {
   volcano_plot <- volcano_plot +
-        geom_text_repel(data = biggest_changers, aes(label = Name)) 
+        geom_text_repel(aes(label = name_label)) 
 }
 
 volcano_plot <- volcano_plot +
