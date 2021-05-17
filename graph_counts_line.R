@@ -63,21 +63,22 @@ if (debug) { cat("Counts\n") }
 
 # Read data
 data_file <- cmd_line_args$args[2]
-data <- read.delim(data_file, header=TRUE, check.names=FALSE)
+data <- load_rnaseq_data(data_file)
+# data <- read.delim(data_file, header=TRUE, check.names=FALSE)
 
-# Support different column names
-names(data)[names(data) == 'chr']               <- 'Chr'
-names(data)[names(data) == '#Chr']              <- 'Chr'
-names(data)[names(data) == 'start']             <- 'Start'
-names(data)[names(data) == 'end']               <- 'End'
-names(data)[names(data) == 'strand']            <- 'Strand'
-names(data)[names(data) == 'ID']                <- 'Gene ID'
-names(data)[names(data) == 'adjpval']           <- 'adjp'
-names(data)[names(data) == 'padj']              <- 'adjp'
-names(data)[names(data) == 'Adjusted p value']  <- 'adjp'
-names(data)[names(data) == 'Gene name']         <- 'Name'
-names(data)[ grepl("e[0-9]+ Ensembl Gene ID", names(data)) ] <- 'Gene ID'
-names(data)[names(data) == 'GeneID']                <- 'Gene ID'
+# # Support different column names
+# names(data)[names(data) == 'chr']               <- 'Chr'
+# names(data)[names(data) == '#Chr']              <- 'Chr'
+# names(data)[names(data) == 'start']             <- 'Start'
+# names(data)[names(data) == 'end']               <- 'End'
+# names(data)[names(data) == 'strand']            <- 'Strand'
+# names(data)[names(data) == 'ID']                <- 'Gene ID'
+# names(data)[names(data) == 'adjpval']           <- 'adjp'
+# names(data)[names(data) == 'padj']              <- 'adjp'
+# names(data)[names(data) == 'Adjusted p value']  <- 'adjp'
+# names(data)[names(data) == 'Gene name']         <- 'Name'
+# names(data)[ grepl("e[0-9]+ Ensembl Gene ID", names(data)) ] <- 'Gene ID'
+# names(data)[names(data) == 'GeneID']                <- 'Gene ID'
 
 # find adjusted pvalue column
 if (sum(grepl("adjp", names(data))) == 1) {
