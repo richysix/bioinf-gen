@@ -5,6 +5,8 @@ library('optparse')
 option_list <- list(
   make_option("--output_file", type="character", default='kappa_scores.tsv',
               help="Output file name [default %default]" ),
+  make_option("--pval_colname", type="character", default='p value',
+              help="Name of the column which indicates which genes are significant[default %default]" ),
   make_option("--debug", type="logical", default=FALSE, action="store_true",
               help="Turns on debugging statements [default %default]" )
 )
@@ -28,7 +30,7 @@ cmd_line_args <- parse_args(
 #        args = c('sig.tsv', 'BP.sig.genes.tsv'))
 
 # load packages
-packages <- c('tidyverse')
+packages <- c('tidyverse', 'rlang')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
@@ -39,13 +41,19 @@ sig_genes <- read_tsv(cmd_line_args$args[1])
 # topgo sig.genes.tsv
 go_sig_genes <- read_tsv(cmd_line_args$args[2])
 
+# check sig col
+pval_colname <- rlang::sym(cmd_line_args$options[['pval_colname']])
+if (!any(colnames(go_sig_genes) == pval_colname)) {
+  stop("Significnce column name provided by --pval_colname doesn't match any of the column names")
+}
+
 go_terms_matrix <- 
   left_join(sig_genes, go_sig_genes, by = c('Gene')) %>% 
   mutate(., GO.ID = case_when(is.na(GO.ID) ~ go_sig_genes$GO.ID[1], 
                                 TRUE ~ GO.ID),
-           pvalue = case_when(is.na(`p value`) ~ FALSE, 
-                              `p value` == 0 ~ FALSE,
-                              `p value` == 1 ~ TRUE)) %>% 
+           pvalue = case_when(is.na(!!pval_colname) ~ FALSE, 
+                              !!pval_colname == 0 ~ FALSE,
+                              !!pval_colname == 1 ~ TRUE)) %>% 
   select(., Gene, GO.ID, pvalue) %>% 
   pivot_wider(., names_from = GO.ID, values_from = pvalue,
               values_fill = list(pvalue = FALSE))
