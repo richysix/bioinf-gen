@@ -6,9 +6,11 @@ option_list <- list(
   make_option("--heatmap_data", type="character", default=NULL,
               help="tsv of data for chromosome heatmap. Expects columns Chr, Start, End, Value [default %default]" ),
   make_option("--heatmap_colours", type="character", default=NULL,
-              help="comma separated string of colours [default %default]" ),
-  make_option("--annotation_file", type="character", default='mutation.txt',
-              help="tsv of annotation [default %default]" ),
+              help="comma separated string of colours for heatmap [default %default]" ),
+  make_option("--annotation_data", type="character", default='mutation.txt',
+              help="tsv of annotation data [default %default]" ),
+  make_option("--annotation_label_type", type="character", default='marker',
+              help="Type of annotation track (marker, line, polygon, heatmap) [default %default]" ),
   make_option("--width", type="integer", default=NULL,
               help="Width of the plot [default %default]" ),
   make_option("--height", type="integer", default=NULL,
@@ -37,7 +39,7 @@ cmd_line_args <- parse_args(
 #        args = c('~/citiid/hpc-work/resources/genomes/danio_rerio/grcz11/GRCz11.bed'))
  
 # load packages
-packages <- c('tidyverse', 'RIdeogram')
+packages <- c('tidyverse', 'RIdeogram', 'biovisr')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
@@ -60,8 +62,12 @@ if (is.null(cmd_line_args$options[['heatmap_colours']])) {
 }
 
 
-# # load annotation data
-# annotation <- read_tsv(cmd_line_args$options[['annotation_file']])
+# load annotation data
+if (is.null(cmd_line_args$options[['annotation_data']])) {
+  annotation_data <- NULL
+} else {
+  annotation_data <- read_tsv(cmd_line_args$options[['annotation_data']])
+}
 
 # plot ideogram
 plot_device <- sub("^.*\\.", "", cmd_line_args$options[['output_file']])
@@ -70,12 +76,8 @@ plot_width <- ifelse(is.null(cmd_line_args$options[['width']]), 8.2677, cmd_line
 plot_height <- ifelse(is.null(cmd_line_args$options[['height']]), 11.6929, cmd_line_args$options[['height']])
 
 ideogram(karyotype = chr_sizes, output = output_svg,
-         overlaid = heatmap_data, colorset1 = heatmap_colours)
+         overlaid = heatmap_data, colorset1 = heatmap_colours,
+         label = annotation_data, label_type = cmd_line_args$options[['annotation_label_type']])
 convertSVG(output_svg, device = plot_device,
            file = cmd_line_args$options[['output_file']],
            width = plot_width, height = plot_height )
-
-# , 
-#          overlaid = binned_gene_counts, colorset1 = ,
-#          label = annotation, label_type = "marker")
-
