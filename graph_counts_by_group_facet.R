@@ -31,6 +31,8 @@ option_list <- list(
               help="theme_base_size of plot (inches) [default %default]" ),
   make_option("--rotate_xaxis_labels", type="logical", action="store_true", default=FALSE,
               help="Rotate x-axis labels to 90 degrees [default %default]" ),
+  make_option("--output_data_file", type="character", default=NULL,
+              help="Output a Rdata file of the plot object [default %default]" ),
   make_option("--no_jitter", type="logical", action="store_true", default=FALSE,
               help="Don't add jitter to the points  [default %default]" ),
   make_option("--seed", type="integer", default=25673,
@@ -54,6 +56,7 @@ plot_width <- cmd_line_args$options[['width']]
 plot_height <- cmd_line_args$options[['height']]
 theme_base_size <- cmd_line_args$options[['theme_base_size']]
 jitter <- !cmd_line_args$options[['no_jitter']]
+output_data_file <- cmd_line_args$options[['output_data_file']]
 
 packages <- c('tidyverse', 'biovisr', 'rnaseqtools', 'scales')
 for( package in packages ){
@@ -334,4 +337,9 @@ if (sub("^.*\\.", "", cmd_line_args$options[['output_file']]) == "eps") {
         width = plot_width, height = plot_height)
     invisible(lapply(plot_list, print))
     dev.off()
+}
+
+# save rds file if output_data_file options is set
+if (!is.null(output_data_file)) {
+  save(plot_list, samples, data, counts_for_plotting, file = output_data_file)
 }
