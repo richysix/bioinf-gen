@@ -37,9 +37,13 @@ cmd_line_args <- parse_args(
 
 # unpack options
 output_file <- cmd_line_args$options[['output_file']]
-extra_sheets <-
-  unlist( strsplit(cmd_line_args$options[['extra_sheets']],
-                   ',', fixed = TRUE) )
+if (!is.null(cmd_line_args$options[['extra_sheets']])) {
+  extra_sheets <-
+    unlist( strsplit(cmd_line_args$options[['extra_sheets']],
+                     ',', fixed = TRUE) )
+} else {
+  extra_sheets <- NULL
+}
 yaml_file <- cmd_line_args$options[['yaml']]
 guess_max <- cmd_line_args$options[['guess_max']]
 debug <- cmd_line_args$options[['debug']]
@@ -128,11 +132,13 @@ modifyBaseFont(wb, fontSize = 12, fontName = "Calibri")
 create_and_format_sheet(wb, sub("\\.tsv", "", cmd_line_args$args[1]), 
                         excel_data, formats)
 # create worksheets for extra files
-for (filename in extra_sheets){
-  excel_data <- read_tsv(file = filename, na = c("NA"),
-                         guess_max = guess_max)
-  create_and_format_sheet(wb, sub("\\.tsv", "", filename), 
-                          excel_data, formats)
+if (!is.null(extra_sheets)) {
+  for (filename in extra_sheets){
+    excel_data <- read_tsv(file = filename, na = c("NA"),
+                           guess_max = guess_max)
+    create_and_format_sheet(wb, sub("\\.tsv", "", filename), 
+                            excel_data, formats)
+  }
 }
 
 saveWorkbook(wb, output_file, overwrite = TRUE)
