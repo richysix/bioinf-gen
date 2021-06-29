@@ -56,11 +56,10 @@ if (is.null(cmd_line_args$options[['heatmap_data']])) {
 }
 # load colours
 if (is.null(cmd_line_args$options[['heatmap_colours']])) {
-  heatmap_colours <- c("#FFFFFF", "firebrick3")
+  heatmap_colours <- c("yellow", "orange", "red")
 } else {
   heatmap_colours <- str_split(cmd_line_args$options[['heatmap_colours']], ",")[[1]]
 }
-
 
 # load annotation data
 if (is.null(cmd_line_args$options[['annotation_data']])) {
