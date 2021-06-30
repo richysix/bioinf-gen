@@ -73,7 +73,7 @@ while(<$ht_fh>){
     # check for more than 1 condition
     if( scalar @conditions == 1 ){
         if ($options{randomise_single_conditions}) {
-            my @conditions = map { 'group' . $_ } ( 1..$options{randomise_single_conditions} );
+            @conditions = map { 'group' . $_ } ( 1..$options{randomise_single_conditions} );
             %samples_for = ();
             foreach my $sample ( @samples ){
                 my $condition = $conditions[ int( rand @conditions ) ];
@@ -91,11 +91,11 @@ while(<$ht_fh>){
     # make sample file
     my $samples_file = File::Spec->catfile($dir, 'samples.txt');
     open my $sample_fh, '>', $samples_file;
-    print $sample_fh join("\t", '', 'condition'), "\n";
+    print $sample_fh join("\t", 'sample', 'condition'), "\n";
     foreach my $condition ( @conditions ){
         #next if $condition eq "NA" || $condition eq "NC";
         foreach my $sample ( sort sort_by_row @{$samples_for{$condition}} ){
-            print $sample_fh join("\t", $sample, $cols[ $col_for->{$sample} ] ),
+            print $sample_fh join("\t", $sample, $condition ),
                 "\n";
         }
     }
@@ -110,7 +110,6 @@ while(<$ht_fh>){
     my $script = File::Spec->catfile($dir, 'run_deseq.sh');
     open my $script_fh, '>', $script;
     my $cmd = <<"CMD";
-export R_LIBS_USER=/software/team31/R
 perl ~rw4/checkouts/bio-misc/run_deseq2_rnaseq.pl \\
 --output_dir %s \\
 --counts_file %s \\
@@ -129,6 +128,25 @@ CMD
                                 join(q{ }, @comparisons);
     close($script_fh);
     
+    # make comparisons json file
+    my $json = <<"JSON";
+{
+"experimental_conditions": ["%s"],
+"control_conditions": ["%s"]
+}
+JSON
+
+    my $json_file = File::Spec->catfile($dir, 'comparison.json');
+    open my $json_fh, '>', $json_file;
+    if (scalar @conditions == 2) {
+        # 1 vs 2
+        print $json_fh sprintf $json, $conditions[0], $conditions[1];
+    } else {
+        # 1 vs rest
+        print $json_fh sprintf $json, $conditions[0], join(q{", "}, @conditions[1..(scalar @conditions) - 1]);
+    }
+    close($json_fh);
+
 }
 
 ################################################################################
