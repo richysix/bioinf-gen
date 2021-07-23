@@ -30,6 +30,7 @@ cmd_line_args <- parse_args(
 
 # Get samples
 samples <- read_tsv("samples.txt")
+names(samples)[1] <- "sample"
 groups <- setdiff(colnames(samples), c("sample", "condition"))
 if (length(groups) > 0) {
   for (col in c('condition', groups)) {
