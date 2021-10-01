@@ -14,6 +14,8 @@ option_list <- list(
               help="Comma separated list of the colours for the levels of haplotype [default %default]"),
   make_option("--orientation", type="character", default='landscape',
               help="Orientation of chromosome (landscape = chr on x-axis) [default %default]"),
+  make_option("--output_type", type="character", default='pdf',
+              help="Type of file to output [default %default]"),
   make_option(c("-d", "--directory"), type="character", default=NULL,
               help="Working directory [default %default]" ),
   make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
@@ -67,7 +69,7 @@ if ("NA" %in% names(haplotype_colours)) {
 }
 
 # orientation
-orientation <- cmd_line_args$options[['haplotype_levels']]
+orientation <- cmd_line_args$options[['orientation']]
 if (!(orientation %in% c('landscape', 'portrait'))) {
   stop("--orientation must be one of landscape or portrait")
 }
@@ -137,12 +139,7 @@ plot_list <- lapply( split(input_data, input_data$chr), plot_haplotypes,
                      na_colour = na_colour)
 
 # output plots to file
-if (cmd_line_args$options[['output_type']] == 'pdf') {
-  pdf_filename <- paste(output_base, "pdf", sep=".")
-  pdf(file=pdf_filename, width=9, height=10, paper = "special")
-  invisible(print(plot_list))
-  invisible(dev.off())
-} else if (cmd_line_args$options[['output_type']] == 'svg') {
+if (cmd_line_args$options[['output_type']] == 'svg') {
   for (i in seq_len(length(plot_list))) {
     svg_filename <- paste(paste0(output_base, '-Chr', i), 'svg', sep = '.')
     svglite(file = svg_filename, width=7, height=5)
@@ -157,6 +154,9 @@ if (cmd_line_args$options[['output_type']] == 'pdf') {
     print(plot_list[[i]])
     dev.off()
   }
-} else {
-  
+} else { # use pdf as fallback
+  pdf_filename <- paste(output_base, "pdf", sep=".")
+  pdf(file=pdf_filename, width=9, height=10, paper = "special")
+  invisible(print(plot_list))
+  invisible(dev.off())
 }
