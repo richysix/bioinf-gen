@@ -78,6 +78,10 @@ samples_df <- data.frame(
 )
 write_tsv(samples_df, path = file.path(root_path, 'test_data', 'test_samples.tsv'))
 
+# make a file with just the control samples in
+filter(samples_df, treatment == "control") %>% 
+  write_tsv(., path = file.path(root_path, 'test_data', 'test_control_samples.tsv'))
+
 # pivot samples file to use as metadata
 samples_df_long <- samples_df %>% 
   pivot_longer(., cols = condition:sex, names_to = "category",
