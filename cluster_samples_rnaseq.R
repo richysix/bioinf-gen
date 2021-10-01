@@ -5,7 +5,7 @@ library('optparse')
 option_list <- list(
   make_option(c("-o", "--output_file"), action="store", default='sample_clustering.svg',
               help="Name of output file [default %default]"),
-  make_option("--cluster_file", action="store", default='clustering.tsv',
+  make_option("--cluster_file", action="store", default=NULL,
               help="Name of output file for clustering [default %default]"),
   make_option("--plots_rda_file", action="store", default=NULL,
               help="Name of plots rda file [default %default]"),
@@ -130,8 +130,10 @@ for(num in unique(cluster_labels)) {
 }
 names(reordered_clusters) <- names(cluster_labels)
 
-write.table(reordered_clusters, file = cmd_line_args$options[['cluster_file']],
-            quote = FALSE, sep = "\t", row.names = TRUE, col.names = FALSE)
+if(!is.null(cmd_line_args$options[['cluster_file']])) {
+  write.table(reordered_clusters, file = cmd_line_args$options[['cluster_file']],
+              quote = FALSE, sep = "\t", row.names = TRUE, col.names = FALSE)    
+}
 
 # load metadata if it exists
 # The first column should be the sample ids/names (x axis, matching the samples file)
@@ -151,19 +153,24 @@ if (!is.null(cmd_line_args$options[['metadata_file']])) {
            levels = colnames(clustering$matrix))
   # reverse levels of y axis to make plot match
   category_col <- cmd_line_args$options[['metadata_category_col']]
+  cat_var <- rlang::sym(category_col)
+  fill_col <- cmd_line_args$options[['metadata_fill']]
+  fill_var <- rlang::sym(fill_col)
   if (class(metadata_for_plot[[category_col]]) == 'character') {
     metadata_for_plot[[category_col]] <- 
       factor(metadata_for_plot[[category_col]],
               levels = rev(unique(metadata_for_plot[[category_col]])))
+    metadata_for_plot[[fill_col]] <- 
+      factor(metadata_for_plot[[fill_col]],
+              levels = arrange(metadata_for_plot, !!cat_var, !!fill_var) %>% pull(!!fill_var) %>% unique() %>% rev())
   } else if (class(metadata_for_plot[[category_col]]) == 'factor') {
     metadata_for_plot[[category_col]] <- 
       factor(metadata_for_plot[[category_col]],
              levels = rev(levels(metadata_for_plot[[category_col]])))
   }
   
-  # sort out fill_palette
-  fill_col <- cmd_line_args$options[['metadata_fill']]
   
+  # sort out fill_palette
   fill_palette <- cmd_line_args$options[['metadata_fill_palette']]
   if (!is.null(fill_palette)) {
     if (fill_palette %in% colnames(metadata_for_plot)) {
@@ -214,7 +221,7 @@ cor_matrix <- cor_matrix[ clustering$clustering$order , clustering$clustering$or
 
 cor_matrix_plot <- 
   matrix_heatmap(cor_matrix, x_title = "Sample", y_title = "Sample",
-                 fill_title = cmd_line_args$options[['distance_measure']], fill_palette = "plasma",
+                 fill_title = 'Pearson Correlation Coefficient', fill_palette = "plasma",
                  xaxis_labels = TRUE, yaxis_labels = TRUE,
                  base_size = 16)
 if (cmd_line_args$options[['orientation']] == "landscape") {
@@ -264,7 +271,7 @@ if (is.null(metadata_for_plot)) {
 dev.off()
 
 if (!is.null(cmd_line_args$options[['plots_rda_file']])) {
-  save(tree_plot, metadata_plot, cor_matrix_plot, 
+  save(tree_plot, metadata_plot, cor_matrix_plot, cluster_boxes,
        file = cmd_line_args$options[['plots_rda_file']])
 }
 
