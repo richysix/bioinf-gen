@@ -28,7 +28,7 @@ option_list <- list(
   make_option("--height", type="numeric", default=7,
               help="height of plot (inches) [default %default]" ),
   make_option("--theme_base_size", type="numeric", default=12,
-              help="theme_base_size of plot (inches) [default %default]" ),
+              help="theme_base_size of plot (points) [default %default]" ),
   make_option("--rotate_xaxis_labels", type="logical", action="store_true", default=FALSE,
               help="Rotate x-axis labels to 90 degrees [default %default]" ),
   make_option("--output_data_file", type="character", default=NULL,
