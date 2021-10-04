@@ -80,7 +80,7 @@ write_tsv(samples_df, path = file.path(root_path, 'test_data', 'test_samples.tsv
 
 # make a file with just the control samples in
 filter(samples_df, treatment == "control") %>% 
-  write_tsv(., path = file.path(root_path, 'test_data', 'test_control_samples.tsv'))
+  write_tsv(., path = file.path(root_path, 'test_data', 'test_samples_control.tsv'))
 
 # pivot samples file to use as metadata
 samples_df_long <- samples_df %>% 
