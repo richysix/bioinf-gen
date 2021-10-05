@@ -61,6 +61,11 @@ go-3expts.tsv
 The x axis represents different experiments and the y axis represents enriched
 Gene Ontology terms.](test_data/test_bubble_cat.png "Test Categorical bubble plot")
 
+**Required packages**
+* [tidyverse](https://www.tidyverse.org/)
+* [biovisr](https://github.com/richysix/biovisr)
+* [svglite](https://svglite.r-lib.org/) - only required for svg output
+
 ### gene_expr_heatmap.R
 
 Script to produce a heatmap from RNAseq data. It expects a sample file and a count file (e.g. sig.tsv)
@@ -175,6 +180,15 @@ according to the expression of the gene/sample combination. Two more heatmaps sh
 metadata associated with each gene and sample and the clustering trees for the genes and 
 samples are shown above and to the left of the main expression heatmap](test_data/test_heatmap_with_trees-sample_gene_metadata.png "RNAseq heatmap with gene and sample metadata and clustering trees")
 
+**Required packages**
+* [tidyverse](https://www.tidyverse.org/)
+* [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
+* [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
+* [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+* [patchwork](https://patchwork.data-imaginist.com/)
+* [biovisr](https://github.com/richysix/biovisr)
+* [rnaseqtools](https://github.com/richysix/rnaseqtools)
+
 ### go_barchart.R
 
 Script to produce a barchart from a file of GO enrichments. By default the
@@ -204,6 +218,12 @@ test_data_go.tsv
 
 ![Bar chart of GO terms against -log10pvalue. The bars are coloured by
 experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
+
+**Required packages**
+* [tidyverse](https://www.tidyverse.org/)
+* [grid](https://www.tidyverse.org/)
+* [biovisr](https://github.com/richysix/biovisr)
+* [miscr](https://github.com/richysix/miscr)
 
 ### go_bubble_plot.R
 
@@ -371,6 +391,7 @@ I've had problems trying to run multiple analyses in sequence. If that happens y
 That will destroy the network at the end of the script so you won't be able to save it as a ClueGO/Cytoscape network, but it means that you can produce a bunch of network pictures in one go.
 
 **Required packages**
+* [tidyverse](https://www.tidyverse.org/)
 * [xml2](https://github.com/r-lib/xml2)
 * [RJSONIO](https://cran.r-project.org/web/packages/RJSONIO/index.html)
 * [httr](https://github.com/r-lib/httr)
