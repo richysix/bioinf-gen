@@ -234,13 +234,11 @@ plot_list <- lapply(regions,
         if (!is.null(cmd_line_args$options[['crossbar']])) {
             if (cmd_line_args$options[['crossbar']] == 'mean') {
                 plot <- plot + 
-                    stat_summary(fun.y = "mean", fun.ymin = "mean",
-                                 fun.ymax="mean", geom = "crossbar",
+                    stat_summary(fun = "mean", geom = "crossbar",
                                  width = 0.6, size = 0.4 )
             } else if (cmd_line_args$options[['crossbar']] == 'median') {
                 plot <- plot + 
-                    stat_summary(fun.y = "median", fun.ymin = "median",
-                                 fun.ymax="median", geom = "crossbar",
+                    stat_summary(fun = "median", geom = "crossbar",
                                  width = 0.6, size = 0.4 )
             }
         }
