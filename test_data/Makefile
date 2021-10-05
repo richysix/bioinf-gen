@@ -4,7 +4,8 @@ test_heatmap_with_trees-sample_gene_metadata.png \
 go_bubble.pdf go_bubble_pval.pdf go_bubble_specific.pdf go_bubble_no_labels.pdf \
 counts.pdf test-condition-sex-treatment.pdf \
 go_barchart.pdf go_barchart_top20.svg \
-test-gsea_to_genes.out.tsv test-gsea_to_genes.sig.out.tsv
+test-gsea_to_genes.out.tsv test-gsea_to_genes.sig.out.tsv \
+test_rnaseq_data_subset.out.tsv
 
 # test data
 BP.sig.tsv CC.sig.tsv MF.sig.tsv \
@@ -141,6 +142,12 @@ Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls
 test-gsea_to_genes.sig.out.tsv: ../gsea_to_genes.py test_gsea_report.xls \
 Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls
 	../gsea_to_genes.py --genes_file gsea-genes.txt --comparison test test_gsea_report.xls > test-gsea_to_genes.sig.out.tsv
+
+# subset rnaseq script
+test_rnaseq_data_subset.out.tsv: ../rnaseq_subset_samples_filter_genes.R test_samples_control.tsv test_rnaseq_data.tsv
+	Rscript ../rnaseq_subset_samples_filter_genes.R \
+--output_file test_rnaseq_data_subset.out.tsv \
+--samples_file test_samples_control.tsv test_rnaseq_data.tsv
 
 .PHONY : clean
 clean :
