@@ -128,7 +128,7 @@ go_bubble_plot_highlighted <- ggplot(data = go_results, aes(x = GO.ID, y = log10
                   hjust = 0, direction = "y") +
   facet_wrap(vars(domain), nrow = 1,
              strip.position = "bottom") +
-  scale_x_discrete(name = NULL, expand = expand_scale(mult = 0.05)) +
+  scale_x_discrete(name = NULL, expand = expansion(mult = 0.05)) +
   scale_color_manual(values = colour_palette,
                      guide  = "none") +
   scale_fill_manual(values = fill_palette,
