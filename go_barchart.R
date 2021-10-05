@@ -52,10 +52,17 @@ cmd_line_args <- parse_args(
 #        args = c('test_data_go.tsv'))
 
 # load packages
-packages <- c('tidyverse', 'rlang', 'biovisr', 'miscr', 'grid', 'extrafont')
+packages <- c('tidyverse', 'rlang', 'biovisr', 'miscr', 'grid')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
+# if(!suppressWarnings(require('extrafont'))) {
+#   extrafont <- FALSE
+#   font_name <- "Helvetica"
+# } else {
+#   extrafont <- TRUE
+#   font_name <- "Arial"
+# }
 
 # load data
 go_info <- read_tsv(cmd_line_args$args[1])
@@ -95,8 +102,10 @@ go_info <- go_info %>%
                               levels = unique(go_info[[ cmd_line_args$options[['fill_variable']] ]]) ) )
 
 # Text for labelling the x axis
-up_label <- grobTree(textGrob(label = "Up genes", gp = gpar(fontsize = 12, fontfamily = "Arial")))
-down_label <- grobTree(textGrob(label = "Down genes", gp = gpar(fontsize = 12, fontfamily = "Arial")))
+# up_label <- grobTree(textGrob(label = "Up genes", gp = gpar(fontsize = 12, fontfamily = font_name)))
+up_label <- grobTree(textGrob(label = "Up genes", gp = gpar(fontsize = 12)))
+# down_label <- grobTree(textGrob(label = "Down genes", gp = gpar(fontsize = 12, fontfamily = font_name)))
+down_label <- grobTree(textGrob(label = "Down genes", gp = gpar(fontsize = 12)))
 
 # vectors for labelling the bars
 up_term_labels <- go_info %>% 
@@ -131,7 +140,7 @@ coloured_bar_chart <- ggplot(data = go_info) +
   coord_flip(clip = "off") +
   theme_minimal(base_size = 15) +
   theme(legend.position = "top", 
-        text = element_text(family = "Arial"),
+        # text = element_text(family = font_name),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         axis.title.x = element_text(margin = margin(20,0,0,0)),
@@ -145,10 +154,12 @@ print(coloured_bar_chart)
 dev.off()
 
 # embed fonts if it's a pdf
-if (grepl("pdf$", cmd_line_args$options[['output_file']])) {
-  embed_fonts(cmd_line_args$options[['output_file']], 
-              outfile = cmd_line_args$options[['output_file']])
-}
+# if (grepl("pdf$", cmd_line_args$options[['output_file']])) {
+#   if(extrafont) {
+#     embed_fonts(cmd_line_args$options[['output_file']], 
+#                 outfile = cmd_line_args$options[['output_file']])
+#   }
+# }
 
 # save to rdata file if option specified
 if (!is.null(cmd_line_args$options[['RData_file']])) {
