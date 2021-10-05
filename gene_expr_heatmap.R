@@ -193,11 +193,12 @@ if (cmd_line_args$options[['detct']]) {
 }
 
 # get count data
-counts <- get_counts(data, samples, normalised = FALSE)
+counts <- as.matrix(get_counts(data, samples, normalised = FALSE))
 # add gene ids to rownames
 rownames(counts) <- data$GeneID
 # Transform using DESeq2
 dds <- DESeqDataSetFromMatrix(counts, samples, design = ~ condition)
+mcols(dds) <- get_gene_metadata(data)
 dds <- estimateSizeFactors(dds)
 if (cmd_line_args$options[['transform']] == "rlog") {
   dds <- rlogTransformation(dds, blind=TRUE)
@@ -380,8 +381,6 @@ gene_metadata_plot <- plot_spacer()
 if (!is.null(gene_metadata)) {
   category_col <- cmd_line_args$options[['gene_metadata_xcol']]
   category_var <- rlang::sym(category_col)
-  fill_col <- cmd_line_args$options[['gene_metadata_fill']]
-  fill_var <- rlang::sym(fill_col)
   # make xaxis col a factor
   if (class(gene_metadata[[category_col]]) == 'character') {
     gene_metadata[[category_col]] <-
@@ -389,10 +388,14 @@ if (!is.null(gene_metadata)) {
              levels = unique(gene_metadata[[category_col]]))
   }
   
+  fill_col <- cmd_line_args$options[['gene_metadata_fill']]
+  fill_var <- rlang::sym(fill_col)
   # make new column for fill variable in case category and fill are the same
   gene_metadata <- gene_metadata %>% 
     mutate(., fill = factor(!!fill_var, levels = unique(!!fill_var)))
-
+  fill_col <- 'fill'
+  fill_var <- rlang::sym(fill_col)
+  
   # subset gene_metadata to genes and order by current gene order
   # and sort by category and then fill
   gene_metadata <- left_join((select(plot_data, id) %>% unique()), 
