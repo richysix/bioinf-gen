@@ -6,7 +6,9 @@ option_list <- list(
   make_option("--output_file", type="character", default='kappa_scores.tsv',
               help="Output file name [default %default]" ),
   make_option("--pval_colname", type="character", default='p value',
-              help="Name of the column which indicates which genes are significant[default %default]" ),
+              help="Name of the column which indicates which genes are significant [default %default]" ),
+  make_option("--gene_id_colname", type="character", default='Gene',
+              help="Name of the Gene ID column in the sig.tsv [default %default]" ),
   make_option("--debug", type="logical", default=FALSE, action="store_true",
               help="Turns on debugging statements [default %default]" )
 )
@@ -26,8 +28,16 @@ cmd_line_args <- parse_args(
 
 # cmd_line_args <-
 #   list(options = list('output_file' = 'kappa_scores.tsv',
+#                       'pval_colname' = "p value",
 #                       debug = TRUE),
 #        args = c('sig.tsv', 'BP.sig.genes.tsv'))
+
+# cmd_line_args <-
+#   list(options = list('output_file' = 'kappa-scores/zmp_ph71.kappa_scores.tsv',
+#                       'gene_id_colname' = "e92 Ensembl Gene ID",
+#                       'pval_colname' = "Sig?",
+#                       debug = TRUE),
+#        args = c('hom_vs_het_wt/sig.tsv', 'hom_vs_het_wt.overlap/GO.sig.genes.tsv'))
 
 # load packages
 packages <- c('tidyverse', 'rlang')
@@ -37,6 +47,13 @@ for( package in packages ){
 
 # load sig genes
 sig_genes <- read_tsv(cmd_line_args$args[1])
+# check Gene column
+gene_id_colname <- rlang::sym(cmd_line_args$options[['gene_id_colname']])
+if (!any(colnames(sig_genes) == gene_id_colname)) {
+  stop("Gene column name provided by --gene_id_colname doesn't match any of the column names")
+}
+# change col name to Gene
+colnames(sig_genes)[colnames(sig_genes) == gene_id_colname] <- 'Gene'
 
 # topgo sig.genes.tsv
 go_sig_genes <- read_tsv(cmd_line_args$args[2])
@@ -44,11 +61,14 @@ go_sig_genes <- read_tsv(cmd_line_args$args[2])
 # check sig col
 pval_colname <- rlang::sym(cmd_line_args$options[['pval_colname']])
 if (!any(colnames(go_sig_genes) == pval_colname)) {
-  stop("Significnce column name provided by --pval_colname doesn't match any of the column names")
+  stop("Significance column name provided by --pval_colname doesn't match any of the column names")
 }
 
+# The pvalue column is used to set TRUE/FALSE on gene to go term
+# This is a matrix of genes to GO terms
+unique_genes <- select(sig_genes, Gene) %>% unique()
 go_terms_matrix <- 
-  left_join(sig_genes, go_sig_genes, by = c('Gene')) %>% 
+  left_join(unique_genes, go_sig_genes, by = c('Gene')) %>% 
   mutate(., GO.ID = case_when(is.na(GO.ID) ~ go_sig_genes$GO.ID[1], 
                                 TRUE ~ GO.ID),
            pvalue = case_when(is.na(!!pval_colname) ~ FALSE, 
@@ -64,7 +84,7 @@ calc_kappa_score <- function(first_col, second_col, go_terms_matrix){
   InFirstNotSecond <- sum(go_terms_matrix[[first_col]] & !go_terms_matrix[[second_col]])
   InSecondNotFirst <- sum(!go_terms_matrix[[first_col]] & go_terms_matrix[[second_col]])
   InNeither <- sum(!go_terms_matrix[[first_col]] & !go_terms_matrix[[second_col]])
-  po <- (InBoth + InNeither)/ num_genes
+  po <- (InBoth + InNeither) / num_genes
   go1 <- ((InBoth + InFirstNotSecond)/num_genes)*((InBoth + InSecondNotFirst)/num_genes)
   go2 <- ((InSecondNotFirst + InNeither)/num_genes)*((InFirstNotSecond + InNeither)/num_genes)
   pe <- go1 + go2
