@@ -54,13 +54,37 @@ for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
 
-go_bp <- read_tsv('BP.sig.tsv') %>% 
-  mutate(., domain = "BP")
-go_mf <- read_tsv('MF.sig.tsv') %>% 
-  mutate(., domain = "MF")
-go_cc <- read_tsv('CC.sig.tsv') %>% 
-  mutate(., domain = "CC")
-go_results <- rbind(go_mf, go_bp, go_cc) %>% 
+column_types <- cols(
+  GO.ID = col_character(),
+  Term = col_character(),
+  Annotated = col_integer(),
+  Significant = col_integer(),
+  Expected = col_double(),
+  pval = col_character(),
+  Genes = col_character()
+)
+
+go_results <- data.frame()
+data_exists <- FALSE
+for(file in c('BP.sig.tsv', 'MF.sig.tsv', 'CC.sig.tsv')) {
+  domain <- sub("\\.sig\\.tsv$", "", file)
+  if(file.exists(file)) {
+    data_exists <- TRUE
+    go_data <- read_tsv(file, col_types = column_types) %>% 
+        mutate(., pval = as.numeric(sub("< ", "", pval)),
+               domain = domain)
+  } else {
+    warning(paste0("File, ", file, ", does not exist in current working directory"))
+    go_data <- data.frame()
+  }
+  go_results <- rbind(go_results, go_data)
+}
+
+if(!data_exists) {
+  stop("No data in current working directory")
+}
+
+go_results <- go_results %>% 
   mutate(., log10p = -log10(pval),
          label = domain)
 
@@ -139,10 +163,6 @@ go_bubble_plot_highlighted <- ggplot(data = go_results, aes(x = GO.ID, y = log10
   theme_minimal() +
   theme(axis.text.x = element_blank(),
         panel.grid.major.x = element_blank())
-# png(filename = 'go_bubble_highlight_test.png',
-#     width = 960, height = 540)
-# print(go_bubble_plot_highlighted)
-# dev.off()
 
 # print plot to file
 output_plot(list(plot = go_bubble_plot_highlighted, 
