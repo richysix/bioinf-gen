@@ -108,7 +108,7 @@ create_formatting <- function(sheet_name, formats, excel_df) {
     }
     
     conditionalFormatting(wb, sheet_name, cols=1:ncol(excel_df), 
-                          rows=1:(nrow(excel_df)+1), rule=format_rule, 
+                          rows=2:(nrow(excel_df)+1), rule=format_rule, 
                           style = createStyle(fontColour = format_info[['fontColour']], 
                                               bgFill = format_info[['bgFill']]),
                           type = format_type)
@@ -129,15 +129,24 @@ wb <- createWorkbook()
 modifyBaseFont(wb, fontSize = 12, fontName = "Calibri")
 
 # create worksheet for main file
-create_and_format_sheet(wb, sub("\\.tsv", "", cmd_line_args$args[1]), 
-                        excel_data, formats)
+sheet_name <- sub("\\.tsv", "", cmd_line_args$args[1])
+if (nchar(sheet_name) > 31) {
+  sheet_name <- 'Sheet1'
+}
+
+create_and_format_sheet(wb, sheet_name, excel_data, formats)
 # create worksheets for extra files
+sheet_num <- 2
 if (!is.null(extra_sheets)) {
   for (filename in extra_sheets){
     excel_data <- read_tsv(file = filename, na = c("NA"),
                            guess_max = guess_max)
-    create_and_format_sheet(wb, sub("\\.tsv", "", filename), 
-                            excel_data, formats)
+    sheet_name <- sub("\\.tsv", "", filename)
+    if (nchar(sheet_name) > 31) {
+      sheet_name <- paste0('Sheet', sheet_num)
+      sheet_num <- sheet_num + 1
+    }
+    create_and_format_sheet(wb, sheet_name, excel_data, formats)
   }
 }
 
