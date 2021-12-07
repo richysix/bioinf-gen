@@ -16,6 +16,10 @@ option_list <- list(
               help="Orientation of chromosome (landscape = chr on x-axis) [default %default]"),
   make_option("--output_type", type="character", default='pdf',
               help="Type of file to output [default %default]"),
+  make_option("--width", type="numeric", default=8,
+              help="Width of plot [default %default]"),
+  make_option("--height", type="numeric", default=5,
+              help="Height of plot [default %default]"),
   make_option(c("-d", "--directory"), type="character", default=NULL,
               help="Working directory [default %default]" ),
   make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
@@ -140,18 +144,20 @@ plot_list <- lapply( split(input_data, input_data$chr), plot_haplotypes,
 
 # output plots to file
 if (cmd_line_args$options[['output_type']] == 'svg') {
-  for (i in seq_len(length(plot_list))) {
-    svg_filename <- paste(paste0(output_base, '-Chr', i), 'svg', sep = '.')
-    svglite(file = svg_filename, width=7, height=5)
-    print(plot_list[[i]])
+  for (chr_name in names(plot_list)) {
+    svg_filename <- paste(paste0(output_base, '-Chr', chr_name), 'svg', sep = '.')
+    svglite(file = svg_filename, width=cmd_line_args$options[['width']], 
+            height=cmd_line_args$options[['height']])
+    print(plot_list[[chr_name]])
     dev.off()
   }
 } else if (cmd_line_args$options[['output_type']] == 'eps') {
-  for (i in seq_len(length(plot_list))) {
-    eps_filename <- paste(paste0(output_base, '-Chr', i), 'eps', sep = '.')
-    postscript(file = eps_filename, width=7, height=5,
+  for (chr_name in names(plot_list)) {
+    eps_filename <- paste(paste0(output_base, '-Chr', chr_name), 'eps', sep = '.')
+    postscript(file = eps_filename, width=cmd_line_args$options[['width']], 
+               height=cmd_line_args$options[['height']],
                horizontal = TRUE, paper = 'special')
-    print(plot_list[[i]])
+    print(plot_list[[chr_name]])
     dev.off()
   }
 } else { # use pdf as fallback
