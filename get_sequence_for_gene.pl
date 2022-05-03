@@ -8,7 +8,6 @@ use strict;
 use Getopt::Long;
 use autodie;
 use Pod::Usage;
-use Carp;
 
 use Bio::EnsEMBL::Registry;
 use Bio::Seq;
@@ -89,7 +88,8 @@ sub output_transcript_and_protein_sequence {
     my ($gene, $species, $dna_fasta_out, $aa_fasta_out, $individual_files) = @_;
     
     if ($gene->biotype() ne 'protein_coding') {
-        croak "$gene is not protein coding";
+        warn $gene->stable_id(), ' (', $gene->external_name(), ')',
+        " is not protein coding. Biotype is ", $gene->biotype(), ". Skipping...\n";
     }
     foreach my $transcript ( @{ $gene->get_all_Transcripts } ) {
         next if !$transcript->is_canonical();
