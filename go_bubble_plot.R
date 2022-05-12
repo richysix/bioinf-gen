@@ -49,7 +49,7 @@ cmd_line_args <- parse_args(
 #        args = c())
 
 # load packages
-packages <- c('tidyverse', 'viridis', 'biovisr', 'miscr', 'ggrepel')
+packages <- c('tidyverse', 'biovisr', 'miscr', 'ggrepel')
 for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
