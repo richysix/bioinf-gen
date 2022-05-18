@@ -7,8 +7,6 @@ option_list <- list(
               help="Output file name [default %default]" ),
   make_option("--pval_colname", type="character", default='p value',
               help="Name of the column which indicates which genes are significant [default %default]" ),
-  make_option("--gene_id_colname", type="character", default='Gene',
-              help="Name of the Gene ID column in the sig.tsv [default %default]" ),
   make_option("--debug", type="logical", default=FALSE, action="store_true",
               help="Turns on debugging statements [default %default]" )
 )
@@ -21,23 +19,10 @@ desc <- paste(
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'kappa_scores.R',
-    usage = "Usage: %prog [options] sig_file topgo_sig_genes_file",
+    usage = "Usage: %prog [options] topgo_sig_genes_file",
     description = desc ),
-  positional_arguments = 2
+  positional_arguments = 1
 )
-
-# cmd_line_args <-
-#   list(options = list('output_file' = 'kappa_scores.tsv',
-#                       'pval_colname' = "p value",
-#                       debug = TRUE),
-#        args = c('sig.tsv', 'BP.sig.genes.tsv'))
-
-# cmd_line_args <-
-#   list(options = list('output_file' = 'kappa-scores/zmp_ph71.kappa_scores.tsv',
-#                       'gene_id_colname' = "e92 Ensembl Gene ID",
-#                       'pval_colname' = "Sig?",
-#                       debug = TRUE),
-#        args = c('hom_vs_het_wt/sig.tsv', 'hom_vs_het_wt.overlap/GO.sig.genes.tsv'))
 
 # load packages
 packages <- c('tidyverse', 'rlang')
@@ -45,18 +30,8 @@ for( package in packages ){
   suppressPackageStartupMessages( suppressWarnings( library(package, character.only = TRUE) ) )
 }
 
-# load sig genes
-sig_genes <- read_tsv(cmd_line_args$args[1])
-# check Gene column
-gene_id_colname <- rlang::sym(cmd_line_args$options[['gene_id_colname']])
-if (!any(colnames(sig_genes) == gene_id_colname)) {
-  stop("Gene column name provided by --gene_id_colname doesn't match any of the column names")
-}
-# change col name to Gene
-colnames(sig_genes)[colnames(sig_genes) == gene_id_colname] <- 'Gene'
-
 # topgo sig.genes.tsv
-go_sig_genes <- read_tsv(cmd_line_args$args[2])
+go_sig_genes <- read_tsv(cmd_line_args$args[1])
 
 # check sig col
 pval_colname <- rlang::sym(cmd_line_args$options[['pval_colname']])
@@ -66,17 +41,16 @@ if (!any(colnames(go_sig_genes) == pval_colname)) {
 
 # The pvalue column is used to set TRUE/FALSE on gene to go term
 # This is a matrix of genes to GO terms
-unique_genes <- select(sig_genes, Gene) %>% unique()
 go_terms_matrix <- 
-  left_join(unique_genes, go_sig_genes, by = c('Gene')) %>% 
-  mutate(., GO.ID = case_when(is.na(GO.ID) ~ go_sig_genes$GO.ID[1], 
-                                TRUE ~ GO.ID),
-           pvalue = case_when(is.na(!!pval_colname) ~ FALSE, 
-                              !!pval_colname == 0 ~ FALSE,
-                              !!pval_colname == 1 ~ TRUE)) %>% 
+  go_sig_genes %>% 
+  mutate(., pvalue = case_when(
+    is.na(!!pval_colname) ~ FALSE, 
+    !!pval_colname == 0 ~ FALSE,
+    !!pval_colname == 1 ~ TRUE)
+  ) %>% 
   select(., Gene, GO.ID, pvalue) %>% 
   pivot_wider(., names_from = GO.ID, values_from = pvalue,
-              values_fill = list(pvalue = FALSE))
+              values_fill = list(pvalue = FALSE)) 
 
 calc_kappa_score <- function(first_col, second_col, go_terms_matrix){
   num_genes <- nrow(go_terms_matrix)
@@ -118,4 +92,13 @@ kappa_scores <-
   do.call(rbind,
     lapply(seq_len(length(pairwise_terms_1)), calc_pairwise_kappa,
        pairwise_terms_1, pairwise_terms_2, go_terms_matrix))
-write_tsv(kappa_scores, path = cmd_line_args$options[['output_file']])
+write_tsv(kappa_scores, file = cmd_line_args$options[['output_file']])
+
+# cmd_line_args for testing
+# cmd_line_args <-
+#   list(options = list('output_file' = 'kappa-scores/zmp_ph71.kappa_scores.tsv',
+#                       'gene_id_colname' = "e92 Ensembl Gene ID",
+#                       'pval_colname' = "Sig?",
+#                       debug = TRUE),
+#        args = c('hom_vs_het_wt/sig.tsv', 'hom_vs_het_wt.overlap/GO.sig.genes.tsv'))
+
