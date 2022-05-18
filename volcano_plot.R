@@ -100,13 +100,14 @@ if (cmd_line_args$options[['labels']]) {
   volcano_plot <- volcano_plot +
     geom_text_repel(aes(label = name_label),
                     point.padding = 0.25, box.padding = 1,
-                    force = 2)
+                    force = 2, family = "OpenSans")
 }
 
 # Add colour scale, chnge theme and add axis labels
 volcano_plot <- volcano_plot +
   scale_colour_manual(values = c(up = '#cc6600', down = '#0073b3'), na.value = "grey80") +
   theme_minimal() +
+  theme(text = element_text(family = "OpenSans")) +
   guides(colour = "none") +
   labs(x = expr(log[2]*'(Fold Change)'), y = expr(log[10]*'(Adjusted pvalue)')) +
   NULL
