@@ -133,17 +133,17 @@ regions <- unique(data$region)
 
 # get normalised counts
 normalised_counts <- get_counts(data, samples = samples, normalised = TRUE) %>% 
-  mutate(region = data$region)
+  mutate(GeneID = data$GeneID,
+         region = data$region)
 
 if (debug) { cat("Join\n") }
-# subset data to regions if necessary
-# normalised_counts <- filter(normalised_counts, region %in% regions)
 # melt counts and join with sample info
 counts_for_plotting <-
-    gather(normalised_counts, key = 'sample', value = 'count', -region)
+  pivot_longer(normalised_counts, cols = -c('GeneID', 'region'), 
+               names_to = "sample", values_to = "count")
 counts_for_plotting$sample <- factor(counts_for_plotting$sample,
                                     levels = unique(counts_for_plotting$sample))
-counts_for_plotting <- merge(samples, counts_for_plotting)
+counts_for_plotting <- inner_join(samples, counts_for_plotting)
 
 if (cmd_line_args$options[['log10']]) {
   counts_for_plotting$log10 <- log10(counts_for_plotting$count + 1)
