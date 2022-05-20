@@ -73,7 +73,7 @@ if (!keep_order) {
 
 # work out which intersection each gene is in
 # each intersection is represented as a number whose binary representation indicates which set it is a part of
-# e.g. for 3 sets, 5 = 101 is a gene in Set3 and Set1
+# e.g. for 3 sets, 5 = 101 is a gene in Set1 and Set3
 gene_ids_to_sets <- gene_ids_binary_matrix %>% 
   unite("Intersection", !matches("GeneID"), remove = FALSE, sep = "") %>% 
   mutate(Intersection = strtoi(Intersection, base = 2))
@@ -91,14 +91,14 @@ for (col_name in sets) {
 }
 # stitch the strings together to a string representation of each intersection
 # and join in Gene Names
-gene_ids_to_sets <- gene_ids_to_sets %>% 
+purrr::map_dfr(sig_genes_list, ~ .x) %>% # concat gene lists
+  select(., GeneID, Name) %>% unique() %>% # select ids and names and make unique
+  inner_join(., gene_ids_to_sets) %>% # join to gene_ids_to_sets
   unite("Set", all_of(sets), sep = "|", na.rm = TRUE) %>% 
   mutate(., Intersection = factor(Intersection),
          Intersection = fct_infreq(Intersection)) %>% # order by the size of the intersections
-  arrange(., Intersection)
-
-# output to file
-write_tsv(gene_ids_to_sets, file = output_file)
+  arrange(., Intersection, Name) %>% 
+  write_tsv(., file = output_file) # output to file
 
 # list of genes present in each set
 gene_ids_list <- purrr::map(sig_genes_list, ~ .x$GeneID)
