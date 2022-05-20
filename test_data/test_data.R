@@ -218,3 +218,25 @@ bubble_data_num <- data.frame(x = runif(100, min = 1, max = 50),
                             size = sample(20:100, 100, replace = TRUE),
                             fill = runif(100))
 write_tsv(bubble_data_num, path = file.path(root_path, 'test_data', 'bubble_continuous.tsv'))
+
+# make test data for upset-sig-genes.R
+num_genes <- 100
+genes <- sprintf('ENSTEST%03d', seq_len(num_genes))
+names(genes) <- paste0('gene-', seq_len(num_genes))
+set.seed(9374)
+sets <- purrr::map(1:3, function(num){
+  num_rows <- 20*num
+  starts <- sample(1:10000, num_rows)
+  gene_subset <- sample(genes, num_rows)
+  test_all_data <- tibble(
+    'GeneID' = gene_subset,
+    'chr' = sample(1:25, num_rows, replace = TRUE),
+    'start' = starts,
+    'end' = as.integer(starts + 100),
+    'strand' = sample(c('1', '-1'), num_rows, replace = TRUE),
+    'p value' = runif(num_rows, min = 1e-8, max = 0.001),
+    'Adjusted p value' = `p value` * 20,
+    'Gene name' = names(gene_subset)
+  )
+})
+invisible(purrr::map(1:3, ~ write_tsv(sets[[.x]], file = paste0('set', .x, '.sig.tsv'))))
