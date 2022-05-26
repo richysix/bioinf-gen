@@ -7,6 +7,10 @@ option_list <- list(
               help="Output file name [default %default]" ),
   make_option("--genes_file", type="character", default=NULL,
               help="File of gene/region ids to subset plots to [default %default]" ),
+  make_option("--pvalue_file", type="character", default=NULL,
+              help="File of pvalue to add to plots [default %default]" ),
+  make_option("--asterisks", action="store_true", type="logical", default=FALSE,
+              help="Convert pvalues to asterisks [default %default]" ),
   make_option("--x_variable", type="character", default='condition',
               help="Name of column from samples file to plot on x-axis [default %default]" ),
   make_option("--colour_variable", type="character", default='condition',
@@ -57,6 +61,9 @@ plot_height <- cmd_line_args$options[['height']]
 theme_base_size <- cmd_line_args$options[['theme_base_size']]
 jitter <- !cmd_line_args$options[['no_jitter']]
 output_data_file <- cmd_line_args$options[['output_data_file']]
+pvalue_file <- cmd_line_args$options[['pvalue_file']]
+asterisks <- cmd_line_args$options[['asterisks']]
+detct <- cmd_line_args$options[['detct']]
 
 packages <- c('tidyverse', 'biovisr', 'rnaseqtools', 'scales')
 for( package in packages ){
@@ -113,7 +120,7 @@ if (cmd_line_args$options[['no_pvalue']]) {
 }
 
 # make a region column
-if (cmd_line_args$options[['detct']]) {
+if (detct) {
     data$region <- paste(data[['Chr']], data[['Region start']],
                          data[['Region end']], data[["3' end position"]],
                          data[["3' end strand"]], sep=":")
@@ -123,6 +130,7 @@ if (cmd_line_args$options[['detct']]) {
                 data[['End']], data[['Strand']])
 }
 
+# subset to genes in genes file if it exists
 if (!is.null(cmd_line_args$options[['genes_file']])) {
   genes <- read.delim(cmd_line_args$options[['genes_file']], header=FALSE)
   # subset to Gene IDs and arrange in the same order
@@ -147,6 +155,36 @@ counts_for_plotting <- inner_join(samples, counts_for_plotting)
 
 if (cmd_line_args$options[['log10']]) {
   counts_for_plotting$log10 <- log10(counts_for_plotting$count + 1)
+}
+
+# load p value data if it exists
+if (!is.null(pvalue_file)) {
+  pvalues <- read_tsv(pvalue_file) %>% 
+    mutate(
+      condition1 = factor(condition1, levels = levels(counts_for_plotting$condition)),
+      condition2 = factor(condition2, levels = levels(counts_for_plotting$condition)),
+      x1 = as.integer(condition1),
+      x2 = as.integer(condition2),
+      start = case_when(
+        x1 < x2 ~ x1,
+        x2 < x1 ~ x2
+      ),
+      midpoint = start + abs(x1 - x2)/2)
+  if (asterisks) {
+    pvalues <- pvalues %>% 
+      mutate(
+        pval_txt = case_when(
+          adjp < 0.001 ~ "***",
+          adjp < 0.01 ~ "**",
+          adjp < 0.05 ~ "*",
+          TRUE ~ "NS")
+      )
+  } else {
+    pvalues <- pvalues %>% 
+      mutate(
+        pval_txt = sprintf("Adjusted p = %.2g, Log2FC = %.2f", adjp, log2fc)
+      )
+  }
 }
 
 # make colour palette for the data
@@ -213,20 +251,22 @@ if (!is.null(shape_var)) {
 }
 
 plot_list <- lapply(regions,
-    function(region, counts_for_plotting, data) {
-        if (debug) { cat(region, "\n") }
-        counts <- counts_for_plotting[ counts_for_plotting$region == region, ]
+    function(region_to_plot, counts_for_plotting, data) {
+        if (debug) { cat(region_to_plot, "\n") }
+        counts <- counts_for_plotting[ counts_for_plotting$region == region_to_plot, ]
+        gene_id <- filter(data, region == region_to_plot) %>% pull("GeneID")
         if(!is.null(adjp_col)){
-          title <- sprintf("%s\n%s / %s\np = %.3g", region,
-                           data[ data$region == region, "GeneID"],
-                           data[ data$region == region, "Name"],
-                           data[ data$region == region, adjp_col ])
+          title <- sprintf("%s\n%s / %s\np = %.3g", region_to_plot,
+                           gene_id,
+                           data[ data$region == region_to_plot, "Name"],
+                           data[ data$region == region_to_plot, adjp_col ])
         } else {
-          title <- sprintf("%s\n%s / %s", region,
-                           data[ data$region == region, "GeneID"],
-                           data[ data$region == region, "Name"])
+          title <- sprintf("%s\n%s / %s", region_to_plot,
+                           gene_id,
+                           data[ data$region == region_to_plot, "Name"])
         }
         
+        # creat basic plot
         plot <- ggplot(data = counts, aes_(x = as.name(x_var),
                                             y = as.name('count')))
 
@@ -248,6 +288,7 @@ plot_list <- lapply(regions,
         } else {
           pos <- position_identity()
         }
+        # add points with the correct shapes
         if (is.null(shape_var)) {
           plot <- plot +
             geom_point(aes_(fill = as.name(colour_var)),
@@ -278,6 +319,46 @@ plot_list <- lapply(regions,
                     scale_shape_manual(values = shape_palette,
                                        guide = guide_legend(order = 2))
             }
+        }
+        
+        # add pvalue lines and text if necessary
+        if (!is.null(pvalue_file)) {
+          # subset pvalues to gene/region
+          if (detct) {
+            pvals <- filter(pvalues, region == region_to_plot)
+          } else {
+            pvals <- filter(pvalues, GeneID == gene_id)
+          }
+          # create y values based on largest data value
+          points_y_range <- range(counts$count)
+          # get major and minor breaks values
+          major_breaks <- scales::extended_breaks()(points_y_range)
+          minor_breaks <- scales::regular_minor_breaks()(major_breaks, points_y_range, n = 2)
+          # set spacing of pvalue lines to halfway between minor breaks
+          line_spacing <- (minor_breaks[2] - minor_breaks[1])/2
+          n <- nrow(pvals) - 1
+          # create y column in pvals by starting at highest major break and adding line spacing
+          pvals$ypos <- major_breaks[length(major_breaks)] + seq(0,line_spacing*n,line_spacing)
+          
+          # with the pval lines added the plot gets bigger so the axes and breaks may change
+          # work out minor breaks and how much to nudge the pvalue labels by
+          y_limits <- range(c(counts$count, pvals$ypos))
+          major_breaks <- scales::extended_breaks()(y_limits)
+          minor_breaks <- scales::regular_minor_breaks()(major_breaks, y_limits, n = 2)
+          if (asterisks) {
+            # nudge asterisk 10% of the distance between the minor breaks
+            text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.1
+          } else {
+            # nudge asterisk 20% of the distance between the minor breaks
+            text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.2
+          }
+          
+          # add segments and text to plot
+          plot <- plot +
+            geom_segment(data = pvals, aes(x = condition1, xend = condition2,
+                                           y = ypos, yend = ypos)) +
+            geom_text(data = pvals, aes(x = midpoint, y = ypos, label = pval_txt),
+                      nudge_y = text_nudge)
         }
         
         if (cmd_line_args$options[['log10']]) {
