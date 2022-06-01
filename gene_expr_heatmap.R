@@ -106,7 +106,6 @@ if (!is.null(cmd_line_args$options[['fill_limits']])) {
 # load sample data
 samples <- read_tsv(cmd_line_args$args[1])
 
-#data <- read.delim(cmd_line_args$args[2], check.names = FALSE)
 data <- load_rnaseq_data(cmd_line_args$args[2])
 
 # CHECK ALL FILES BEFORE DOING RLOG/VST TRANSFORM
@@ -293,10 +292,9 @@ heatmap_plot <- heatmap_plot +
   biovisr::theme_heatmap( xaxis_labels = cmd_line_args$options[['sample_names']],
                           yaxis_labels = cmd_line_args$options[['gene_names']],
                           base_size = 12) +
-  theme(axis.title = element_blank(),
-        #axis.text.x.top = element_text(angle = 45, hjust=0),
-        axis.text.y.right = element_text(hjust=0, face = "italic")) +
-  NULL
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y.right = element_text(hjust=0, face = "italic"))
 
 # create tree plots if appropriate options are set
 gene_tree_plot <- plot_spacer()
