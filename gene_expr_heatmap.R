@@ -67,45 +67,6 @@ option_list <- list(
               help="output an .rda file containing the plot object and clustered counts [default %default]" )
 )
 
-# cmd_line_args <- list(
-#   options = list(
-#     "genes_file" = "test_data/test_genes.txt",
-#     "genes_to_label" = "test_data/test_genes_to_label.txt",
-#     "detct" = FALSE,
-#     "transform" = "rlog",
-#     "centre_and_scale" = TRUE,
-#     "cluster" = "both",
-#     "output_clusters" = FALSE,
-#     "gene_tree" = TRUE,
-#     "genes_to_label" = "test_data/test_genes.txt",
-#     "sample_tree" = TRUE,
-#     "colour_palette" = 'plasma',
-#     "cell_colour" = "grey80",
-#     "gene_names" = TRUE,
-#     "sample_names" = TRUE,
-#     "sample_metadata_file" = "test_data/test_samples_long.tsv",
-#     "sample_metadata_ycol" = "category",
-#     "sample_metadata_fill" = "value",
-#     "sample_metadata_fill_palette" = NULL,
-#     "gene_metadata_file" = "test_data/test_gene_metadata.tsv",
-#     "gene_metadata_xcol" = "value",
-#     "gene_metadata_fill" = "category",
-#     "gene_metadata_fill_palette" = NULL,
-#     "relative_widths" = "1,3,1,1",
-#     "relative_heights" = "1,3,1",
-#     "width" = 7,
-#     "height" = 10,
-#     "fill_limits" = NULL,
-#     "output_count_file" = NULL,
-#     "output_rda_file" = NULL
-#   ),
-#   args = c(
-#     'test_data/test_samples.tsv',
-#     'test_data/test_rnaseq_data.tsv',
-#     'test_data/test_heatmap_with_metadata.pdf'
-#   )
-# )
-
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'gene_expr_heatmap.R',
@@ -114,7 +75,8 @@ cmd_line_args <- parse_args(
 )
 
 output_file <- cmd_line_args$args[3]
-packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork', 'DESeq2', 'ggrepel')
+packages <- c('tidyverse', 'viridis', 'rnaseqtools', 'biovisr', 'patchwork',
+              'DESeq2', 'ggrepel', 'ggdendro')
 if (grepl('svg$', output_file)) { packages <- c(packages, 'svglite') }
 metadata_files <- c(cmd_line_args$options[['sample_metadata_file']],
                    cmd_line_args$options[['gene_metadata_file']])
@@ -367,8 +329,8 @@ if (cluster_rows & cmd_line_args$options[['output_clusters']]) {
   
   if (cmd_line_args$options[['gene_tree']]) {
     gene_tree_plot <- gene_tree_plot + 
-      geom_tile(data = clusters, aes(x = GeneID, y = -1, fill = factor(cluster))) +
-      scale_fill_manual(values = biovisr::cbf_palette(nlevels(factor(clusters$cluster))),
+      geom_tile(data = clusters, aes(x = GeneID, y = -1, fill = cluster)) +
+      scale_fill_manual(values = biovisr::cbf_palette(clusters$cluster),
                         guide = guide_legend(reverse = TRUE),
                         name = "Cluster") + 
       theme(legend.position = "left")
@@ -573,10 +535,55 @@ if (!is.null(cmd_line_args$options[['output_rda_file']])) {
     }
   }
   if (!is.null(cmd_line_args$options[['sample_metadata_file']])) {
-    object_list <- c(object_list, 'sample_metadata_plot')
+    object_list <- c(object_list, 'sample_metadata_plot', 'sample_metadata_labels_plot')
   }
   if (!is.null(cmd_line_args$options[['gene_metadata_file']])) {
     object_list <- c(object_list, 'gene_metadata_plot')
   }
+  if (!is.null(cmd_line_args$options[['genes_to_label']])) {
+    object_list <- c(object_list, 'labels_plot')
+  }
   save(list = object_list, file = cmd_line_args$options[['output_rda_file']])
 }
+
+# options for testing 
+# cmd_line_args <- list(
+#   options = list(
+#     "genes_file" = "test_data/test_genes.txt",
+#     "genes_to_label" = "test_data/test_genes_to_label.txt",
+#     "detct" = FALSE,
+#     "transform" = "rlog",
+#     "centre_and_scale" = TRUE,
+#     "cluster" = "both",
+#     "output_clusters" = FALSE,
+#     "cluster_files_base" = 'hclust/cluster-',
+#     "k" = 9,
+#     "gene_tree" = TRUE,
+#     "genes_to_label" = "test_data/test_genes.txt",
+#     "sample_tree" = TRUE,
+#     "colour_palette" = 'plasma',
+#     "cell_colour" = "grey80",
+#     "gene_names" = TRUE,
+#     "sample_names" = TRUE,
+#     "sample_metadata_file" = "test_data/test_samples_long.tsv",
+#     "sample_metadata_ycol" = "category",
+#     "sample_metadata_fill" = "value",
+#     "sample_metadata_fill_palette" = NULL,
+#     "gene_metadata_file" = "test_data/test_gene_metadata.tsv",
+#     "gene_metadata_xcol" = "value",
+#     "gene_metadata_fill" = "category",
+#     "gene_metadata_fill_palette" = NULL,
+#     "relative_widths" = "1,3,1,1",
+#     "relative_heights" = "1,3,1",
+#     "width" = 7,
+#     "height" = 10,
+#     "fill_limits" = NULL,
+#     "output_count_file" = NULL,
+#     "output_rda_file" = NULL
+#   ),
+#   args = c(
+#     'test_data/test_samples.tsv',
+#     'test_data/test_rnaseq_data.tsv',
+#     'test_data/test_heatmap_with_metadata.pdf'
+#   )
+# )
