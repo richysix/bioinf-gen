@@ -12,7 +12,13 @@ option_list <- list(
               help="P value cut-off to use to colour/label the points [default %default]" ),
   make_option("--log2fc_or_pval", action="store_true", type="logical", default=FALSE,
               help=paste0("Change labelling to be points over either threshold [default %default]\n",
-                          "The default behaviour if both thresholds are set is to labels points over both thresholds\n") )
+                          "The default behaviour if both thresholds are set is to labels points over both thresholds\n") ),
+  make_option("--width", type="numeric", default=7,
+              help="Width of plot in inches [default %default]" ),
+  make_option("--height", type="numeric", default=7,
+              help="Height of plot in inches [default %default]" ),
+  make_option("--text_base_size", type="numeric", default=16,
+              help="Base size of text for ggplot theme [default %default]" )
 )
 
 cmd_line_args <- parse_args(
@@ -99,15 +105,15 @@ if(suppressPackageStartupMessages(suppressWarnings(require('ggrastr')))) {
 if (cmd_line_args$options[['labels']]) {
   volcano_plot <- volcano_plot +
     geom_text_repel(aes(label = name_label),
+                    size = cmd_line_args$options[['text_base_size']]*0.75/.pt,
                     point.padding = 0.25, box.padding = 1,
-                    force = 2, family = "OpenSans")
+                    force = 2)
 }
 
 # Add colour scale, chnge theme and add axis labels
 volcano_plot <- volcano_plot +
   scale_colour_manual(values = c(up = '#cc6600', down = '#0073b3'), na.value = "grey80") +
-  theme_minimal() +
-  theme(text = element_text(family = "OpenSans")) +
+  theme_minimal(base_size = cmd_line_args$options[['text_base_size']]) +
   guides(colour = "none") +
   labs(x = expr(log[2]*'(Fold Change)'), y = expr(log[10]*'(Adjusted pvalue)')) +
   NULL
@@ -116,15 +122,23 @@ volcano_plot <- volcano_plot +
 # get output type from filename suffix
 # pdf is default if nothing matches
 if (sub("^.*\\.", "", output_file) == "eps") {
-  postscript(file = output_file)
+  postscript(file = output_file,
+             width = cmd_line_args$options[['width']],
+             height = cmd_line_args$options[['height']])
 } else if (sub("^.*\\.", "", output_file) == "svg") {
   if(suppressPackageStartupMessages(suppressWarnings(require('svglite')))) {
-    svglite(file = output_file)
+    svglite(file = output_file,
+            width = cmd_line_args$options[['width']],
+            height = cmd_line_args$options[['height']])
   } else {
-    svg(filename = output_file)
+    svg(filename = output_file,
+        width = cmd_line_args$options[['width']],
+        height = cmd_line_args$options[['height']])
   }
 } else {
-  pdf(file = output_file)
+  pdf(file = output_file,
+      width = cmd_line_args$options[['width']],
+      height = cmd_line_args$options[['height']])
 }
 # print plot and close graphics device
 print(volcano_plot)
