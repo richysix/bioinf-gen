@@ -502,6 +502,12 @@ if (number_clusters > 1) {
   writeBin(content(response, as = "raw"), cluster_image_file)
 }
 
+# save cluego session
+session_file <- paste0(file_base, ".cluego")
+encoded_path <- URLencode(paste0(output_path, '/'), reserved = TRUE)
+response <- PUT(url=paste(cluego_base_url, "session", encoded_path, session_file, sep="/"), encode = "json")
+stop_for_status(response, "Save Cluego session")
+
 if (verbose) {
   print(paste0("Analysis ", analysis_name, " done"))
 }
