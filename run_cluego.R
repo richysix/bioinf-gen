@@ -89,15 +89,19 @@ text_to_data_frame <- function(table.text) {
   table <- NULL
   rows <- unlist(strsplit(table.text, split="\n"))
   header <- t(unlist(strsplit(rows[1], split="\t")))
-  for(i in 2:length(rows)) {
-    if(is.null(table)) {
-      table <- t(unlist(strsplit(rows[i], split="\t")))
-    } else {
-      table <- rbind(table, t(unlist(strsplit(rows[i], split="\t"))))
+  if(length(rows) == 1) {
+    warning('Table is empty!')
+  } else {
+    for(i in 2:length(rows)) {
+      if(is.null(table)) {
+        table <- t(unlist(strsplit(rows[i], split="\t")))
+      } else {
+        table <- rbind(table, t(unlist(strsplit(rows[i], split="\t"))))
+      }
     }
+    table <- as.data.frame(table)
+    names(table) <- header
   }
-  table <- as.data.frame(table)
-  names(table) <- header
   return(table)
 }
 
