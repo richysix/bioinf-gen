@@ -5,9 +5,8 @@ This script runs a standard ClueGO analysis from the supplied gene lists.
 It assumes that the gene list has a header and the Ensembl gene ids are in a column named Gene. 
 If more than one gene list is supplied, the script will produce two images, 
 one coloured by group (Enriched Term) and one coloured by cluster (Gene List origin). 
-At the moment the script runs the analysis and saves an image(s) and the output files, 
-but I can't find a way to save the analysis as a ClueGO session. 
-This must be done manually in Cytoscape.
+The script runs the analysis and saves an image(s) and the output files, 
+and then saves the analysis as a ClueGO session. 
 To run the script, CytoScape (> v3.6) must be running and the Cytoscape Apps 
 'yFiles Layout Algorithms' and 'ClueGO' (> v2.5.2) must be installed.
 This script is based on the example script provided with the ClueGO documentation.
@@ -29,6 +28,8 @@ option_list <- list(
               help=paste("Comma separated list of ontologies to pick.",
               "Each entry must be the index of the ontology",
               "followed by a shape separated by a semi-colon",
+              "Use the --get_ontologies option to find the correct indices", 
+              "The defaults are set for zebrafish", 
               "[default %default]", sep = '\n                ')), 
   make_option("--analysis_name", type="character", default='cluego', 
               help="Name of the analysis [default %default]" ), 
@@ -175,7 +176,7 @@ if (verbose) {
 
 # [optional functions and settings, un comment and modify if needed]
 # 2.1 Select the ClueGO ID type
-id_type_name = "EnsemblGeneID" # (run "2.3 Get ClueGO ID types" to get all options) "# Automatic #"
+id_type_name = "EnsemblGeneID" # (run "2.3 Get ClueGO ID types" to get all options)
 response <- PUT(url=paste(cluego_base_url, "ids", "set-id-type", id_type_name, sep="/"), encode = "json")
 stop_for_status(response, "Set ID type")
 
@@ -208,15 +209,16 @@ for (cluster_index in seq_len(length(cmd_line_args$args))) {
   cluster_color = colour_palette[cluster_index]
   min_number_of_genes_per_term = 3 # defaults. could have as an option
   min_percentage_of_genes_mapped = 4 # defaults. could have as an option
-  no_restrictions = FALSE # TRUE for no restricions in number and percentage per term
-  response <- PUT(url=paste(cluego_base_url, "cluster", "set-analysis-properties", as.character(cluster_index), 
+  no_restrictions = FALSE # TRUE for no restrictions in number and percentage per term
+  response <- PUT(url=paste(cluego_base_url, "cluster", "set-analysis-properties", 
+                            as.character(cluster_index), 
                             URLencode(node_shape, reserved = TRUE), URLencode(cluster_color, reserved = TRUE), 
                             min_number_of_genes_per_term, min_percentage_of_genes_mapped, 
                             no_restrictions, sep="/"), encode = "json")
   stop_for_status(response, "Set Cluster properties")
 }
 
-# go through again and load gene lists
+# go through files again and load gene lists
 identifiers <- list(
   'Homo Sapiens' = 'ENSG[0-9]{11}',
   'Mus Musculus' = 'ENSMUSG[0-9]{11}',
@@ -225,7 +227,7 @@ identifiers <- list(
 for (cluster_index in seq_len(length(cmd_line_args$args))) {
   file <- cmd_line_args$args[cluster_index]
   gene_info <- read_tsv(file)
-  # check gene ids match
+  # check gene ids match Ensembl identifiers
   if (is.null(identifiers[[organism_name]])) {
     warning("No identifier regex for species, ", organism_name)
   }else {
@@ -235,8 +237,11 @@ for (cluster_index in seq_len(length(cmd_line_args$args))) {
                   "ids = ", paste0(head(gene_info$Gene), collapse = ", ")))
     }
   }
+  # convert gene list to JSON
   gene_list <- toJSON(gene_info$Gene)
-  response <- PUT(url=paste(cluego_base_url, "cluster", "upload-ids-list", URLencode(as.character(cluster_index)), sep="/"), 
+  # upload gene list
+  response <- PUT(url=paste(cluego_base_url, "cluster", "upload-ids-list", 
+                            URLencode(as.character(cluster_index)), sep="/"), 
                   body=gene_list, encode = "json", content_type_json())
   stop_for_status(response, "Upload gene lists")
 }
@@ -259,6 +264,7 @@ response <- PUT(url=paste(cluego_base_url, "ontologies", "set-ontologies", sep="
 stop_for_status(response, "Select ontologies and set shape")
 
 ## [optional functions and settings, un comment and modify if needed]
+# this is run above if --get_ontologies is set
 # 3.1 Get all available Ontologies
 # response <- GET(paste(cluego_base_url, "ontologies", "get-ontology-info", sep="/"))
 # stop_for_status(response, "Get all ontologies")
@@ -348,6 +354,7 @@ current_network_suid <- content(response, encode = "json")$data$networkSUID
 # print(current_network_suid)
 
 # hide the control and table panels
+# this makes the network viewing window as big as possible
 response <- GET(paste(cytoscape_base_url, "ui", "panels", sep="/"))
 stop_for_status(response, "Get panel info")
 panel_info <- content(response, encode = "text", encoding = "UTF-8")
