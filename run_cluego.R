@@ -412,11 +412,13 @@ stop_for_status(response, "First view")
 writeBin(content(response, as = "raw"), cmd_line_args$options[['output_image_file']])
 
 # 4.2 Get ClueGO result table
-response <- GET(paste(cluego_base_url, "analysis-results", "get-cluego-table", current_network_suid, sep="/"))
-stop_for_status(response, "Cluego results table")
-result_table_text <- content(response, encode = "text", encoding = "UTF-8")
-table_file_name = paste0(output_basename, "-result-table.txt")
-write.table(text_to_data_frame(result_table_text), file=table_file_name, row.names=FALSE, quote = FALSE, na="", col.names=TRUE, sep="\t")
+# this doesn't work at the moment. don't know why
+# I have commented it out.
+# response <- GET(paste(cluego_base_url, "analysis-results", "get-cluego-table", current_network_suid, sep="/"))
+# stop_for_status(response, "Get Cluego results table")
+# result_table_text <- content(response, encode = "text", encoding = "UTF-8")
+# table_file_name = paste0(output_basename, "-result-table.txt")
+# write.table(text_to_data_frame(result_table_text), file=table_file_name, row.names=FALSE, quote = FALSE, na="", col.names=TRUE, sep="\t")
 
 # # 4.3 Get ClueGO genes and main functions
 # number_of_functions_to_add = 3
