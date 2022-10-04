@@ -130,7 +130,16 @@ if(http_status(response)$category == "Server error") {
 }
 
 #### 1.0 Select the ClueGO Organism to analyze ####
-organism_name = cmd_line_args$options[['organism']] # (run "1.1 Get all ClueGO organisms" to get all options)
+organism_name = cmd_line_args$options[['organism']] 
+# run "1.1 Get all ClueGO organisms" to get all available organisms
+# check organism is installed
+response <- GET(paste(cluego_base_url,"organisms","get-all-installed-organisms",sep="/"))
+stop_for_status(response, "Get species")
+species_vec <- unlist(content(response, encode = "json"))
+if (!(organism_name %in% species_vec)) {
+  stop(paste0("Organism, ", organism_name, ", is not installed"))
+}
+
 if (verbose) {
   print(paste("1.0 Select the ClueGO Organism to analyze: ", organism_name, sep=""))
 }
@@ -152,11 +161,6 @@ if (cmd_line_args$options[['get_ontologies']]) {
 }
 
 ## [optional functions and settings, un comment and modify if needed]
-# 1.1 Get all ClueGO organisms
-# response <- GET(paste(cluego_base_url, "organisms", "get-all-installed-organisms", sep="/"))
-# stop_for_status(response, "Get organisms")
-# print(content(response))
-#
 # 1.2 Get all info for installed organisms
 # response <- GET(paste(cluego_base_url, "organisms", "get-all-organism-info", sep="/"))
 # stop_for_status(response, "Get all organism info")
