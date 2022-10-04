@@ -76,6 +76,8 @@ cmd_line_args <- parse_args(
 debug <- cmd_line_args$options[['debug']]
 verbose <- cmd_line_args$options[['verbose']]
 output_basename <- cmd_line_args$options[['output_basename']]
+output_path <- ifelse(dirname(output_basename) == ".", getwd(), dirname(output_basename))
+file_base <- basename(output_basename)
 ontologies_to_select <- unlist(strsplit(cmd_line_args$options[['ontologies']], ",", fixed = TRUE))
 
 # load packages
@@ -335,7 +337,7 @@ if (response$status_code == 404) {
   print(content(response, encode = "json")[["message"]])
 }
 stop_for_status(response, "Run analysis")
-log_file_name = paste(output_basename, "analysis-log.txt", sep = "-")
+log_file_name = file.path(output_path, paste(file_base, "analysis-log.txt", sep = "-"))
 writeLines(content(response, encoding="UTF-8"), log_file_name)
 # print(content(response, encode = "text"))
 
@@ -425,25 +427,34 @@ write.table(text_to_data_frame(result_table_text), file=table_file_name, row.nam
 # write.table(text_to_data_frame(result_table_text), file=table_file_name, row.names=FALSE, quote = FALSE, na="", col.names=TRUE, sep="\t")
 
 # # 4.4 Get genes result table
-# response <- GET(paste(cluego_base_url, "analysis-results", "get-gene-table", current_network_suid, sep="/"))
-# stop_for_status(response, "Get gene table")
-# result_table_text <- content(response, encode = "text", encoding = "UTF-8")
-# table_file_name = paste0(output_basename, "-gene-table.txt")
-# write.table(text_to_data_frame(result_table_text), file=table_file_name, row.names=FALSE, quote = FALSE, na="", col.names=TRUE, sep="\t")
+response <- GET(paste(cluego_base_url, "analysis-results", "get-gene-table", current_network_suid, sep="/"))
+stop_for_status(response, "Get gene table")
+result_table_text <- content(response, encode = "text", encoding = "UTF-8")
+table_file_name = file.path(output_path, paste0(file_base, "-gene-table.txt"))
+result_table <- text_to_data_frame(result_table_text)
+if (!is.null(result_table)) {
+  write_tsv(result_table, file=table_file_name)
+}
 
 # 4.5 Get Kappascore Matrix
 response <- GET(paste(cluego_base_url, "analysis-results", "get-kappascore-matrix", current_network_suid, sep="/"))
 stop_for_status(response, "Get kappa score matrix")
 result_table_text <- content(response, encode = "text", encoding = "UTF-8")
-table_file_name = paste0(output_basename, "-kappascore-matrix.txt")
-write.table(text_to_data_frame(result_table_text), file=table_file_name, row.names=FALSE, quote = FALSE, na="", col.names=TRUE, sep="\t")
+kappa_result_table <- text_to_data_frame(result_table_text)
+table_file_name = file.path(output_path, paste0(file_base, "-kappascore-matrix.txt"))
+if (!is.null(kappa_result_table)) {
+  write_tsv(kappa_result_table, file=table_file_name)
+}
 
 # 4.6 Get binary Gene-Term Matrix
 response <- GET(paste(cluego_base_url, "analysis-results", "get-binary-gene-term-matrix", current_network_suid, sep="/"))
 stop_for_status(response, "Get binary Gene-Term Matrix")
 result_table_text <- content(response, encode = "text", encoding = "UTF-8")
-table_file_name = paste0(output_basename, "-binary-gene-term-matrix.txt")
-write.table(text_to_data_frame(result_table_text), file=table_file_name, row.names=FALSE, quote = FALSE, na="", col.names=TRUE, sep="\t")
+gene_term_result_table <- text_to_data_frame(result_table_text)
+table_file_name = file.path(output_path, paste0(file_base, "-binary-gene-term-matrix.txt"))
+if (!is.null(gene_term_result_table)) {
+  write_tsv(gene_term_result_table, file=table_file_name)
+}
 
 # # 4.7 ClueGO Result Chart
 # # Get result charts for both cluster as pie chart
