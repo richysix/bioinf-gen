@@ -1,8 +1,20 @@
 #!/usr/bin/env Rscript
 
-library('optparse')
+desc <- "
+This script runs a standard ClueGO analysis from the supplied gene lists. 
+It assumes that the gene list has a header and the Ensembl gene ids are in a column named Gene. 
+If more than one gene list is supplied, the script will produce two images, 
+one coloured by group (Enriched Term) and one coloured by cluster (Gene List origin). 
+At the moment the script runs the analysis and saves an image(s) and the output files, 
+but I can't find a way to save the analysis as a ClueGO session. 
+This must be done manually in Cytoscape.
+To run the script, CytoScape (> v3.6) must be running and the Cytoscape Apps 
+'yFiles Layout Algorithms' and 'ClueGO' (> v2.5.2) must be installed.
+This script is based on the example script provided with the ClueGO documentation.
+http://www.ici.upmc.fr/cluego/ClueGOcyRESTExample.R
+"
 
-#### Please make sure that Cytoscape >v3.6+ is started and the Cytoscape Apps 'yFiles Layout Algorithms' and 'ClueGO v2.5.2' are installed before running this script! ####
+library('optparse')
 
 option_list <- list(
   make_option("--output_image_file", type="character", default='go_network.svg', 
@@ -17,7 +29,7 @@ option_list <- list(
               help=paste("Comma separated list of ontologies to pick.",
               "Each entry must be the index of the ontology",
               "followed by a shape separated by a semi-colon",
-              "[default %default]" )), 
+              "[default %default]", sep = '\n                ')), 
   make_option("--analysis_name", type="character", default='cluego', 
               help="Name of the analysis [default %default]" ), 
   make_option("--destroy_network", action="store_true", type="logical", default=FALSE, 
@@ -38,34 +50,28 @@ option_list <- list(
               help="Turns on debugging statements [default %default]" )
 )
 
-desc <- paste(
-  '\nScript to run GO enrichment using ClueGO', 
-  sep = "\n"
-)
+# For testing. If running this script interactively the options
+# get set to defaults and positional arguments are set to
+# whatever is in the arguments vector below
+# change this line 
+# arguments <- c('data/Amp.sig.tsv', 'data/Oxy.sig.tsv')
+# to change the file names
+if (any(commandArgs() == "--interactive")) {
+  arguments <- c('data/Amp.sig.tsv', 'data/Oxy.sig.tsv')
+} else {
+  arguments <- commandArgs(trailingOnly = TRUE)
+}
 
+# get command line options
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'run_cluego.R', 
     usage = "Usage: %prog [options] input_files", 
     description = desc ), 
+  args = arguments,
   positional_arguments = c(1, 8)
 )
 
-# cmd_line_args <-
-#   list(options = list('output_image_file' = 'go_network.svg',
-#                       "output_basename" = 'cluego',
-#                       'organism' = 'Danio rerio',
-#                       'ontologies' = "1;Ellipse,2;Hexagon,4;Rectangle,5;Diamond",
-#                       "analysis_name" = 'cluego',
-#                       "destroy_network" = FALSE,
-#                       "min_go_tree_level" = 3,
-#                       "max_go_tree_level" = 8,
-#                       "pvalue_threshold" = 0.05,
-#                       "kappa_score_level" = 0.4,
-#                       verbose = TRUE,
-#                       debug = TRUE),
-#        args = c('sig-genes.tsv'))
-  
 # unpack options
 debug <- cmd_line_args$options[['debug']]
 verbose <- cmd_line_args$options[['verbose']]
@@ -104,7 +110,7 @@ cluego_base_url = paste(cytoscape_base_url, "apps", "cluego", "cluego-manager", 
 
 analysis_name <- cmd_line_args$options[['analysis_name']]
 if (verbose) {
-  print(paste("Analysis: ", analysis_name, sep=""))
+  print(paste("Analysis name: ", analysis_name, sep=""))
   print(paste("Cytoscape Base URL: ", cytoscape_base_url, sep=""))
   print(paste("ClueGO Base URL: ", cluego_base_url, sep=""))
 }
