@@ -1,5 +1,17 @@
 # Script to plot a volcano plot from DESeq2 results
 
+# AUTHOR
+#
+# Richard White <rich@buschlab.org>
+#
+# COPYRIGHT AND LICENSE
+#
+# This software is Copyright (c) 2022. Queen Mary University of London.
+#
+# This is free software, licensed under:
+#
+#  The GNU General Public License, Version 3, June 2007
+
 # load packages
 library('optparse')
 
