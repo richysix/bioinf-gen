@@ -1,5 +1,17 @@
 #!/usr/bin/env Rscript
 
+# AUTHOR
+#
+# Richard White <rich@buschlab.org>
+#
+# COPYRIGHT AND LICENSE
+#
+# This software is Copyright (c) 2022. Queen Mary University of London.
+#
+# This is free software, licensed under:
+#
+#  The GNU General Public License, Version 3, June 2007
+
 library('optparse')
 
 option_list <- list(
