@@ -5,7 +5,7 @@ General Bioinformatics scripts
 ## Scripts
 
 * aggregate_zfa.R - aggregate ZFA terms by another column
-* [bubble_plot.R](https://github.com/richysix/bioinf-gen#bubble_plotr) - Generic bubble plot
+* [bubble_plot.R](docs/bubble_plot/bubble_plot.md) - Generic bubble plot
 * cluster_samples_rnaseq.R
 * convert_detct_to_rnaseq_for_gsea.pl
 * create_geneset_file.R
