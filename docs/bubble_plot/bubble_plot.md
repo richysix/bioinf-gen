@@ -1,4 +1,6 @@
-[Go to script](https://github.com/richysix/bioinf-gen/bubble_plot.R)
+## bubble_plot.R
+
+[Go to script](../../bubble_plot.R)
 
 Script to produce a bubble plot from continuous or categorical data. It
 expects 1 input file. There is some test data in the test_data directory
