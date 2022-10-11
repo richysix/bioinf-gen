@@ -3,7 +3,7 @@
 [Go to script](../../volcano_plot.R)
 
 Script to produce a volcano plot from a RNA-seq experiment.  
-It expects columns named ‘adjp’ and ‘log2fc’ in the input file.
+It expects columns named `adjp` and `log2fc` in the input file.
 
 ``` bash
 Rscript volcano_plot.R \
@@ -15,13 +15,13 @@ volcano-basic.pdf
 log2(Fold Change).](volcano-basic.png "Test volcano plot")
 
 There are also options to label points that are above threshold for
-Adjusted pvalue and/or log\[2\]\~Fold Change. The `--labels` option
-turns on labelling.  
+Adjusted pvalue and/or log<sub>2</sub>(Fold Change).  
+The `--labels` option turns on labelling.  
 If `--labels` is set and neither of `--log2fc_threshold` or
 `--pval_threshold` are set, the script will use default values of 2 and
 1e-5 respectively.  
-The `--log2fc_threshold` is a threshold on absolute log2FC, so
-down-regulated genes will also be labelled.  
+The `--log2fc_threshold` is a threshold on absolute log<sub>2</sub>(Fold
+Change), so down-regulated genes will also be labelled.  
 It is also possible to set just one of the thresholds.
 
 ``` bash
