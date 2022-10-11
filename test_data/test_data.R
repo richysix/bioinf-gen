@@ -196,29 +196,6 @@ write.table(gene_info$PROBE[sample(1:20, 10)], quote = FALSE,
             file = file.path(root_path, 'test_data', 'gsea-genes.txt'), 
             col.names = FALSE, row.names = FALSE)
 
-# test data for bubble_plot.R
-num_terms <- 10
-num_expts <- 3
-set.seed(492)
-bubble_data <- tibble(
-  GO.ID = sprintf('GO:%07d', rep(seq_len(num_terms), num_expts)),
-  Name = sprintf('Term-%d', rep(seq_len(num_terms), num_expts)),
-  Expt = rep(c('Expt1', 'Expt2', 'Expt3'), each = num_terms),
-  log10p = runif(num_expts * num_terms, min = 2, max = 10),
-  Enrichment = runif(num_expts * num_terms, min = 2, max = 4)
-) %>% 
-  sample_n(., 20) %>%  
-  arrange(., Expt, GO.ID)
-write_tsv(bubble_data, path = file.path(root_path, 'test_data', 'go-3expts.tsv'))
-
-# continuous test data for bubble plot
-set.seed(20229)
-bubble_data_num <- data.frame(x = runif(100, min = 1, max = 50),
-                            y = runif(100, min = 1, max = 50),
-                            size = sample(20:100, 100, replace = TRUE),
-                            fill = runif(100))
-write_tsv(bubble_data_num, path = file.path(root_path, 'test_data', 'bubble_continuous.tsv'))
-
 # make test data for upset-sig-genes.R
 num_genes <- 100
 genes <- sprintf('ENSTEST%03d', seq_len(num_genes))

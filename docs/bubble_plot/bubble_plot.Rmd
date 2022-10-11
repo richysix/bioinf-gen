@@ -17,18 +17,45 @@ for( package in c("knitr", "rprojroot", "tidyverse", "biovisr")) {
 opts_chunk$set(fig.width=6, fig.height=4, include=TRUE, echo=TRUE)
 ```
 
-```{r load_data, include=FALSE}
+```{r root-path, include=FALSE}
 #set.seed(193746)
 root_path <- find_root(is_rstudio_project)
 Sys.setenv(ROOT_PATH = root_path)
 ```
 
+```{r create-test-data, include=FALSE}
+# test data for bubble_plot.R
+num_terms <- 10
+num_expts <- 3
+set.seed(492)
+bubble_data <- tibble(
+  GO.ID = sprintf('GO:%07d', rep(seq_len(num_terms), num_expts)),
+  Name = sprintf('Term-%d', rep(seq_len(num_terms), num_expts)),
+  Expt = rep(c('Expt1', 'Expt2', 'Expt3'), each = num_terms),
+  log10p = runif(num_expts * num_terms, min = 2, max = 10),
+  Enrichment = runif(num_expts * num_terms, min = 2, max = 4)
+) %>% 
+  sample_n(., 20) %>%  
+  arrange(., Expt, GO.ID)
+write_tsv(bubble_data, file = file.path(root_path, 'test_data', 'go-3expts.tsv'))
+
+# continuous test data for bubble plot
+set.seed(20229)
+bubble_data_num <- data.frame(x = runif(100, min = 1, max = 50),
+                            y = runif(100, min = 1, max = 50),
+                            size = sample(20:100, 100, replace = TRUE),
+                            fill = runif(100))
+write_tsv(bubble_data_num, file = file.path(root_path, 'test_data', 'bubble_continuous.tsv'))
+```
+
+
 [Go to script](../../bubble_plot.R)
 
-Script to produce a bubble plot from continuous or categorical data. It expects 1 input file.
-There is some test data in the test_data directory of this repository.
+Script to produce a bubble plot from continuous or categorical data. It expects 1 input file.  
+There is some test data in the test_data directory of this repository.  
 The script defaults to using columns named `x`, `y`, `fill` and `size` in the
-data file. For example ...
+data file.   
+For example ...
 
 ```{bash bubble-cont, eval=FALSE, echo=TRUE}
 Rscript bubble_plot.R \
@@ -45,7 +72,8 @@ $ROOT_PATH/test_data/bubble_continuous.tsv
 ![Test bubble plot. It shows bubbles of different sizes and colours plotted
 at random positions on the x and y axes.](test_bubble_cont.png "Test bubble plot")
 
-Or for categorical data. This example also shows some of the possible options.
+The options allow the user to set which column names in the data to use.  
+This example also shows some of the other possible options.
 
 ```{bash bubble-cat, eval=FALSE, echo=TRUE}
 Rscript bubble_plot.R --x_var Expt --y_var GO.ID \

@@ -3,9 +3,11 @@
 [Go to script](../../bubble_plot.R)
 
 Script to produce a bubble plot from continuous or categorical data. It
-expects 1 input file. There is some test data in the test_data directory
-of this repository. The script defaults to using columns named `x`, `y`,
-`fill` and `size` in the data file. For example …
+expects 1 input file.  
+There is some test data in the test_data directory of this repository.  
+The script defaults to using columns named `x`, `y`, `fill` and `size`
+in the data file.  
+For example …
 
 ``` bash
 Rscript bubble_plot.R \
@@ -17,8 +19,9 @@ test_data/bubble_continuous.tsv
 plotted at random positions on the x and y
 axes.](test_bubble_cont.png "Test bubble plot")
 
-Or for categorical data. This example also shows some of the possible
-options.
+The options allow the user to set which column names in the data to
+use.  
+This example also shows some of the other possible options.
 
 ``` bash
 Rscript bubble_plot.R --x_var Expt --y_var GO.ID \
