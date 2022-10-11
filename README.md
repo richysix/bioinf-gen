@@ -28,10 +28,10 @@ Click on the links to go to the documentation for that script.
 * reshape-long_to_wide.R - reshapes long data to wide data
 * [run_cluego.R](https://github.com/richysix/bioinf-gen#run_cluegor) - Run a Cytoscape ClueGO analysis from gene list(s)
 * [upset-sig-genes.R](https://github.com/richysix/bioinf-gen#upset-sig-genesr) - Simple UpSet plot from DESeq2 sig files with genes for each intersection
-* volcano_plot.R
+* [volcano_plot.R](docs/volcano_plot/volcano_plot.md) - Volcano plot
 * xlsx_conditional_formatting.R
 
-The plot scripts (gene_expr_heatmap.R, go_barchart.R, go_bubble_plot.R) support outputting plot files as
+The plot scripts (gene_expr_heatmap.R, go_barchart.R, go_bubble_plot.R etc.) support outputting plot files as
 pdf, png, ps and svg
 
 ### gene_expr_heatmap.R

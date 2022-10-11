@@ -1,4 +1,12 @@
-# Script to plot a volcano plot from DESeq2 results
+#!/usr/bin/env Rscript
+
+desc <- "
+This script plots a volcano plot (Log2[Fold Change] vs -log10[adjusted p]) from a DESeq2 results file.
+It will optionally label points that are above pvalue and/or log2[Fold Change] thresholds.
+It expects columns named 'adjp' and 'log2fc' in the input file. 
+A column called 'Name' is required for labels.
+Available output formats are 'eps', 'svg' and 'pdf'
+"
 
 # AUTHOR
 #
@@ -19,25 +27,36 @@ option_list <- list(
   make_option("--labels", action="store_true", type="logical", default=FALSE,
               help="Label the points which are above the logfc and pvalue thresholds [default %default]" ),
   make_option("--log2fc_threshold", type="numeric", default=NULL,
-              help="Log2 FC threshold above which to label the points [default %default]" ),
+              help="Absolute Log2 FC threshold above which to label the points [default %default]" ),
   make_option("--pval_threshold", type="numeric", default=NULL,
               help="P value cut-off to use to colour/label the points [default %default]" ),
   make_option("--log2fc_or_pval", action="store_true", type="logical", default=FALSE,
               help=paste0("Change labelling to be points over either threshold [default %default]\n",
                           "The default behaviour if both thresholds are set is to labels points over both thresholds\n") ),
-  make_option("--width", type="numeric", default=7,
+  make_option("--width", type="numeric", default=NULL,
               help="Width of plot in inches [default %default]" ),
-  make_option("--height", type="numeric", default=7,
+  make_option("--height", type="numeric", default=NULL,
               help="Height of plot in inches [default %default]" ),
   make_option("--text_base_size", type="numeric", default=16,
               help="Base size of text for ggplot theme [default %default]" )
 )
 
+# For testing. If running this script interactively the options
+# get set to defaults and positional arguments are set to
+# whatever is in the arguments vector below
+if (any(commandArgs() == "--interactive")) {
+  arguments <- c('test_data/test_rnaseq_data.tsv',
+                 'test-volcano.pdf')
+} else {
+  arguments <- commandArgs(trailingOnly = TRUE)
+}
+
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'volcano_plot.R',
     usage = "Usage: %prog [options] results_file output_file",
-    description = 'This script makes a volcano plot from a DESeq2 results file'),
+    description = desc ),
+  args = arguments,
   positional_arguments = 2
 )
 
@@ -131,27 +150,20 @@ volcano_plot <- volcano_plot +
   NULL
 
 # output plot
-# get output type from filename suffix
-# pdf is default if nothing matches
-if (sub("^.*\\.", "", output_file) == "eps") {
-  postscript(file = output_file,
-             width = cmd_line_args$options[['width']],
-             height = cmd_line_args$options[['height']])
-} else if (sub("^.*\\.", "", output_file) == "svg") {
-  if(suppressPackageStartupMessages(suppressWarnings(require('svglite')))) {
-    svglite(file = output_file,
-            width = cmd_line_args$options[['width']],
-            height = cmd_line_args$options[['height']])
-  } else {
-    svg(filename = output_file,
-        width = cmd_line_args$options[['width']],
-        height = cmd_line_args$options[['height']])
-  }
+width <- cmd_line_args$options[['width']]
+height <- cmd_line_args$options[['height']]
+if (grepl("png$", output_file)) {
+  width <- ifelse(is.null(width), 480, width)
+  height <- ifelse(is.null(height), 480, height)
 } else {
-  pdf(file = output_file,
-      width = cmd_line_args$options[['width']],
-      height = cmd_line_args$options[['height']])
+  width <- ifelse(is.null(width), 7, width)
+  height <- ifelse(is.null(height), 7, height)
 }
-# print plot and close graphics device
+
+miscr::open_graphics_device(
+  filename = output_file,
+  width = width,
+  height = height
+)
 print(volcano_plot)
 dev.off()
