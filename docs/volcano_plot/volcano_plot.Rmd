@@ -37,7 +37,7 @@ test_all_data <- tibble(
   'log2fc' = res$log2FoldChange,
   'Name' = paste0('gene-', seq_len(num_rows))
 )
-write_tsv(test_all_data, path = file.path(root_path, 'test_data', 'test_data_volcano.tsv'))
+write_tsv(test_all_data, path = file.path(root_path, 'test_data', 'volcano-test-data.tsv'))
 ```
 
 [Go to script](../../volcano_plot.R)
@@ -47,13 +47,13 @@ It expects columns named `adjp` and `log2fc` in the input file.
 
 ```{bash volcano-basic, eval=FALSE, echo=TRUE}
 Rscript volcano_plot.R \
-test_data/test_data_volcano.tsv \
+test_data/volcano-test-data.tsv \
 volcano-basic.pdf
 ```
 
 ```{bash run-volcano-basic, echo=FALSE, results='hide'}
 Rscript $ROOT_PATH/volcano_plot.R \
-$ROOT_PATH/test_data/test_data_volcano.tsv \
+$ROOT_PATH/test_data/volcano-test-data.tsv \
 volcano-basic.png
 ```
 
@@ -69,7 +69,7 @@ It is also possible to set just one of the thresholds.
 Rscript volcano_plot.R \
 --labels --log2fc_threshold 5 \
 --pval_threshold 1e-45 \
-test_data/test_data_volcano.tsv \
+test_data/volcano-test-data.tsv \
 volcano-labelled.pdf
 ```
 
@@ -77,7 +77,7 @@ volcano-labelled.pdf
 Rscript $ROOT_PATH/volcano_plot.R \
 --labels --log2fc_threshold 5 \
 --pval_threshold 1e-45 \
-$ROOT_PATH/test_data/test_data_volcano.tsv \
+$ROOT_PATH/test_data/volcano-test-data.tsv \
 volcano-labelled.png
 ```
 
@@ -91,7 +91,7 @@ Rscript volcano_plot.R \
 --labels --log2fc_or_pval \
 --log2fc_threshold 5 \
 --pval_threshold 1e-45 \
-test_data/test_data_volcano.tsv \
+test_data/volcano-test-data.tsv \
 volcano-either-threshold.pdf
 ```
 
@@ -100,7 +100,7 @@ Rscript $ROOT_PATH/volcano_plot.R \
 --labels --log2fc_or_pval \
 --log2fc_threshold 5 \
 --pval_threshold 1e-45 \
-$ROOT_PATH/test_data/test_data_volcano.tsv \
+$ROOT_PATH/test_data/volcano-test-data.tsv \
 volcano-either-threshold.png
 ```
 

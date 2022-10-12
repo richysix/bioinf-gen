@@ -45,7 +45,7 @@ option_list <- list(
 # get set to defaults and positional arguments are set to
 # whatever is in the arguments vector below
 if (any(commandArgs() == "--interactive")) {
-  arguments <- c('test_data/test_rnaseq_data.tsv',
+  arguments <- c('test_data/volcano-test-data.tsv',
                  'test-volcano.pdf')
 } else {
   arguments <- commandArgs(trailingOnly = TRUE)

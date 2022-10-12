@@ -7,7 +7,7 @@ It expects columns named `adjp` and `log2fc` in the input file.
 
 ``` bash
 Rscript volcano_plot.R \
-test_data/test_data_volcano.tsv \
+test_data/volcano-test-data.tsv \
 volcano-basic.pdf
 ```
 
@@ -28,7 +28,7 @@ It is also possible to set just one of the thresholds.
 Rscript volcano_plot.R \
 --labels --log2fc_threshold 5 \
 --pval_threshold 1e-45 \
-test_data/test_data_volcano.tsv \
+test_data/volcano-test-data.tsv \
 volcano-labelled.pdf
 ```
 
@@ -45,7 +45,7 @@ Rscript volcano_plot.R \
 --labels --log2fc_or_pval \
 --log2fc_threshold 5 \
 --pval_threshold 1e-45 \
-test_data/test_data_volcano.tsv \
+test_data/volcano-test-data.tsv \
 volcano-either-threshold.pdf
 ```
 
