@@ -6,6 +6,7 @@ It will optionally label points that are above pvalue and/or log2[Fold Change] t
 It expects columns named 'adjp' and 'log2fc' in the input file. 
 A column called 'Name' is required for labels.
 Available output formats are 'eps', 'svg' and 'pdf'
+If the ggrastr package is installed, it is used to rasterise the points layer of the plot to reduce the size of the output file.
 "
 
 # AUTHOR
