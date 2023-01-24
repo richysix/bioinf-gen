@@ -1,0 +1,8 @@
+{
+    "title": "New entry with 2 files",
+    "description": "Some longer text to test the description field",
+    "keywords": ["RNA-seq", "transcriptomics", "zebrafish"],
+    "references": ["https://doi.org/10.1073/pnas.1917993117"],
+    "defined_type": "dataset",
+    "categories_by_source_id": "310508"
+}
