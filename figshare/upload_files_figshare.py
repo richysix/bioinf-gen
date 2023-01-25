@@ -6,7 +6,7 @@ import json
 import figshare
 
 def main(args):
-    fconn = figshare.FigshareConnection(chunk_size = 10485760)
+    fconn = figshare.FigshareConnection(chunk_size = args.chunk_size)
 
     # load json
     if args.article_data is not None:
@@ -46,6 +46,8 @@ if __name__ == '__main__':
         default=None, help='Article id to add files to')
     parser.add_argument('--article_data', metavar='JSON FILE', type=str, 
         default=None, help='Name of JSON file of atricle data to use')
+    parser.add_argument('--chunk_size', metavar='Int', type=int, 
+        default=1048576, help='Size to chunk files by')
     # parser.add_argument('--log_level', action='store', default='INFO',
     #     choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
     #     help='Sets the logging level')
