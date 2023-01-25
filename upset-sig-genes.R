@@ -15,7 +15,7 @@
 library('optparse')
 
 option_list <- list(
-  make_option("--plot_file", type="character", default='upset-plot.tsv',
+  make_option("--plot_file", type="character", default='upset-plot.pdf',
               help="Name for UpSet plot file [default %default]" ),
   make_option("--output_file", type="character", default='upset-sets.tsv',
               help="Name for output file [default %default]" ),
