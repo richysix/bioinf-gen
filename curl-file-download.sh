@@ -80,11 +80,13 @@ while read line
 do
     url=$( echo $line | awk '{ print $1 }' )
     filename=$( echo $line | awk '{ print $2 }' )
-    if [ $debug -eq 1 ]; then
+    if [[ -z $filename ]]; then
+        filename=$( echo $url | sed -e 's|^.*/||')
+    fi
+    if [[ $debug -eq 1 ]]; then
         echo URL:$url FILE:$filename
         echo "CMD: curl -sS -o $filename.tmp $url && mv $filename.tmp $filename"
     fi
     curl -sS -o $filename.tmp $url && mv $filename.tmp $filename
     error_checking $? "Download of file, $filename, succeeded." "Download of file, $filename, failed: $?"
 done < $INPUT_FILE
-
