@@ -83,10 +83,12 @@ do
     if [[ -z $filename ]]; then
         filename=$( echo $url | sed -e 's|^.*/||')
     fi
+    if [[ -e $filename ]]; then continue; fi
     if [[ $debug -eq 1 ]]; then
         echo URL:$url FILE:$filename
         echo "CMD: curl -sS -o $filename.tmp $url && mv $filename.tmp $filename"
     fi
     curl -sS -o $filename.tmp $url && mv $filename.tmp $filename
     error_checking $? "Download of file, $filename, succeeded." "Download of file, $filename, failed: $?"
+    sleep 2
 done < $INPUT_FILE
