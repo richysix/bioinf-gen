@@ -128,6 +128,64 @@ if (!is.null(shape_var)) {
                                     levels = unique(samples[[shape_var]]))
 }
 
+# make colour palette for the data
+num_levels <- nlevels(samples[[colour_var]])
+if (!is.null(cmd_line_args$options[['colour_palette']])) {
+  # split by ',' then by '='
+  if (grepl("=", cmd_line_args$options[['colour_palette']])) {
+    colours <- str_split_1(cmd_line_args$options[['colour_palette']], ",")  |>  
+      str_split(pattern = "=")
+    colour_palette <- sapply(colours, function(x){ return(x[2]) })
+    names(colour_palette) <- sapply(colours, function(x){ return(x[1]) })
+    # check that names match levels
+    if (any( !(levels(samples[[colour_var]]) %in% names(colour_palette)) )) {
+      missing_levels <- levels(samples[[colour_var]])[ !(levels(samples[[colour_var]]) %in% names(colour_palette)) ]
+      print(colour_palette)
+      cat(missing_levels, "\n")
+      stop('names in colour_palette option do not match levels of colour variable!')
+    }
+  } else {
+    colour_palette <- str_split_1(cmd_line_args$options[['colour_palette']], ",")
+  }
+  
+  # check that number of colours match the number of levels
+  if (length(colour_palette) > num_levels) {
+    warning('There are more colours than necessary in colour_palette option')
+  }
+  if (length(colour_palette) < num_levels) {
+    stop('Not enough colours in colour_palette option!')
+  }
+} else if (num_levels <= 10) {
+  colour_palette <- cbf_palette(nlevels(samples[[colour_var]]))
+  names(colour_palette) <- levels(samples[[colour_var]])
+} else{
+  ord1 <- seq(1,num_levels,2)
+  ord2 <- seq(2,num_levels,2)
+  colour_palette <- scales::hue_pal()(num_levels)[ order(c(ord1,ord2)) ]
+}
+if (debug) {
+  print(colour_palette)
+}
+
+if (!is.null(shape_var)) {
+  make_shape_palette <- function(shape_palette, samples) {
+    shape_palette <- shape_palette[seq_len(nlevels(samples[[shape_var]]))]
+    names(shape_palette) <- levels(samples[[shape_var]])
+    return(shape_palette)
+  }
+  shape_palette <- 21:25
+  if (nlevels(samples[[shape_var]]) <= length(shape_palette)) {
+    shape_palette <- make_shape_palette(shape_palette, samples)
+  } else {
+    shape_palette <- c(15:19,4,6,9)
+    if (nlevels(samples[[shape_var]]) <= length(shape_palette)) {
+      shape_palette <- make_shape_palette(shape_palette, samples)
+    } else {
+      stop(paste0('Shape variable (', shape_var, ') has too many levels!'))
+    }
+  }
+}
+
 if (debug) { cat("Counts\n") }
 
 # Read data
