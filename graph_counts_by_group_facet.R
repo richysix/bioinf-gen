@@ -61,10 +61,22 @@ option_list <- list(
             help="Turns on debugging statements [default %default]" )
 )
 
+# For testing. If running this script interactively the options
+# get set to defaults and positional arguments are set to
+# whatever is in the arguments vector below
+if (any(commandArgs() == "--interactive")) {
+  arguments <- 
+    file.path('test_data', 
+              c('test_samples.tsv', 'test_rnaseq_data.tsv'))
+} else {
+  arguments <- commandArgs(trailingOnly = TRUE)
+}
+
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'graph_counts_by_group_facet.R',
     usage = "Usage: %prog [options] samples_file count_file" ),
+  args = arguments,
   positional_arguments = 2
 )
 debug <- cmd_line_args$options[['debug']]
