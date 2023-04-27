@@ -226,22 +226,9 @@ normalised_counts <- get_counts(data, samples = samples, normalised = TRUE) %>%
   mutate(GeneID = data$GeneID,
          region = data$region)
 
-if (debug) { cat("Join\n") }
-# melt counts and join with sample info
-counts_for_plotting <-
-  pivot_longer(normalised_counts, cols = -c('GeneID', 'region'), 
-               names_to = "sample", values_to = "count")
-counts_for_plotting$sample <- factor(counts_for_plotting$sample,
-                                    levels = unique(counts_for_plotting$sample))
-counts_for_plotting <- inner_join(samples, counts_for_plotting)
-
-if (cmd_line_args$options[['log10']]) {
-  counts_for_plotting$log10 <- log10(counts_for_plotting$count + 1)
-}
-
 # load p value data if it exists
 if (!is.null(pvalue_file)) {
-  pvalues <- read_tsv(pvalue_file) %>% 
+  pvalues <- read_tsv(pvalue_file) %>%
     mutate(
       condition1 = factor(condition1, levels = levels(counts_for_plotting$condition)),
       condition2 = factor(condition2, levels = levels(counts_for_plotting$condition)),
@@ -253,7 +240,7 @@ if (!is.null(pvalue_file)) {
       ),
       midpoint = start + abs(x1 - x2)/2)
   if (asterisks) {
-    pvalues <- pvalues %>% 
+    pvalues <- pvalues %>%
       mutate(
         pval_txt = case_when(
           adjp < 0.001 ~ "***",
@@ -262,245 +249,202 @@ if (!is.null(pvalue_file)) {
           TRUE ~ "NS")
       )
   } else {
-    pvalues <- pvalues %>% 
+    pvalues <- pvalues %>%
       mutate(
         pval_txt = sprintf("Adjusted p = %.2g, Log2FC = %.2f", adjp, log2fc)
       )
   }
 }
 
-# make colour palette for the data
-num_levels <- nlevels(samples[[colour_var]])
-if (!is.null(cmd_line_args$options[['colour_palette']])) {
-    # split by ',' then by '='
-    if (grepl("=", cmd_line_args$options[['colour_palette']])) {
-        colours <- strsplit(unlist(strsplit(cmd_line_args$options[['colour_palette']], ",")), "=")
-        colour_palette <- sapply(colours, function(x){ return(x[2]) })
-        names(colour_palette) <- sapply(colours, function(x){ return(x[1]) })
-        
-        # check that names match levels
-        missing_levels <- unlist( lapply(levels(samples[[colour_var]]),
-                                        function(level, colour_palette){
-                                            if( !(level %in% names(colour_palette)) ){
-                                                return(level)
-                                            }
-                                        }, colour_palette ) )
-        if (!is.null(missing_levels)) {
-            print(colour_palette)
-            cat(missing_levels, "\n")
-            stop('names in colour_palette option do not match levels of colour variable!')
-        }
+make_count_data_for_plot <- function(region_to_plot, normalised_counts, samples){
+  plot_data <- normalised_counts |> 
+    # subset data to region
+    filter(region == region_to_plot) |> 
+    # pivot 
+    pivot_longer(cols = -c('GeneID', 'region'),
+                 names_to = "sample", values_to = "count") |> 
+    # set levels of sample
+    mutate(sample = factor(sample, levels = unique(sample))) |> 
+    # join to samples
+    inner_join(samples, by = c('sample'))
+  if (cmd_line_args$options[['log10']]) {
+    plot_data$log10 <- log10(plot_data$count + 1)
+  }
+  return(plot_data)
+}
+
+# if pdf, open plot device first
+output_plot <- function(plot, output_file_name, plot_num) {
+  # get output type from filename suffix
+  plot_suffix <- sub("^.*\\.", "", output_file_name)
+  # pdf is default if nothing matches
+  if (plot_suffix == "eps") {
+    filename <- sub("\\.eps", paste0('.', plot_num, '.eps'), output_file_name)
+    postscript(file = filename, width = plot_width, height = plot_height,
+                paper="special", horizontal = FALSE)
+    print(plot)
+    invisible(dev.off())
+  } else if (plot_suffix == "svg") {
+    # if svglite is not installed use svg function
+    filename <- sub("\\.svg", paste0('.', plot_num, '.svg'), output_file_name)
+    if (length(find.package('svglite', quiet = TRUE)) == 0) {
+      grDevices::svg(filename = filename, width = plot_width, height = plot_height)
     } else {
-        colour_palette <- unlist(strsplit(cmd_line_args$options[['colour_palette']], ","))
+      svglite::svglite(file = filename, width = plot_width, height = plot_height)
+    }
+    print(plot)
+    invisible(dev.off())
+  } else { # assume pdf device has already been opened and print
+    print(plot)
+  }
+}
+
+make_count_plot <- function(plot_num, data, normalised_counts, samples) {
+  region_to_plot <- regions[plot_num]
+  if (debug) { cat(region_to_plot, "\n") }
+  
+  counts <- make_count_data_for_plot(region_to_plot, normalised_counts, samples)
+  gene_id <- filter(data, region == region_to_plot) %>% pull("GeneID")
+  gene_name <- filter(data, region == region_to_plot) %>% pull("Name")
+  if(!is.null(adjp_col)){
+    pval <- filter(data, region == region_to_plot) %>% pull(!!adjp_col)
+    title <- sprintf("%s\n%s / %s\np = %.3g", region_to_plot,
+                     gene_id, gene_name, pval)
+  } else {
+    title <- sprintf("%s\n%s / %s", region_to_plot,
+                     gene_id, gene_name)
+  }
+  
+  # create basic plot
+  plot <- ggplot(data = counts, aes_(x = as.name(x_var),
+                                     y = as.name('count')))
+  
+  # add crossbars
+  if (!is.null(cmd_line_args$options[['crossbar']])) {
+    if (cmd_line_args$options[['crossbar']] == 'mean') {
+      plot <- plot + 
+        stat_summary(fun = "mean", geom = "crossbar",
+                     width = 0.6, size = 0.4 )
+    } else if (cmd_line_args$options[['crossbar']] == 'median') {
+      plot <- plot + 
+        stat_summary(fun = "median", geom = "crossbar",
+                     width = 0.6, size = 0.4 )
+    }
+  }
+  
+  if (jitter) {
+    pos <- position_jitter(width = 0.3, height = 0, seed = cmd_line_args$options[['seed']])
+  } else {
+    pos <- position_identity()
+  }
+  # add points with the correct shapes
+  if (is.null(shape_var)) {
+    plot <- plot +
+      geom_point(aes_(fill = as.name(colour_var)),
+                 size = 3, shape = 21, colour = 'black',
+                 position = pos ) +
+      scale_fill_manual(values = colour_palette)
+  } else {
+    if (shape_palette[1] == 15) {
+      plot <- plot +
+        geom_point(aes_(colour = as.name(colour_var),
+                        shape = as.name(shape_var)), size = 3,
+                   position = pos) +
+        scale_colour_manual(values = colour_palette,
+                            guide = guide_legend(override.aes =
+                                                   list(shape = shape_palette[1]),
+                                                 order = 1)) +
+        scale_shape_manual(values = shape_palette,
+                           guide = guide_legend(order = 2))
+    } else {
+      plot <- plot +
+        geom_point(aes_(fill = as.name(colour_var),
+                        shape = as.name(shape_var)), size = 3,
+                   position = pos ) +
+        scale_fill_manual(values = colour_palette,
+                          guide = guide_legend(override.aes =
+                                                 list(shape = shape_palette[1]),
+                                               order = 1)) +
+        scale_shape_manual(values = shape_palette,
+                           guide = guide_legend(order = 2))
+    }
+  }
+  
+  # add pvalue lines and text if necessary
+  if (!is.null(pvalue_file)) {
+    # subset pvalues to gene/region
+    if (detct) {
+      pvals <- filter(pvalues, region == region_to_plot)
+    } else {
+      pvals <- filter(pvalues, GeneID == gene_id)
+    }
+    # create y values based on largest data value
+    points_y_range <- range(counts$count)
+    # get major and minor breaks values
+    major_breaks <- scales::extended_breaks()(points_y_range)
+    minor_breaks <- scales::regular_minor_breaks()(major_breaks, points_y_range, n = 2)
+    # set spacing of pvalue lines to halfway between minor breaks
+    line_spacing <- (minor_breaks[2] - minor_breaks[1])/2
+    n <- nrow(pvals) - 1
+    # create y column in pvals by starting at highest major break and adding line spacing
+    pvals$ypos <- major_breaks[length(major_breaks)] + seq(0,line_spacing*n,line_spacing)
+    
+    # with the pval lines added the plot gets bigger so the axes and breaks may change
+    # work out minor breaks and how much to nudge the pvalue labels by
+    y_limits <- range(c(counts$count, pvals$ypos))
+    major_breaks <- scales::extended_breaks()(y_limits)
+    minor_breaks <- scales::regular_minor_breaks()(major_breaks, y_limits, n = 2)
+    if (asterisks) {
+      # nudge asterisk 10% of the distance between the minor breaks
+      text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.1
+    } else {
+      # nudge asterisk 20% of the distance between the minor breaks
+      text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.2
     }
     
-    # check that number of colours match the number of levels
-    if (length(colour_palette) > num_levels) {
-      warning('There are more colours than necessary in colour_palette option')
-    }
-    if (length(colour_palette) < num_levels) {
-        stop('Not enough colours in colour_palette option!')
-    }
-} else if (nlevels(samples[[colour_var]]) <= 10) {
-    colour_palette <- cbf_palette(nlevels(samples[[colour_var]]))
-    names(colour_palette) <- levels(samples[[colour_var]])
-} else{
-    ord1 <- seq(1,num_levels,2)
-    ord2 <- seq(2,num_levels,2)
-    colour_palette <- scales::hue_pal()(num_levels)[ order(c(ord1,ord2)) ]
-}
-if (debug) {
-    print(colour_palette)
-}
-
-if (!is.null(shape_var)) {
-    make_shape_palette <- function(shape_palette, samples) {
-        shape_palette <- shape_palette[seq_len(nlevels(samples[[shape_var]]))]
-        names(shape_palette) <- levels(samples[[shape_var]])
-        return(shape_palette)
-    }
-    shape_palette <- 21:25
-    if (nlevels(samples[[shape_var]]) <= length(shape_palette)) {
-        shape_palette <- make_shape_palette(shape_palette, samples)
-    } else {
-        shape_palette <- c(15:19,4,6,9)
-        if (nlevels(samples[[shape_var]]) <= length(shape_palette)) {
-            shape_palette <- make_shape_palette(shape_palette, samples)
-        } else {
-            stop(paste0('Shape variable (', shape_var, ') has too many levels!'))
-        }
-    }
+    # add segments and text to plot
+    plot <- plot +
+      geom_segment(data = pvals, aes(x = condition1, xend = condition2,
+                                     y = ypos, yend = ypos)) +
+      geom_text(data = pvals, aes(x = midpoint, y = ypos, label = pval_txt),
+                nudge_y = text_nudge)
+  }
+  
+  if (cmd_line_args$options[['log10']]) {
+    plot <- plot + scale_y_continuous(trans = scales::pseudo_log_trans()) +
+      labs(title = title, y = expression(log[10] * '(Normalised Counts)') )
+  } else {
+    plot <- plot + labs(title = title, y = "Normalised Counts")
+  }
+  
+  # add facets
+  if (!is.null(facet_var)) {
+    plot <- plot +
+      facet_wrap(as.name(facet_var), nrow = 1)
+  }
+  
+  plot <- plot + 
+    theme_minimal(base_size = theme_base_size) +
+    theme(strip.background = element_rect(fill = "grey90",
+                                          colour = "grey90"),
+          axis.text.x = element_text(angle = ifelse(cmd_line_args$options[['rotate_xaxis_labels']], 90, 0)))
+  
+  output_plot(plot, cmd_line_args$options[['output_file']], plot_num)
 }
 
-plot_list <- lapply(regions,
-    function(region_to_plot, counts_for_plotting, data) {
-        if (debug) { cat(region_to_plot, "\n") }
-        counts <- counts_for_plotting[ counts_for_plotting$region == region_to_plot, ]
-        gene_id <- filter(data, region == region_to_plot) %>% pull("GeneID")
-        if(!is.null(adjp_col)){
-          title <- sprintf("%s\n%s / %s\np = %.3g", region_to_plot,
-                           gene_id,
-                           data[ data$region == region_to_plot, "Name"],
-                           data[ data$region == region_to_plot, adjp_col ])
-        } else {
-          title <- sprintf("%s\n%s / %s", region_to_plot,
-                           gene_id,
-                           data[ data$region == region_to_plot, "Name"])
-        }
-        
-        # creat basic plot
-        plot <- ggplot(data = counts, aes_(x = as.name(x_var),
-                                            y = as.name('count')))
-
-        # add crossbars
-        if (!is.null(cmd_line_args$options[['crossbar']])) {
-            if (cmd_line_args$options[['crossbar']] == 'mean') {
-                plot <- plot + 
-                    stat_summary(fun = "mean", geom = "crossbar",
-                                 width = 0.6, size = 0.4 )
-            } else if (cmd_line_args$options[['crossbar']] == 'median') {
-                plot <- plot + 
-                    stat_summary(fun = "median", geom = "crossbar",
-                                 width = 0.6, size = 0.4 )
-            }
-        }
-        
-        if (jitter) {
-          pos <- position_jitter(width = 0.3, height = 0, seed = cmd_line_args$options[['seed']])
-        } else {
-          pos <- position_identity()
-        }
-        # add points with the correct shapes
-        if (is.null(shape_var)) {
-          plot <- plot +
-            geom_point(aes_(fill = as.name(colour_var)),
-                       size = 3, shape = 21, colour = 'black',
-                       position = pos ) +
-            scale_fill_manual(values = colour_palette)
-        } else {
-          if (shape_palette[1] == 15) {
-                plot <- plot +
-                    geom_point(aes_(colour = as.name(colour_var),
-                                     shape = as.name(shape_var)), size = 3,
-                                position = pos) +
-                    scale_colour_manual(values = colour_palette,
-                        guide = guide_legend(override.aes =
-                                             list(shape = shape_palette[1]),
-                                             order = 1)) +
-                    scale_shape_manual(values = shape_palette,
-                                       guide = guide_legend(order = 2))
-            } else {
-                plot <- plot +
-                    geom_point(aes_(fill = as.name(colour_var),
-                                     shape = as.name(shape_var)), size = 3,
-                                position = pos ) +
-                    scale_fill_manual(values = colour_palette,
-                        guide = guide_legend(override.aes =
-                                             list(shape = shape_palette[1]),
-                                             order = 1)) +
-                    scale_shape_manual(values = shape_palette,
-                                       guide = guide_legend(order = 2))
-            }
-        }
-        
-        # add pvalue lines and text if necessary
-        if (!is.null(pvalue_file)) {
-          # subset pvalues to gene/region
-          if (detct) {
-            pvals <- filter(pvalues, region == region_to_plot)
-          } else {
-            pvals <- filter(pvalues, GeneID == gene_id)
-          }
-          # create y values based on largest data value
-          points_y_range <- range(counts$count)
-          # get major and minor breaks values
-          major_breaks <- scales::extended_breaks()(points_y_range)
-          minor_breaks <- scales::regular_minor_breaks()(major_breaks, points_y_range, n = 2)
-          # set spacing of pvalue lines to halfway between minor breaks
-          line_spacing <- (minor_breaks[2] - minor_breaks[1])/2
-          n <- nrow(pvals) - 1
-          # create y column in pvals by starting at highest major break and adding line spacing
-          pvals$ypos <- major_breaks[length(major_breaks)] + seq(0,line_spacing*n,line_spacing)
-          
-          # with the pval lines added the plot gets bigger so the axes and breaks may change
-          # work out minor breaks and how much to nudge the pvalue labels by
-          y_limits <- range(c(counts$count, pvals$ypos))
-          major_breaks <- scales::extended_breaks()(y_limits)
-          minor_breaks <- scales::regular_minor_breaks()(major_breaks, y_limits, n = 2)
-          if (asterisks) {
-            # nudge asterisk 10% of the distance between the minor breaks
-            text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.1
-          } else {
-            # nudge asterisk 20% of the distance between the minor breaks
-            text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.2
-          }
-          
-          # add segments and text to plot
-          plot <- plot +
-            geom_segment(data = pvals, aes(x = condition1, xend = condition2,
-                                           y = ypos, yend = ypos)) +
-            geom_text(data = pvals, aes(x = midpoint, y = ypos, label = pval_txt),
-                      nudge_y = text_nudge)
-        }
-        
-        if (cmd_line_args$options[['log10']]) {
-          plot <- plot + scale_y_continuous(trans = scales::pseudo_log_trans()) +
-            labs(title = title, y = expression(log[10] * '(Normalised Counts)') )
-        } else {
-          plot <- plot + labs(title = title, y = "Normalised Counts")
-        }
-        
-        # add facets
-        if (!is.null(facet_var)) {
-            plot <- plot +
-                facet_wrap(as.name(facet_var), nrow = 1)
-        }
-        
-        plot <- plot + 
-            theme_minimal(base_size = theme_base_size) +
-            theme(strip.background = element_rect(fill = "grey90",
-                                                  colour = "grey90"),
-                  axis.text.x = element_text(angle = ifelse(cmd_line_args$options[['rotate_xaxis_labels']], 90, 0)))
-        return(plot)
-    }, counts_for_plotting, data
-)
-
-# get output type from filename suffix
-# pdf is default if nothing matches
-if (sub("^.*\\.", "", cmd_line_args$options[['output_file']]) == "eps") {
-    invisible(
-        lapply(seq_len(length(plot_list)),
-            function(i, plot_list) {
-                filename <- sub("\\.eps", paste0('.', i, '.eps'),
-                                cmd_line_args$options[['output_file']])
-                postscript(file = filename, width = plot_width, height = plot_height,
-                           paper="special", horizontal = FALSE)
-                print(plot_list[[i]])
-                dev.off()
-                return(TRUE)
-            }, plot_list)
-    )
-} else if (sub("^.*\\.", "", cmd_line_args$options[['output_file']]) == "svg") {
-    library('svglite')
-    invisible(
-        lapply(seq_len(length(plot_list)),
-            function(i, plot_list) {
-                filename <- sub("\\.svg", paste0('.', i, '.svg'),
-                                cmd_line_args$options[['output_file']])
-                svglite(file = filename, width = plot_width, height = plot_height)
-                print(plot_list[[i]])
-                dev.off()
-                return(TRUE)
-            }, plot_list)
-    )    
-} else {
-    pdf(file = cmd_line_args$options[['output_file']],
-        width = plot_width, height = plot_height)
-    invisible(lapply(plot_list, print))
-    dev.off()
+plot_suffix <- sub("^.*\\.", "", cmd_line_args$options[['output_file']])
+if(plot_suffix == 'pdf') {
+  pdf(file = cmd_line_args$options[['output_file']],
+      width = plot_width, height = plot_height)
 }
 
-# save rds file if output_data_file options is set
-if (!is.null(output_data_file)) {
-  save(plot_list, samples, data, counts_for_plotting, file = output_data_file)
+purrr::walk(seq_along(regions), make_count_plot, data, normalised_counts, samples)
+
+if(plot_suffix == 'pdf') {
+  dev.off()
 }
+
+# # save rds file if output_data_file options is set
+# if (!is.null(output_data_file)) {
+#   save(plot_list, samples, data, counts_for_plotting, file = output_data_file)
+# }
