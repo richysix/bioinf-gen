@@ -305,6 +305,11 @@ output_plot <- function(plot, output_file_name, plot_num) {
     }
     print(plot)
     invisible(dev.off())
+  } else if (plot_suffix == "png") {
+    filename <- sub("\\.png", paste0('.', plot_num, '.png'), output_file_name)
+    png(file = filename, width = plot_width, height = plot_height)
+    print(plot)
+    invisible(dev.off())
   } else { # assume pdf device has already been opened and print
     print(plot)
   }
