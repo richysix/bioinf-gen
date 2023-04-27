@@ -186,6 +186,47 @@ if (!is.null(shape_var)) {
   }
 }
 
+# load p value data if it exists
+if (!is.null(pvalue_file)) {
+  pvalues <- read_tsv(pvalue_file) %>%
+    mutate(
+      condition1 = factor(condition1, levels = levels(samples$condition)),
+      condition2 = factor(condition2, levels = levels(samples$condition)),
+      x1 = as.integer(condition1),
+      x2 = as.integer(condition2),
+      start = case_when(
+        x1 < x2 ~ x1,
+        x2 < x1 ~ x2
+      ),
+      midpoint = start + abs(x1 - x2)/2)
+  # check whether file has padj
+  if (!('adjp' %in% names(pvalues))) {
+    stop("adjp column does not exist in pvalue file!")
+  }
+  if (asterisks) {
+    pvalues <- pvalues %>%
+      mutate(
+        pval_txt = case_when(
+          adjp < 0.001 ~ "***",
+          adjp < 0.01 ~ "**",
+          adjp < 0.05 ~ "*",
+          TRUE ~ "NS")
+      )
+  } else {
+    if ('log2fc' %in% names(pvalues)) {
+      pvalues <- pvalues %>%
+        mutate(
+          pval_txt = sprintf("Adjusted p = %.2g, Log2FC = %.2f", adjp, log2fc)
+        )
+    } else {
+      pvalues <- pvalues %>%
+        mutate(
+          pval_txt = sprintf("Adjusted p = %.2g", adjp)
+        )
+    }
+  }
+}
+
 if (debug) { cat("Counts\n") }
 
 # Read data
@@ -225,36 +266,6 @@ regions <- unique(data$region)
 normalised_counts <- get_counts(data, samples = samples, normalised = TRUE) %>% 
   mutate(GeneID = data$GeneID,
          region = data$region)
-
-# load p value data if it exists
-if (!is.null(pvalue_file)) {
-  pvalues <- read_tsv(pvalue_file) %>%
-    mutate(
-      condition1 = factor(condition1, levels = levels(counts_for_plotting$condition)),
-      condition2 = factor(condition2, levels = levels(counts_for_plotting$condition)),
-      x1 = as.integer(condition1),
-      x2 = as.integer(condition2),
-      start = case_when(
-        x1 < x2 ~ x1,
-        x2 < x1 ~ x2
-      ),
-      midpoint = start + abs(x1 - x2)/2)
-  if (asterisks) {
-    pvalues <- pvalues %>%
-      mutate(
-        pval_txt = case_when(
-          adjp < 0.001 ~ "***",
-          adjp < 0.01 ~ "**",
-          adjp < 0.05 ~ "*",
-          TRUE ~ "NS")
-      )
-  } else {
-    pvalues <- pvalues %>%
-      mutate(
-        pval_txt = sprintf("Adjusted p = %.2g, Log2FC = %.2f", adjp, log2fc)
-      )
-  }
-}
 
 make_count_data_for_plot <- function(region_to_plot, normalised_counts, samples){
   plot_data <- normalised_counts |> 
