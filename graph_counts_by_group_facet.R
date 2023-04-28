@@ -464,21 +464,26 @@ make_count_plot <- function(plot_num, data, normalised_counts, samples) {
           axis.text.x = element_text(angle = ifelse(cmd_line_args$options[['rotate_xaxis_labels']], 90, 0)))
   
   output_plot(plot, cmd_line_args$options[['output_file']], plot_num)
+  
+  if (!is.null(output_data_file)) {
+    return(plot)
+  } else {
+    return(NULL)
+  }
 }
 
-plot_suffix <- sub("^.*\\.", "", cmd_line_args$options[['output_file']])
 if(plot_suffix == 'pdf') {
   pdf(file = cmd_line_args$options[['output_file']],
       width = plot_width, height = plot_height)
 }
 
-purrr::walk(seq_along(regions), make_count_plot, data, normalised_counts, samples)
+plot_list <- purrr::map(seq_along(regions), make_count_plot, data, normalised_counts, samples)
 
 if(plot_suffix == 'pdf') {
   dev.off()
 }
 
-# # save rds file if output_data_file options is set
-# if (!is.null(output_data_file)) {
-#   save(plot_list, samples, data, counts_for_plotting, file = output_data_file)
-# }
+# save rds file if output_data_file options is set
+if (!is.null(output_data_file)) {
+  save(plot_list, file = output_data_file)
+}
