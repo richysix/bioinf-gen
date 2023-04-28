@@ -39,9 +39,9 @@ option_list <- list(
               help="Type of crossbar (mean/median) to add to each group [default %default]" ),
   make_option("--log10", type="logical", action="store_true", default=FALSE,
               help="Use a log10 scaled y-axis [default %default]" ),
-  make_option("--width", type="numeric", default=10,
+  make_option("--width", type="numeric", default=NULL,
               help="width of plot (inches) [default %default]" ),
-  make_option("--height", type="numeric", default=7,
+  make_option("--height", type="numeric", default=NULL,
               help="height of plot (inches) [default %default]" ),
   make_option("--theme_base_size", type="numeric", default=12,
               help="theme_base_size of plot (points) [default %default]" ),
@@ -80,8 +80,27 @@ cmd_line_args <- parse_args(
   positional_arguments = 2
 )
 debug <- cmd_line_args$options[['debug']]
+plot_suffix <- sub("^.*\\.", "", cmd_line_args$options[['output_file']])
+width_defaults <- c(
+  'svg' = 10,
+  'eps' = 10,
+  'pdf' = 10,
+  'png' = 720
+)
 plot_width <- cmd_line_args$options[['width']]
+if (is.null(plot_width)) {
+  plot_width <- width_defaults[plot_suffix]
+}
+height_defaults <- c(
+  'svg' = 7,
+  'eps' = 7,
+  'pdf' = 7,
+  'png' = 504
+)
 plot_height <- cmd_line_args$options[['height']]
+if (is.null(plot_height)) {
+  plot_height <- height_defaults[plot_suffix]
+}
 theme_base_size <- cmd_line_args$options[['theme_base_size']]
 jitter <- !cmd_line_args$options[['no_jitter']]
 output_data_file <- cmd_line_args$options[['output_data_file']]
