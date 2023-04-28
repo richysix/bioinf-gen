@@ -123,6 +123,8 @@ echo "ENSTEST001" > test_gene.txt
 Rscript $ROOT_PATH/graph_counts_by_group_facet.R \
 --output_file test_counts_basic.png \
 --genes_file test_gene.txt \
+--width 480 \
+--height 360 \
 $ROOT_PATH/test_data/test_samples.tsv \
 $ROOT_PATH/test_data/test_rnaseq_data.tsv
 ```
@@ -172,10 +174,12 @@ Rscript $ROOT_PATH/graph_counts_by_group_facet.R \
 --genes_file test_gene.txt \
 --x_variable condition \
 --colour_variable condition \
---colour_palette wt=#0000ff,mut=#ff0000 \
+--colour_palette 'wt=#0000ff,mut=#ff0000' \
 --shape_variable sex \
 --facet_variable treatment \
 --crossbar median \
+--width 480 \
+--height 360 \
 --theme_base_size 14 \
 --rotate_xaxis_labels \
 --seed 7635 \
@@ -206,6 +210,8 @@ Rscript $ROOT_PATH/graph_counts_by_group_facet.R \
 --output_file test_counts_pval.png \
 --genes_file test_gene.txt \
 --pvalue_file $ROOT_PATH/test_data/rnaseq_adjusted_pvalues.tsv --asterisks \
+--width 480 \
+--height 360 \
 $ROOT_PATH/test_data/test_samples.tsv \
 $ROOT_PATH/test_data/test_rnaseq_data.tsv
 ```

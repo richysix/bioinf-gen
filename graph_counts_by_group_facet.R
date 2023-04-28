@@ -431,16 +431,20 @@ make_count_plot <- function(plot_num, data, normalised_counts, samples) {
     if (asterisks) {
       # nudge asterisk 10% of the distance between the minor breaks
       text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.1
+      text_size <- theme_base_size * 4 / 3
     } else {
       # nudge asterisk 20% of the distance between the minor breaks
       text_nudge <- (minor_breaks[2] - minor_breaks[1])*0.2
+      text_size <- theme_base_size
     }
     
     # add segments and text to plot
     plot <- plot +
       geom_segment(data = pvals, aes(x = condition1, xend = condition2,
                                      y = ypos, yend = ypos)) +
-      geom_text(data = pvals, aes(x = midpoint, y = ypos, label = pval_txt),
+      geom_text(data = pvals, 
+                aes(x = midpoint, y = ypos, label = pval_txt),
+                size = text_size/.pt,
                 nudge_y = text_nudge)
   }
   
