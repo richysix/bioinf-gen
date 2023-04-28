@@ -332,8 +332,7 @@ make_count_plot <- function(plot_num, data, normalised_counts, samples) {
   }
   
   # create basic plot
-  plot <- ggplot(data = counts, aes_(x = as.name(x_var),
-                                     y = as.name('count')))
+  plot <- ggplot(data = counts, aes(x = .data[[x_var]], y = count))
   
   # add crossbars
   if (!is.null(cmd_line_args$options[['crossbar']])) {
@@ -356,15 +355,15 @@ make_count_plot <- function(plot_num, data, normalised_counts, samples) {
   # add points with the correct shapes
   if (is.null(shape_var)) {
     plot <- plot +
-      geom_point(aes_(fill = as.name(colour_var)),
+      geom_point(aes(fill = .data[[colour_var]]),
                  size = 3, shape = 21, colour = 'black',
                  position = pos ) +
       scale_fill_manual(values = colour_palette)
   } else {
     if (shape_palette[1] == 15) {
       plot <- plot +
-        geom_point(aes_(colour = as.name(colour_var),
-                        shape = as.name(shape_var)), size = 3,
+        geom_point(aes(colour = .data[[colour_var]],
+                        shape = .data[[shape_var]]), size = 3,
                    position = pos) +
         scale_colour_manual(values = colour_palette,
                             guide = guide_legend(override.aes =
@@ -374,8 +373,8 @@ make_count_plot <- function(plot_num, data, normalised_counts, samples) {
                            guide = guide_legend(order = 2))
     } else {
       plot <- plot +
-        geom_point(aes_(fill = as.name(colour_var),
-                        shape = as.name(shape_var)), size = 3,
+        geom_point(aes(fill = .data[[colour_var]],
+                        shape = .data[[shape_var]]), size = 3,
                    position = pos ) +
         scale_fill_manual(values = colour_palette,
                           guide = guide_legend(override.aes =
