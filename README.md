@@ -18,7 +18,7 @@ Click on the links to go to the documentation for that script.
 * get_msigdb_geneset.R
 * [go_barchart.R](https://github.com/richysix/bioinf-gen#go_barchartr) - Produce a bar chart of GO results
 * [go_bubble_plot.R](https://github.com/richysix/bioinf-gen#go_bubble_plotr) - Produce a bubble plot from a topgo analysis
-* [graph_counts_by_group_facet.R](https://github.com/richysix/bioinf-gen#graph_counts_by_group_facetr) - jittered and facetted count plot
+* [graph_counts_by_group_facet.R](docs/graph_counts_by_group_facet/graph_counts_by_group_facet.md) - jittered and facetted count plot
 * graph_counts_line.R
 * gsea_to_genes.py - Get the genes behind GSEA enrichments
 * histogram.R
@@ -239,77 +239,6 @@ domain and the first 5 terms are labelled](test_data/go_bubble_plot_specific_lab
 * [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
 * [biovisr](https://github.com/richysix/biovisr)
 * [miscr](https://github.com/richysix/miscr)
-
-### graph_counts_by_group_facet.R
-
-This is a script to produce counts plots from RNA-seq (or DETCT) data.
-The required arguments are a samples file and a sig file.
-It expects the sample file to have a header with the column names.
-It expects one of the columns to be called "sample".
-e.g.
-```
-sample  condition
-sample_1    wt
-sample_2    mut
-```
-
-There is an example samples file and sig file in the test_data directory of
-this repository.
-The simplest way to run the script would be this:
-```
-cd test_data
-../graph_counts_by_group_facet.R \
-test_samples.tsv test_rnaseq_data.tsv
-```
-
-![Basic count plot showing the normalised counts for the wt condition as blue
-circles and the mutant condition as orange circles](test_data/count_plot_basic.png "Basic count plot")
-
-By default it tries to use a column named condition in the samples file as the
-x variable. The default is to colour the points by condition as well.
-
-The --x_variable option allows you to name a column to use as the x axis and
-you can also specify columns to use for colours (--colour_variable) and
-shapes (--shape_variable).
-The --crossbar option plots a bar to show the mean/median of each group.
-It is also possible to supply a file of Ensembl gene ids and the script will
-only make plots for those gene ids in the data.
-
-The example below uses almost all the available options
-```
-# create a test ids file
-echo -e "ZFG005\nZFG006\nZFG009" > test_genes.txt
-
-../graph_counts_by_group_facet.R \
---output_file test-condition-sex-treatment.pdf \
---genes_file test_genes.txt \
---x_variable condition \
---colour_variable condition \
---colour_palette wt=#0000ff,mut=#ff0000 \
---shape_variable sex \
---facet_variable treatment \
---crossbar median \
---width 12 \
---height 8 \
---theme_base_size 14 \
---rotate_xaxis_labels \
---seed 7635 \
---no_pvalue \
-test_samples.tsv test_rnaseq_data.tsv
-```
-
-![Count plot showing the normalised counts for the wt condition in blue and the
-mutant condition in red. The points are split by the control or treated. Sex is
-displayed as circle for female and squares for male](test_data/count_plot_everything.png "Count plot by condition by treatment")
-
-The other options are:
-* --no_jitter - removes the jitter from the points
-* --detct - input data is DeTCT rather than RNAseq
-
-**Required packages**
-* [tidyverse](https://www.tidyverse.org/)
-* [biovisr](https://github.com/richysix/biovisr)
-* [rnaseqtools](https://github.com/richysix/rnaseqtools)
 
 ### gsea_to_genes.py
 

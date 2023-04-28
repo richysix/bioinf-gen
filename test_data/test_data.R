@@ -61,56 +61,22 @@ go_sig_genes <- tibble(
   unique()
 write_tsv(go_sig_genes, file = file.path(root_path, 'test_data', 'BP.sig.genes.tsv'))
 
-# test data for graph_counts_by_group_facet.R
-set.seed(583)
-tmp <- makeExampleDESeqDataSet(n = 10, m = 12, betaSD = 2)
-tmp2 <- makeExampleDESeqDataSet(n = 10, m = 12, betaSD = 2, interceptMean = 3)
-# adjust sample names
-rownames(colData(tmp2)) <- paste0('sample', 13:24)
-# create samples file
-df <- rbind(colData(tmp), colData(tmp2))
-set.seed(714)
-samples_df <- data.frame(
-  sample = rownames(df),
-  condition = rep( rep(c('wt', 'mut'), each = 6), 2 ),
-  treatment = rep(c('control', 'treated'), each = 12),
-  sex = sample(c("F", "M"), 24, replace = TRUE)
-)
-write_tsv(samples_df, file = file.path(root_path, 'test_data', 'test_samples.tsv'))
-
 # make a file with just the control samples in
-filter(samples_df, treatment == "control") %>% 
+# load samples file
+samples_df <- read_tsv(file.path(root_path, 'test_data', 'test_samples.tsv'))
+samples_df %>%
+  filter(treatment == "control") %>% 
   write_tsv(., file = file.path(root_path, 'test_data', 'test_samples_control.tsv'))
 
 # pivot samples file to use as metadata
-samples_df_long <- samples_df %>% 
+samples_df %>% 
   pivot_longer(., cols = condition:sex, names_to = "category",
                values_to = "value")
 write_tsv(samples_df_long, file = file.path(root_path, 'test_data', 'test_samples_long.tsv'))
 
-tmp <- DESeq(tmp)
-res <- results(tmp)
-tmp2 <- DESeq(tmp2)
-# create gene info
-num_rows <- 10
-set.seed(208)
-starts <- sample(1:10000, num_rows)
-test_all_data <- tibble(
-  'GeneID' = sprintf('ENSTEST%03d', seq_len(num_rows)),
-  'chr' = sample(1:25, num_rows, replace = TRUE),
-  'start' = starts,
-  'end' = as.integer(starts + 100),
-  'strand' = sample(c('1', '-1'), num_rows, replace = TRUE),
-  'p value' = res$pvalue,
-  'Adjusted p value' = res$padj,
-  'Gene name' = paste0('gene-', seq_len(num_rows)),
-  'Class' = c(sample(c('TF', 'DNAPol', 'GPCR'), num_rows - 2, replace = TRUE), NA, NA),
-  'GO_BP' = c(rep(c('Translation', 'UPR'), each = 4), NA, 'Immune Response'),
-  'GO_CC' = c('Cytoplasm', rep('Nucleus', 5), 'Membrane', NA, NA, 'Cytoplasm'),
-  'GO_MF' = c(rep(c('Kinase activity', 'ATPase activity'), 4), NA, NA)
-)
-test_all_data$chr <- factor(test_all_data$chr, levels = unique(test_all_data$chr))
-test_all_data$strand <- factor(test_all_data$strand)
+# load test_all_data
+test_all_data <- read_tsv(file = file.path(root_path, 'test_data', 'test_rnaseq_data.tsv')) %>% 
+  dplyr::select(GeneID:GO_MF)
 
 # subset to 3 genes
 test_all_data %>% filter(., GeneID %in% c('ENSTEST005', 'ENSTEST006', 'ENSTEST009')) %>% 
@@ -128,24 +94,6 @@ write_tsv(gene_metadata, file = file.path(root_path, 'test_data', 'test_gene_met
 set.seed(912)
 sample_n(test_all_data, 3) %>% select(., GeneID) %>% 
   write_tsv(., file = file.path(root_path, 'test_data', 'test_genes.txt'))
-
-# create counts file
-counts_1 <- counts(tmp)
-counts_2 <- counts(tmp2)
-colnames(counts_1) <- sub("$", " count", colnames(counts_1))
-colnames(counts_2) <- sub("$", " count", colnames(counts_2))
-norm_counts_1 <- counts(tmp, normalized = TRUE)
-norm_counts_2 <- counts(tmp2, normalized = TRUE)
-colnames(norm_counts_1) <- sub("$", " normalised count", colnames(norm_counts_1))
-colnames(norm_counts_2) <- sub("$", " normalised count", colnames(norm_counts_2))
-test_rnaseq_data <- cbind(
-  test_all_data,
-  counts_1,
-  counts_2,
-  norm_counts_1,
-  norm_counts_2
-)
-write_tsv(test_rnaseq_data, file = file.path(root_path, 'test_data', 'test_rnaseq_data.tsv'))
 
 # test data for GO barchart
 num_terms <- 30
@@ -205,7 +153,7 @@ sets <- purrr::map(1:3, function(num){
   num_rows <- 20*num
   starts <- sample(1:10000, num_rows)
   gene_subset <- sample(genes, num_rows)
-  test_all_data <- tibble(
+  tibble(
     'GeneID' = gene_subset,
     'chr' = sample(1:25, num_rows, replace = TRUE),
     'start' = starts,
