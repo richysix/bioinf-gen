@@ -6,9 +6,9 @@
 # arg2 options
 # arg3 Message
 function usage (){
-    echo $3 >&2
     echo $1 >&2
-    echo $2 >&2
+    echo -e "$USAGE\n" >&2
+    echo "$OPTIONS" >&2
     exit 2
 }
 
