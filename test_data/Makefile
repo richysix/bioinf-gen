@@ -10,7 +10,7 @@ test_rnaseq_data_subset.out.tsv
 # test data
 BP.sig.tsv CC.sig.tsv MF.sig.tsv \
 test_samples.tsv test_samples_long.tsv \
-test_gene_metadata.tsv test_rnaseq_data.tsv \
+test_gene_metadata.tsv test_rnaseq_data.tsv rnaseq_adjusted_pvalues.tsv \
 test_data_go.tsv test_gsea_report.xls \
 Term001.xls Term002.xls Term003.xls Term004.xls Term005.xls gsea-genes.txt \
 go-3expts.tsv bubble_continuous.tsv: test_data.R

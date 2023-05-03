@@ -106,4 +106,4 @@ if (!is.null(cmd_line_args$options[['genes_file']])) {
   filtered_data <- subset_data
 }
 
-write_tsv(filtered_data, path = cmd_line_args$options[['output_file']])
+write_tsv(filtered_data, file = cmd_line_args$options[['output_file']])

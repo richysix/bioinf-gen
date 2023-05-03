@@ -25,23 +25,6 @@ for( package in packages ){
 
 root_path <- find_root(is_rstudio_project)
 
-# test data for go_bubble_plot.R
-set.seed(7531)
-num_terms <- 150
-go_bubble_plot_test_data <- tibble(
-  GO.ID = sprintf('GO:%07d', seq_len(num_terms)),
-  Term = sprintf('Term%d', seq_len(num_terms)),
-  Significant = sample(1:50, num_terms, replace = TRUE),
-  pval = 10^-(rnorm(num_terms, mean = 5, sd = 1)),
-  cat = sample(c('BP', 'CC', 'MF'), num_terms, replace = TRUE)
-)
-for (domain in c('BP', 'CC', 'MF')) {
-  data <- go_bubble_plot_test_data %>% 
-    filter(., cat == domain) %>% 
-    select(., -cat)
-  write_tsv(data, file = file.path(root_path, 'test_data', paste0(domain, '.sig.tsv')))
-}
-
 # test data for GO kappa scores
 num_sig_genes <- 100
 sig <- tibble(
