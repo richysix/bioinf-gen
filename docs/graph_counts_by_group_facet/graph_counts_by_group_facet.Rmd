@@ -1,11 +1,11 @@
 ---
-title: "graph_counts_by_group_facet.R"
+title: "Plot counts from transcriptomic data"
 output:
   md_document:
     variant: gfm
 ---
 
-## graph_counts_by_group_facet.R
+# Plot counts from transcriptomic data
 
 ```{r packages, include=FALSE, message=FALSE}
 for( package in c("knitr", "rprojroot", "tidyverse", "DESeq2", "biovisr")) {
@@ -228,8 +228,9 @@ The other options are:
 - \--no_pvalue Don't add a pvalue to the plot title
 - \--detct - input data is DeTCT rather than RNAseq
 
-### Required packages
+## Required packages
 
+- [optparse](https://github.com/trevorld/r-optparse)
 - [tidyverse](https://www.tidyverse.org/)
 - [biovisr](https://github.com/richysix/biovisr)
 - [rnaseqtools](https://github.com/richysix/rnaseqtools)

@@ -142,7 +142,7 @@ if (cmd_line_args$options[['labels']]) {
                     force = 2)
 }
 
-# Add colour scale, chnge theme and add axis labels
+# Add colour scale, change theme and add axis labels
 volcano_plot <- volcano_plot +
   scale_colour_manual(values = c(up = '#cc6600', down = '#0073b3'), na.value = "grey80") +
   theme_minimal(base_size = cmd_line_args$options[['text_base_size']]) +

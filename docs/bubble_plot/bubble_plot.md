@@ -1,4 +1,4 @@
-## bubble_plot.R
+# Create a bubble plot
 
 [Go to script](../../bubble_plot.R)
 
@@ -37,7 +37,7 @@ colours. The x axis represents different experiments and the y axis
 represents enriched Gene Ontology
 terms.](test_bubble_cat.png "Test Categorical bubble plot")
 
-### Required packages
+## Required packages
 
 -   [optparse](https://cran.r-project.org/web/packages/optparse/index.html)
 -   [tidyverse](https://www.tidyverse.org/)

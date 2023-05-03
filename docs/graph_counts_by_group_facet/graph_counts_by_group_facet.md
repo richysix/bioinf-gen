@@ -1,4 +1,4 @@
-## graph_counts_by_group_facet.R
+# Plot counts from transcriptomic data
 
 [Go to script](../../graph_counts_by_group_facet.R)
 
@@ -91,15 +91,16 @@ significant.](test_counts_pval.1.png "Count plot by condition with p-values")
 
 The other options are:
 
-- --log10 - Use a log10 scaled y-axis
-- --output_data_file Output an Rdata file of the plot objects
-- --no_jitter - removes the jitter from the points
-- --seed - random seed to make the jitter reproducible
-- --no_pvalue Don’t add a pvalue to the plot title
-- --detct - input data is DeTCT rather than RNAseq
+-   --log10 - Use a log10 scaled y-axis
+-   --output_data_file Output an Rdata file of the plot objects
+-   --no_jitter - removes the jitter from the points
+-   --seed - random seed to make the jitter reproducible
+-   --no_pvalue Don’t add a pvalue to the plot title
+-   --detct - input data is DeTCT rather than RNAseq
 
-### Required packages
+## Required packages
 
-- [tidyverse](https://www.tidyverse.org/)
-- [biovisr](https://github.com/richysix/biovisr)
-- [rnaseqtools](https://github.com/richysix/rnaseqtools)
+-   [optparse](https://github.com/trevorld/r-optparse)
+-   [tidyverse](https://www.tidyverse.org/)
+-   [biovisr](https://github.com/richysix/biovisr)
+-   [rnaseqtools](https://github.com/richysix/rnaseqtools)

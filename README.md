@@ -17,7 +17,7 @@ Click on the links to go to the documentation for that script.
 * gene_lists_from_groups_cluego.pl
 * get_msigdb_geneset.R
 * [go_barchart.R](https://github.com/richysix/bioinf-gen#go_barchartr) - Produce a bar chart of GO results
-* [go_bubble_plot.R](https://github.com/richysix/bioinf-gen#go_bubble_plotr) - Produce a bubble plot from a topgo analysis
+* [go_bubble_plot.R](docs/go_bubble_plot/go_bubble_plot.md) - Produce a bubble plot from a topgo analysis
 * [graph_counts_by_group_facet.R](docs/graph_counts_by_group_facet/graph_counts_by_group_facet.md) - jittered and facetted count plot
 * graph_counts_line.R
 * gsea_to_genes.py - Get the genes behind GSEA enrichments
@@ -190,53 +190,6 @@ experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -lo
 **Required packages**
 * [tidyverse](https://www.tidyverse.org/)
 * [grid](https://www.tidyverse.org/)
-* [biovisr](https://github.com/richysix/biovisr)
-* [miscr](https://github.com/richysix/miscr)
-
-### go_bubble_plot.R
-
-Script to produce a bubble plot using the output from Ian's topgo script.
-It expects files called "BP.sig.tsv", "CC.sig.tsv" and "MF.sig.tsv" in the
-working directory.
-
-There is some test toy GO data in the test_data directory of this repository.
-For example, run the script with defaults
-```
-cd test_data
-../go_bubble_plot.R
-```
-This will produce a bubble plot (go_bubble.pdf) with the top 5 terms by pvalue labelled.
-
-![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO
-domain and the top 5 are labelled](test_data/go_bubble_plot_default.png "Default GO bubble plot")
-
-To set a p value cut off for labelling
-```
-../go_bubble_plot.R --label_p_cutoff 1e-6
-```
-
-![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO
-domain and points with pvalues below 1e-6 are labelled](test_data/go_bubble_plot_pval_threshold.png "GO bubble plot, terms with pvalue less than 1e-6 labelled")
-
-Or to label specific terms. The GO IDs are used to specify which terms to label,
-but the actual term descriptions are used as the labels.
-```
-../go_bubble_plot.R \
---labels="GO:0000001,GO:0000002,GO:0000003,GO:0000004,GO:0000005"
-```
-
-![Bubble plot of GO terms against -log10(pvalue). The points are coloured by GO
-domain and the first 5 terms are labelled](test_data/go_bubble_plot_specific_labels.png "GO bubble plot, with terms 1 to 5 labelled")
-
---no_labels will remove labels altogether
-```
-../go_bubble_plot.R --no_labels
-```
-
-**Required packages**
-* [tidyverse](https://www.tidyverse.org/)
-* [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
-* [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
 * [biovisr](https://github.com/richysix/biovisr)
 * [miscr](https://github.com/richysix/miscr)
 
