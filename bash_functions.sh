@@ -2,9 +2,8 @@
 # bash_functions.sh - Script containing some common functions
 
 # function to display usage and optional message
-# arg1 usage statemnt
-# arg2 options
-# arg3 Message
+# arg1 Message
+# Assumes variable USAGE and OPTIONS have been set
 function usage (){
     echo $1 >&2
     echo -e "$USAGE\n" >&2
@@ -17,12 +16,14 @@ function usage (){
 # arg2 Message for success
 # arg3 Message for failure
 function error_checking (){
+    if [[ -z $SUCCESS_MSG ]]; then SUCCESS_MSG=$2; fi
+    if [[ -z $ERROR_MSG ]]; then ERROR_MSG=$3; fi
     if [[ $1 -eq 0 ]]
     then
-        if [[ -n $2 && $verbose -ge 1 ]]; then echo $2 ; fi
+        if [[ -n $SUCCESS_MSG && $verbose -ge 1 ]]; then echo $SUCCESS_MSG ; fi
     else
         date >& 2
-        echo $3 >&2
+        echo $ERROR_MSG >&2
         exit $1
     fi
 }
