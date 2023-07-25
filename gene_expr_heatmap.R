@@ -67,10 +67,10 @@ option_list <- list(
               help=paste("The relative widths of the plots as a comma-separated list. [default %default]")),
   make_option("--relative_heights", action="store", type="character", default="1,3,1",
               help=paste("The relative heights of the plots as a comma-separated list. [default %default]")),
-  make_option("--width", type="numeric", default=7,
-              help="width of plot (inches) [default %default]" ),
-  make_option("--height", type="numeric", default=10,
-              help="height of plot (inches) [default %default]" ),
+  make_option("--width", type="numeric", default=NULL,
+              help="width of plot [default: 480px for .png, 7 inches for other formats]" ),
+  make_option("--height", type="numeric", default=NULL,
+              help="height of plot [default: 720px for .png, 10 inches for other formats]" ),
   make_option("--fill_limits", type="character", default=NULL,
               help="Limits of fill scale (comma-separated list of two numbers) [default %default]" ),
   make_option("--output_count_file", type="character", default=NULL,
@@ -104,6 +104,15 @@ for( package in packages ){
 fill_palette <- cmd_line_args$options[['colour_palette']]
 plot_width <- cmd_line_args$options[['width']]
 plot_height <- cmd_line_args$options[['height']]
+file_suffix <- sub("^.*\\.", "", output_file)
+if (file_suffix == "png") {
+  plot_width <- ifelse(is.null(plot_width), 480, plot_width)
+  plot_height <- ifelse(is.null(plot_height), 720, plot_height)
+} else {
+  plot_width <- ifelse(is.null(plot_width), 7, plot_width)
+  plot_height <- ifelse(is.null(plot_height), 10, plot_height)
+}
+
 # unpack relative plot_sizes options
 relative_widths <- as.integer(unlist(str_split(cmd_line_args$options[['relative_widths']], ",")))
 relative_heights <- as.integer(unlist(str_split(cmd_line_args$options[['relative_heights']], ",")))
@@ -400,7 +409,8 @@ if (!is.null(gene_metadata)) {
                na.translate = FALSE
     ) + guides(fill = guide_legend(title = fill_col, reverse = FALSE)) +
     scale_x_discrete(position = "top") +
-    theme(axis.title = element_blank(),
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
           axis.text.x.top = element_text(angle = 45, hjust = 0))
 }
 
@@ -482,16 +492,11 @@ if (!is.null(sample_metadata)) {
           axis.text.y.right = element_text(hjust=0))
 }
 
-if (grepl('ps$', output_file)) {
-  postscript(file = output_file, paper = "special", horizontal = FALSE,
-              width = plot_width, height = plot_height )
-} else if (grepl('svg$', output_file)) {
-  svglite(file = output_file, width = plot_width, height = plot_height )
-} else if (grepl('png$', output_file)) {
-  png(file = output_file, width = plot_width, height = plot_height )
-} else { # default to pdf 
-  pdf(file = output_file, width = plot_width, height = plot_height )
-}
+miscr::open_graphics_device(
+  filename = output_file,
+  width = plot_width,
+  height = plot_height
+)
 
 plot_list <- list(plot_spacer(), sample_tree_plot, plot_spacer(), plot_spacer(),
                   gene_tree_plot, heatmap_plot, labels_plot, gene_metadata_plot,

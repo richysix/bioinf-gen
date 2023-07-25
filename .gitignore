@@ -7,3 +7,4 @@ test_data/*.svg
 test_data/*.rda
 test_data/*out.tsv
 __pycache__
+.DS_Store

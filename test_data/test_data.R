@@ -51,33 +51,6 @@ samples_df %>%
   filter(treatment == "control") %>% 
   write_tsv(., file = file.path(root_path, 'test_data', 'test_samples_control.tsv'))
 
-# pivot samples file to use as metadata
-samples_df %>% 
-  pivot_longer(., cols = condition:sex, names_to = "category",
-               values_to = "value")
-write_tsv(samples_df_long, file = file.path(root_path, 'test_data', 'test_samples_long.tsv'))
-
-# load test_all_data
-test_all_data <- read_tsv(file = file.path(root_path, 'test_data', 'test_rnaseq_data.tsv')) %>% 
-  dplyr::select(GeneID:GO_MF)
-
-# subset to 3 genes
-test_all_data %>% filter(., GeneID %in% c('ENSTEST005', 'ENSTEST006', 'ENSTEST009')) %>% 
-  select(., GeneID, Name = `Gene name`) %>% 
-  write_tsv(., file = file.path(root_path, 'test_data', 'test_genes_to_label.txt'))
-
-# make gene metadata file
-gene_metadata <- select(test_all_data, GeneID, Class, GO_BP, GO_CC, GO_MF) %>% 
-  pivot_longer(., -GeneID, names_to = 'category') %>% 
-  filter(., !is.na(value)) %>% 
-  arrange(., category, value)
-
-write_tsv(gene_metadata, file = file.path(root_path, 'test_data', 'test_gene_metadata.tsv'))
-
-set.seed(912)
-sample_n(test_all_data, 3) %>% select(., GeneID) %>% 
-  write_tsv(., file = file.path(root_path, 'test_data', 'test_genes.txt'))
-
 # test data for GO barchart
 num_terms <- 30
 set.seed(682)

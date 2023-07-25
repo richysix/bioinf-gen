@@ -58,9 +58,9 @@ test_all_data <- tibble(
   'Adjusted p value' = res$padj,
   'Gene name' = paste0('gene-', seq_len(num_rows)),
   'Class' = c(sample(c('TF', 'DNAPol', 'GPCR'), num_rows - 2, replace = TRUE), NA, NA),
-  'GO_BP' = c(rep(c('Translation', 'UPR'), each = 4), NA, 'Immune Response'),
-  'GO_CC' = c('Cytoplasm', rep('Nucleus', 5), 'Membrane', NA, NA, 'Cytoplasm'),
-  'GO_MF' = c(rep(c('Kinase activity', 'ATPase activity'), 4), NA, NA)
+  'GO_BP' = c(rep(c('Translation', 'UPR'), each = 4), 'Immune Response', 'Immune Response'),
+  'GO_CC' = c('Cytoplasm', rep('Nucleus', 5), rep('Cytoplasm', 4)),
+  'GO_MF' = c(rep(c('Kinase activity', 'ATPase activity'), 5))
 )
 test_all_data$chr <- factor(test_all_data$chr, levels = unique(test_all_data$chr))
 test_all_data$strand <- factor(test_all_data$strand)
@@ -90,6 +90,19 @@ test_rnaseq_data <- cbind(
   norm_counts_2
 )
 write_tsv(test_rnaseq_data, file = file.path(root_path, 'test_data', 'test_rnaseq_data.tsv'))
+
+# subset to 3 genes
+test_all_data %>% filter(., GeneID %in% c('ENSTEST005', 'ENSTEST006', 'ENSTEST009')) %>% 
+  select(., GeneID, Name = `Gene name`) %>% 
+  write_tsv(., file = file.path(root_path, 'test_data', 'test_genes_to_label.txt'))
+
+# make gene metadata file
+gene_metadata <- select(test_all_data, GeneID, GO_BP, GO_CC, GO_MF) %>% 
+  pivot_longer(., -GeneID, names_to = 'category') %>% 
+  filter(., !is.na(value)) %>% 
+  arrange(., category, value)
+
+write_tsv(gene_metadata, file = file.path(root_path, 'test_data', 'test_gene_metadata.tsv'))
 ```
 
 [Go to script](../../graph_counts_by_group_facet.R)
