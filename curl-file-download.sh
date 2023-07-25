@@ -13,20 +13,7 @@
 #
 #  The GNU General Public License, Version 3, June 2007
 
-# define function for errors
-# arg1 exit code
-# arg2 Message for success
-# arg3 Message for failure
-function error_checking (){
-    if [ $1 -eq 0 ]
-    then
-        if [[ -n $2 && $verbose -eq 1 ]]; then echo $2 ; fi
-    else
-        date >& 2
-        echo $3 >&2
-        exit $1
-    fi
-}
+source bash_functions.sh
 
 USAGE="curl-file-download.sh [options] input_file
 
@@ -41,34 +28,14 @@ OPTIONS="Options:
 debug=0
 verbose=0
 
-while getopts ":dhv" opt; do
+while getopts ":dhvq" opt; do
   case $opt in
-    d)
-      debug=1
-      ;;
-    h)
-      echo ""
-      echo "$USAGE"
-      echo "$OPTIONS"
-      exit 1
-      ;;
-    v)
-      verbose=1
-      ;;
-    \?)
-      echo ""
-      echo "Invalid option: -$OPTARG" >&2
-      echo "$USAGE" >&2
-      echo "$OPTIONS" >&2
-      exit 1
-      ;;
-    :)
-      echo ""
-      echo "Option -$OPTARG requires an argument!" >&2
-      echo "$USAGE" >&2
-      echo "$OPTIONS" >&2
-      exit 1
-      ;;
+    d) debug=1 ;;
+    h)  usage "" ;;
+    v)  verbose=1 ;;
+    q)  verbose=0 ;;
+    \?) usage "Invalid option: -$OPTARG" ;;
+    :)  usage "Option -$OPTARG requires an argument!" ;;
   esac
 done
 shift "$(($OPTIND -1))"
@@ -84,11 +51,16 @@ do
         filename=$( echo $url | sed -e 's|^.*/||')
     fi
     if [[ -e $filename ]]; then continue; fi
+    CMD="curl -sS -o $filename.tmp $url && mv $filename.tmp $filename"
     if [[ $debug -eq 1 ]]; then
         echo URL:$url FILE:$filename
-        echo "CMD: curl -sS -o $filename.tmp $url && mv $filename.tmp $filename"
+        echo "$CMD"
     fi
-    curl -sS -o $filename.tmp $url && mv $filename.tmp $filename
-    error_checking $? "Download of file, $filename, succeeded." "Download of file, $filename, failed: $?"
+    eval $CMD
+    SUCCESS=$?
+    echo $SUCCESS
+    SUCCESS_MSG="Download of file, $filename, succeeded."
+    ERROR_MSG="Download of file, $filename, failed: $?"
+    error_checking $SUCCESS
     sleep 2
 done < $INPUT_FILE
