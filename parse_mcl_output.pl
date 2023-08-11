@@ -139,28 +139,24 @@ my %info_for_idx = (); # $info_for_idx{ IDX => { ID => 'ENSDARG01', NAME => 'sox
 my %type_for; # %type_for{ COL_NAME1 => [ 'string', 'string' ], COL_NAME1 => [ 'double', 'double ] }
 if ($options{'info_file'}){
     open my $info_fh, '<', $options{'info_file'};
-#    my %summary_id_for = (); # SUMMARY GO ID for a cluster index
-#    my %comparison_info_for = (); # COMPARISON INFO (defalt: pval) for a cluster index
     # deal with header
     my %col_id_for = ();
-    if ($options{'info_file_header'}) {
-        my $line = <$info_fh>;
-        chomp $line;
-        @col_names = split /\t/, $line;
-        for (my $i = 0; $i < scalar @col_names; $i++) {
-            $col_id_for{$col_names[$i]} = $i;
-            # if this column is the node id one then change $node_id_col_name
-            if ($i == $options{'info_file_node_id_col'}) {
-                $node_id_col_name = $col_names[$i];
+    my $line = <$info_fh>;
+    chomp $line;
+    @col_names = split /\t/, $line;
+    for (my $i = 0; $i < scalar @col_names; $i++) {
+        $col_id_for{$col_names[$i]} = $i;
+        # if this column is the node id one then change $node_id_col_name
+        if ($i == $options{'info_file_node_id_col'}) {
+            $node_id_col_name = $col_names[$i];
+        } else {
+            # check whether a node name column number is defined and
+            # whether this column is it
+            if ($options{'info_file_node_name_col'} &&
+                $i == $options{'info_file_node_name_col'}) {
+                $node_name_col_name = $col_names[$i];
             } else {
-                # check whether a node name column number is defined and
-                # whether this column is it
-                if ($options{'info_file_node_name_col'} &&
-                    $i == $options{'info_file_node_name_col'}) {
-                    $node_name_col_name = $col_names[$i];
-                } else {
-                    push @other_cols, $col_names[$i];
-                }
+                push @other_cols, $col_names[$i];
             }
         }
     }
@@ -170,8 +166,6 @@ if ($options{'info_file'}){
         push @output_header, $node_name_col_name;
     }
     
-    #my %idlist_for = (); # LIST of IDs for each cluster index
-    #my %term_name_for = (); # HASHREF of term labels for each GO ID
     while(my $line = <$info_fh>) {
         chomp $line;
         my @fields = split /\t/, $line;
@@ -199,7 +193,7 @@ if ($options{'debug'} > 1) {
     warn Dumper(%type_for);
 }
 
-# open cluster file
+# open cluster output file
 open my $output_fh, '>', $ARGV[3];
 # print header line
 print {$output_fh} join("\t", @output_header, @other_cols, ), "\n";
@@ -349,7 +343,6 @@ sub get_and_check_options {
     $options{'debug'} = $options{'debug'} ? $options{'debug'} : 0;
     $options{'info_file_node_id_col'} = $options{'info_file_node_id_col'} ? $options{'info_file_node_id_col'} - 1: 0;
     $options{'info_file_node_name_col'} = $options{'info_file_node_name_col'} ? $options{'info_file_node_name_col'} - 1: $options{'info_file_node_name_col'};
-    $options{'info_file_header'} = $options{'no_info_file_header'} ? 0 : 1;
     if ($options{'csv_graph_node_file'} && !$options{'csv_graph_edge_file'}) {
         if ($options{'csv_graph_node_file'} =~ m/node/xms) {
             $options{'csv_graph_edge_file'} = $options{'csv_graph_node_file'};
