@@ -35,11 +35,63 @@ if ($options{'debug'} > 1) {
     warn Dumper(%node_idx_for);
 }
 
+# open cluster file
+open my $cluster_fh, '<', $ARGV[2];
+my $begin = 0;
+my @all_nodes = ();
+my $node_list = [];
+my %cluster_idx_for; # %cluster_idx_for = { NODE_IDX => CLUSTER_IDX }
+my %nodes_for = ();
+while(my $line = <$cluster_fh>) {
+    chomp $line;
+    if (!$begin) {
+        if ($line eq "begin") {
+            $begin = 1;
+            next;
+        }
+    } else {
+        if ($line eq ")") {
+            last;
+        } else {
+            # read in cluster numbers
+            $line =~ s/\A \s+//xms;
+            my @info = split /\s+/, $line;
+            my $complete = 0;
+            if ($info[ (scalar @info) - 1 ] eq '$') {
+                $complete = 1;
+                splice(@info, -1);
+            }
+            push @{$node_list}, @info;
+            if ($complete) {
+                my $cluster_idx = shift @{$node_list};
+                if ($options{'cluster_size_threshold'}) {
+                    if (scalar @{$node_list} < $options{'cluster_size_threshold'}) {
+                        # reset node list and go to next line
+                        $node_list = [];
+                        next;
+                    }
+                }
+                foreach my $node_idx (@{$node_list}) {
+                    $cluster_idx_for{$node_idx} = $cluster_idx;
+                    push @{$nodes_for{$cluster_idx}}, $node_idx;
+                }
+                # add nodes to all nodes list and reset node list
+                push @all_nodes, @{$node_list};
+                $node_list = [];
+            }
+        }
+    }
+}
+if ($options{'debug'} > 1) {
+    warn Dumper(%cluster_idx_for);
+}
+
 # open edges file
+my %all_nodes = map { $_ => 1 } @all_nodes;
 open my $edge_fh, '<', $ARGV[1];
 my %weight_for = (); # %weight_for = { 'SOURCE-TARGET' => WEIGHT }
 # In this hash SOURCE is always less than TARGET to avoid duplicating edges
-my $begin = 0;
+$begin = 0;
 my $edge_list = [];
 while(my $line = <$edge_fh>) {
     chomp $line;
@@ -65,13 +117,19 @@ while(my $line = <$edge_fh>) {
                 if ($options{'debug'} > 1) {
                     warn Dumper($edge_list);
                 }
-                my $source_node_idx = splice(@{$edge_list}, 0, 1);
-                foreach my $edge (@{$edge_list}) {
-                    my ($target_node_idx, $weight) = split /:/, $edge;
-                    my $edge_name = $source_node_idx < $target_node_idx ?
-                        join('-', $source_node_idx, $target_node_idx) :
-                        join('-', $target_node_idx, $source_node_idx);
-                    $weight_for{$edge_name} = $weight;
+                my $source_node_idx = shift @{$edge_list};
+                # only add edges if source node exists in the graph
+                if (exists $all_nodes{$source_node_idx}) {
+                    foreach my $edge (@{$edge_list}) {
+                        my ($target_node_idx, $weight) = split /:/, $edge;
+                        # only add edge if the target node exists in the graph
+                        if (exists $all_nodes{$target_node_idx}) {
+                            my $edge_name = $source_node_idx < $target_node_idx ?
+                                join('-', $source_node_idx, $target_node_idx) :
+                                join('-', $target_node_idx, $source_node_idx);
+                            $weight_for{$edge_name} = $weight;
+                        }
+                    }
                 }
                 # reset node list
                 $edge_list = [];
@@ -81,52 +139,6 @@ while(my $line = <$edge_fh>) {
 }
 if ($options{'debug'} > 1) {
     warn Dumper(%weight_for);
-}
-
-# open cluster file
-open my $cluster_fh, '<', $ARGV[2];
-$begin = 0;
-my $node_list = [];
-my %cluster_idx_for; # %cluster_idx_for = { NODE_IDX => CLUSTER_IDX }
-my %nodes_for = ();
-while(my $line = <$cluster_fh>) {
-    chomp $line;
-    if (!$begin) {
-        if ($line eq "begin") {
-            $begin = 1;
-            next;
-        }
-    } else {
-        if ($line eq ")") {
-            last;
-        } else {
-            # read in cluster numbers
-            $line =~ s/\A \s+//xms;
-            my @info = split /\s+/, $line;
-            my $complete = 0;
-            if ($info[ (scalar @info) - 1 ] eq '$') {
-                $complete = 1;
-                splice(@info, -1);
-            }
-            push @{$node_list}, @info;
-            if ($complete) {
-                my $cluster_idx = undef;
-                foreach my $node_idx (@{$node_list}) {
-                    if (!defined $cluster_idx) {
-                        $cluster_idx = $node_idx;
-                    } else {
-                        $cluster_idx_for{$node_idx} = $cluster_idx;
-                        push @{$nodes_for{$cluster_idx}}, $node_idx;
-                    }
-                }
-                # reset node list
-                $node_list = [];
-            }
-        }
-    }
-}
-if ($options{'debug'} > 1) {
-    warn Dumper(%cluster_idx_for);
 }
 
 # open info file
@@ -232,11 +244,12 @@ END_HEADER
     print {$graphml_fh} qq{  <graph id="$graph_id" edgedefault="undirected">}, "\n";
 }
 
-#my $csv_graph_node_fh;
-#if ($options{'csv_graph_node_file'}) {
-#    open $csv_graph_node_fh, '>', $options{'csv_graph_node_file'};
-#    
-#}
+my $csv_graph_node_fh;
+my $csv_graph_edge_fh;
+if ($options{'csv_graph_node_file'}) {
+    open $csv_graph_node_fh, '>', $options{'csv_graph_node_file'};
+    open $csv_graph_edge_fh, '>', $options{'csv_graph_edge_file'};
+}
 
 foreach my $cluster_idx ( sort { $a <=> $b } keys %nodes_for ) {
     foreach my $node_idx ( @{$nodes_for{$cluster_idx}} ) {
@@ -268,6 +281,9 @@ foreach my $cluster_idx ( sort { $a <=> $b } keys %nodes_for ) {
             }
         }
         print {$output_fh} join("\t", @output_fields, ), "\n";
+        if ($csv_graph_node_fh) {
+            print {$csv_graph_node_fh} join(",", @output_fields, ), "\n";
+        }
         if ($graphml_fh){
             print {$graphml_fh} q{    </node>}, "\n";
         }
@@ -275,14 +291,19 @@ foreach my $cluster_idx ( sort { $a <=> $b } keys %nodes_for ) {
     }
 }
 
-if ($graphml_fh){
+if ($graphml_fh || $csv_graph_edge_fh){
     my $edge_idx = 0;
     foreach my $edge ( sort keys %weight_for ) {
         my ($source, $target) = split /-/, $edge;
         my $weight = $weight_for{$edge};
-        print {$graphml_fh} qq{    <edge id="e${edge_idx}" source="n${source}" target="n${target}">}, "\n";
-        print {$graphml_fh} qq{      <data key="d0">${weight}</data>}, "\n";
-        print {$graphml_fh} qq{    </edge>}, "\n";
+        if ($graphml_fh) {
+            print {$graphml_fh} qq{    <edge id="e${edge_idx}" source="n${source}" target="n${target}">}, "\n";
+            print {$graphml_fh} qq{      <data key="d0">${weight}</data>}, "\n";
+            print {$graphml_fh} qq{    </edge>}, "\n";
+        }
+        if ($csv_graph_edge_fh) {
+            print {$csv_graph_edge_fh} join(",", $edge_idx, $source, $target, $weight, ), "\n";
+        }
         $edge_idx++;
     }
     print {$graphml_fh} "  </graph>\n</graphml>\n";
@@ -323,8 +344,8 @@ sub get_and_check_options {
         'graphml_file=s',
         'graph_id=s',
         'csv_graph_node_file=s',
-        'csv_graph_node_file=s',
-        'no_info_file_header',
+        'csv_graph_edge_file=s',
+        'cluster_size_threshold=i',
         'help',
         'man',
         'debug+',
@@ -386,7 +407,7 @@ different formats.
                                     (Default: undefined)
         --csv_graph_edge_file       Name of a file to output the edges to in csv format
                                     (Default: undefined)
-        --no_info_file_header       flag for if the info file doesn't have a header
+        --cluster_size_threshold    Remove clusters smaller than this (Default: undefined)
         --help                      print this help message
         --man                       print the manual page
         --debug                     print debugging information
@@ -455,7 +476,15 @@ Name of a file to output the nodes to in csv format.
 Name of a file to output the edges to in csv format.
 If --csv_graph_node_file is set and --csv_graph_edge_file is not,
 the script will exit, unless the csv_graph_node_file contains 'node'.
-In this case the script will substitute 'edge' for 'node'. 
+In this case the script will substitute 'edge' for 'node' to make a new file
+name. 
+
+(Default: undefined)
+
+=item B<--cluster_size_threshold>
+
+Clusters with fewer nodes than this will not be output. Any edges to/from this
+node will also be removed. By default, all clusters are output.
 
 (Default: undefined)
 
