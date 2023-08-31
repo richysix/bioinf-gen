@@ -117,22 +117,22 @@ plot_haplotypes <- function( plot_data, orientation = "landscape",
     theme_void()
   if (orientation == "landscape") {
     hap_plot <- hap_plot + 
-      theme(axis.text = element_text(size = 16),
-            axis.title = element_text(size = 18),
+      theme(axis.text = element_text(size = 8),
+            axis.title = element_text(size = 9),
             axis.title.y = element_text(angle = 90))
   } else {
     hap_plot <- hap_plot + 
       coord_flip() +
-      theme(axis.text = element_text(size = 16),
+      theme(axis.text = element_text(size = 8),
             # axis.text.x = element_text(size = 16, angle = 45, 
             #                            vjust = 1, hjust = 1),
             axis.text.x = element_blank(),
-            axis.title = element_text(size = 18),
+            axis.title = element_text(size = 9),
             axis.title.y = element_text(angle = 90),
             # legend.position = "top",
             # legend.direction = "vertical",
-            legend.title = element_text(size = 18),
-            legend.text = element_text(size = 16))
+            legend.title = element_text(size = 9),
+            legend.text = element_text(size = 8))
   }
   return(hap_plot)
 }
@@ -162,7 +162,9 @@ if (cmd_line_args$options[['output_type']] == 'svg') {
   }
 } else { # use pdf as fallback
   pdf_filename <- paste(output_base, "pdf", sep=".")
-  pdf(file=pdf_filename, width=9, height=10, paper = "special")
+  pdf(file=pdf_filename, paper = "special",
+      width=cmd_line_args$options[['width']],
+      height=cmd_line_args$options[['height']])
   invisible(print(plot_list))
   invisible(dev.off())
 }
