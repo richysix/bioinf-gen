@@ -6,7 +6,7 @@
 #
 # COPYRIGHT AND LICENSE
 #
-# This software is Copyright (c) 2022. Queen Mary University of London.
+# This software is Copyright (c) 2023. Queen Mary University of London.
 #
 # This is free software, licensed under:
 #
