@@ -143,7 +143,7 @@ if ($options{'debug'} > 1) {
 
 # open info file
 my @col_names = ();
-my @output_header = ('Node_idx', 'Node_id', 'Cluster_idx');;
+my @output_header = ('Node_id', 'Node_idx', 'Cluster_idx');;
 my $node_id_col_name = 'Node_id';
 my $node_name_col_name;
 my @other_cols = ();
@@ -173,7 +173,7 @@ if ($options{'info_file'}){
         }
     }
     # replace 'Node_id' in header with node id column name
-    $output_header[1] = $node_id_col_name;
+    $output_header[0] = $node_id_col_name;
     if ($node_name_col_name) {
         push @output_header, $node_name_col_name;
     }
@@ -261,7 +261,7 @@ foreach my $cluster_idx ( sort { $a <=> $b } keys %nodes_for ) {
             print {$graphml_fh} qq{      <data key="d2">${cluster_idx}</data>}, "\n";
         }
         
-        my @output_fields = ($node_idx, $node_id, $cluster_idx);
+        my @output_fields = ($node_id, $node_idx, $cluster_idx);
         if ($info_for_idx{$node_idx}) {
             if ($node_name_col_name){
                 my $attr_value = $info_for_idx{$node_idx}{$node_name_col_name};
