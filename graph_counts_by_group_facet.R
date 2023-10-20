@@ -119,11 +119,9 @@ options(readr.show_progress = FALSE)
 # Read samples
 if (debug) { cat("Samples\n") }
 samples_file <- cmd_line_args$args[1]
-samples <- read.delim( samples_file, header=TRUE, row.names=1 )
-# add sample name as factor
-samples$sample <- rownames(samples)
-samples$sample <- factor(samples$sample,
-                        levels = samples$sample)
+samples <- read_tsv(samples_file, show_col_types = FALSE) |> 
+  mutate(sample = factor(sample, levels = sample))
+stop_for_problems(samples)
 
 ## NEED TO ADD CHECKING OF COLUMNS. DO SUPPLIED VARIABLES EXIST IN THE DATA
 
@@ -251,6 +249,7 @@ if (debug) { cat("Counts\n") }
 # Read data
 data_file <- cmd_line_args$args[2]
 data <- load_rnaseq_data(data_file)
+stop_for_problems(data)
 
 # find adjusted pvalue column
 if (cmd_line_args$options[['no_pvalue']]) {
