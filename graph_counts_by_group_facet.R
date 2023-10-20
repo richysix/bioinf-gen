@@ -357,11 +357,11 @@ make_count_plot <- function(plot_num, data, normalised_counts, samples) {
     if (cmd_line_args$options[['crossbar']] == 'mean') {
       plot <- plot + 
         stat_summary(fun = "mean", geom = "crossbar",
-                     width = 0.6, size = 0.4 )
+                     width = 0.6, linewidth = 0.4)
     } else if (cmd_line_args$options[['crossbar']] == 'median') {
       plot <- plot + 
         stat_summary(fun = "median", geom = "crossbar",
-                     width = 0.6, size = 0.4 )
+                     width = 0.6, linewidth = 0.4)
     }
   }
   
