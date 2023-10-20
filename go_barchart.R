@@ -15,10 +15,10 @@ option_list <- list(
               help="Name of column to use to determine direction of bars [default %default]" ),
   make_option("--up_down_levels", type="character", default='Down=left,Up=right',
               help="Levels of the up down column with directions [default %default]" ),
-  make_option("--width", type="integer", default=10,
-              help="Width of the plot [default %default]" ),
-  make_option("--height", type="integer", default=7,
-              help="Height of the plot [default %default]" ),
+  make_option("--width", type="numeric", default=NULL,
+              help="Width of the plot [default: 480px for .png, 8 inches for other formats]" ),
+  make_option("--height", type="numeric", default=NULL,
+              help="Height of the plot [default: 360px for .png, 6 inches for other formats]" ),
   make_option("--top_terms", type="integer", default=NULL,
               help="How many terms to plot (ordered by x variable) [default All terms]" ),
   make_option("--RData_file", type="character", default=NULL,
@@ -63,6 +63,19 @@ for( package in packages ){
 #   extrafont <- TRUE
 #   font_name <- "Arial"
 # }
+
+# set up plot dimensions
+output_file <- cmd_line_args$options[['output_file']]
+plot_width <- cmd_line_args$options[['width']]
+plot_height <- cmd_line_args$options[['height']]
+file_suffix <- sub("^.*\\.", "", output_file)
+if (file_suffix == "png") {
+  plot_width <- ifelse(is.null(plot_width), 480, plot_width)
+  plot_height <- ifelse(is.null(plot_height), 360, plot_height)
+} else {
+  plot_width <- ifelse(is.null(plot_width), 8, plot_width)
+  plot_height <- ifelse(is.null(plot_height), 6, plot_height)
+}
 
 # load data
 go_info <- read_tsv(cmd_line_args$args[1])
@@ -147,9 +160,9 @@ coloured_bar_chart <- ggplot(data = go_info) +
         panel.grid.major.y = element_blank())
 
 # output plot
-miscr::open_graphics_device(cmd_line_args$options[['output_file']],
-                            width = cmd_line_args$options[['width']],
-                            height = cmd_line_args$options[['height']])
+miscr::open_graphics_device(output_file,
+                            width = plot_width,
+                            height = plot_height)
 print(coloured_bar_chart)
 dev.off()
 

@@ -1,0 +1,96 @@
+---
+title: "GO enrichment barcharts"
+author: "Richard White"
+date: "2023-05-04"
+output:
+  md_document:
+    variant: gfm
+---
+
+# Create a barchart of enriched GO terms
+
+```{r packages, include=FALSE, message=FALSE}
+for( package in c("knitr", "rprojroot", "tidyverse")) {
+  library(package, character.only = TRUE)
+}
+```
+
+```{r knitr_options, include=FALSE, message=FALSE}
+opts_chunk$set(include=TRUE, echo=TRUE)
+```
+
+```{r root-path, include=FALSE}
+root_path <- find_root(is_rstudio_project)
+Sys.setenv(ROOT_PATH = root_path)
+```
+
+```{r create-test-data, include=FALSE}
+# test data for GO barchart
+num_terms <- 30
+set.seed(682)
+go_bubble_plot_test_data <- tibble(
+  GO.ID = sprintf('GO:%07d', seq_len(num_terms)),
+  Term = sprintf('Term%d', seq_len(num_terms)),
+  FE = sample(seq(3,20), num_terms, replace = TRUE),
+  log10p = rnorm(num_terms, mean = 5, sd = 1),
+  pval = 10^-log10p,
+  Category = sample(c('BP', 'CC', 'MF'), num_terms, replace = TRUE),
+  Set = sample(c('Expt1', 'Expt2', 'Expt3'), num_terms, replace = TRUE),
+  up_down = sample(c('Up', 'Down'), num_terms, replace = TRUE),
+)
+write_tsv(go_bubble_plot_test_data, file = file.path(root_path, 'test_data', 'test_data_go.tsv'))
+```
+
+## go_barchart.R
+
+Script to produce a barchart from a file of GO enrichments. By default the
+script expects columns named GO.ID, Term, FE, Set and up_down, but these can be
+changed by setting options. The GO.IDs are plotted on the y axis and the
+horizontal bars represent the Fold Enrichment (FE). The bars are coloured by
+Set and depending on up_down are plotted to the left or right.
+
+There is an example file in the test_data directory of this repository.
+
+```{bash go-barchart, eval=FALSE, echo=TRUE}
+Rscript go_barchart.R test_data/test_data_go.tsv
+```
+
+```{bash run-go-barchart, echo=FALSE, results='hide'}
+Rscript $ROOT_PATH/go_barchart.R \
+--output_file go-barchart.png \
+--height 420 \
+$ROOT_PATH/test_data/test_data_go.tsv
+```
+
+![Bar chart of GO terms against Fold Enrichment. The bars are coloured by GO
+domain](go-barchart.png "Default GO bar chart")
+
+The column to use can be changed with the `--x_variable` option. In this
+example only the top 20 terms (by the x variable) are plotted.
+
+```{bash go-barchart-top20, eval=FALSE, echo=TRUE}
+Rscript go_barchart.R \
+--x_variable log10p --x_axis_title="-log10[pvalue]" \
+--fill_variable Set --top_terms 20 \
+--output_file go_barchart_top20.svg \
+test_data/test_data_go.tsv
+```
+
+```{bash run-go-barchart-top20, echo=FALSE, results='hide'}
+Rscript $ROOT_PATH/go_barchart.R \
+--x_variable log10p --x_axis_title="-log10[pvalue]" \
+--fill_variable Set --top_terms 20 \
+--output_file go-barchart-top20.png \
+$ROOT_PATH/test_data/test_data_go.tsv
+```
+
+![Bar chart of GO terms against -log10pvalue. The bars are coloured by
+experiment](go-barchart-top20.png "GO bar chart of top 20 terms by -log10p")
+
+## Required packages
+
+* [tidyverse](https://www.tidyverse.org/)
+* [grid](https://www.tidyverse.org/)
+* [biovisr](https://github.com/richysix/biovisr)
+* [miscr](https://github.com/richysix/miscr)
+

@@ -16,7 +16,7 @@ Click on the links to go to the documentation for that script.
 * [gene_expr_heatmap.R](docs/gene_expr_heatmap/gene_expr_heatmap.md) - Gene expression heatmap
 * gene_lists_from_groups_cluego.pl
 * get_msigdb_geneset.R
-* [go_barchart.R](https://github.com/richysix/bioinf-gen#go_barchartr) - Produce a bar chart of GO results
+* [go_barchart.R](docs/go_barchart/go_barchart.md) - Produce a bar chart of GO results
 * [go_bubble_plot.R](docs/go_bubble_plot/go_bubble_plot.md) - Produce a bubble plot from a topgo analysis
 * [graph_counts_by_group_facet.R](docs/graph_counts_by_group_facet/graph_counts_by_group_facet.md) - jittered and facetted count plot
 * graph_counts_line.R
@@ -33,42 +33,6 @@ Click on the links to go to the documentation for that script.
 
 The plot scripts (gene_expr_heatmap.R, go_barchart.R, go_bubble_plot.R etc.) support outputting plot files as
 pdf, png, ps and svg
-
-### go_barchart.R
-
-Script to produce a barchart from a file of GO enrichments. By default the
-script expects columns named GO.ID, Term, FE, Set and up_down, but these can be
-changed by setting options. The GO.IDs are plotted on the y axis and the
-horizontal bars represent the Fold Enrichment (FE). The bars are coloured by
-Set and depending os up_down are plotted to the left or right.
-
-There is an example file in the test_data directory of this repository.
-
-```
-cd test_data
-../go_barchart.R test_data_go.tsv
-```
-
-![Bar chart of GO terms against Fold Enrichment. The bars are coloured by GO
-domain](test_data/go_barchart.png "Default GO bar chart")
-
-The column to use can be changed with the `--x_variable` option. In this
-example only the top 20 terms (by the x variable) are plotted.
-```
-../go_barchart.R --x_variable log10p --x_axis_title="-log10[pvalue]" \
---fill_variable Set --top_terms 20 \
---output_file go_barchart_top20.svg \
-test_data_go.tsv
-```
-
-![Bar chart of GO terms against -log10pvalue. The bars are coloured by
-experiment](test_data/go_barchart_top20.png "GO bar chart of top 20 terms by -log10p")
-
-**Required packages**
-* [tidyverse](https://www.tidyverse.org/)
-* [grid](https://www.tidyverse.org/)
-* [biovisr](https://github.com/richysix/biovisr)
-* [miscr](https://github.com/richysix/miscr)
 
 ### gsea_to_genes.py
 

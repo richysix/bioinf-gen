@@ -51,21 +51,6 @@ samples_df %>%
   filter(treatment == "control") %>% 
   write_tsv(., file = file.path(root_path, 'test_data', 'test_samples_control.tsv'))
 
-# test data for GO barchart
-num_terms <- 30
-set.seed(682)
-go_bubble_plot_test_data <- tibble(
-  GO.ID = sprintf('GO:%07d', seq_len(num_terms)),
-  Term = sprintf('Term%d', seq_len(num_terms)),
-  FE = sample(seq(3,20), num_terms, replace = TRUE),
-  log10p = rnorm(num_terms, mean = 5, sd = 1),
-  pval = 10^-log10p,
-  Category = sample(c('BP', 'CC', 'MF'), num_terms, replace = TRUE),
-  Set = sample(c('Expt1', 'Expt2', 'Expt3'), num_terms, replace = TRUE),
-  up_down = sample(c('Up', 'Down'), num_terms, replace = TRUE),
-)
-write_tsv(go_bubble_plot_test_data, file = file.path(root_path, 'test_data', 'test_data_go.tsv'))
-
 # test data for gsea_to_genes
 set.seed(241)
 gsea_report <- tibble(
