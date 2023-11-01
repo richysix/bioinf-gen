@@ -16,7 +16,11 @@ $(graph_counts_files) : \
 graph_counts_by_group_facet/graph_counts_by_group_facet.Rmd
 	Rscript -e 'library("rmarkdown"); render("graph_counts_by_group_facet/graph_counts_by_group_facet.Rmd")'
 
-gene_expr_heatmap/gene_expr_heatmap.md: gene_expr_heatmap/gene_expr_heatmap.Rmd
+gene_expr_heatmap_files = gene_expr_heatmap/gene_expr_heatmap.md \
+../test_data/test_genes.txt ../test_data/test_samples_long.tsv
+
+$(gene_expr_heatmap_files): gene_expr_heatmap/gene_expr_heatmap.Rmd \
+../test_data/test_samples.tsv ../test_data/test_rnaseq_data.tsv
 	Rscript -e 'library("rmarkdown"); render("gene_expr_heatmap/gene_expr_heatmap.Rmd")'
 
 volcano_plot/volcano_plot.md: volcano_plot/volcano_plot.Rmd

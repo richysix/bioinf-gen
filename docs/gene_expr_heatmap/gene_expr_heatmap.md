@@ -33,14 +33,14 @@ to.
 echo -e "GeneID\tName
 ENSTEST005\tgene-5
 ENSTEST006\tgene-6
-ENSTEST009\tgene-9" > test_genes.txt
+ENSTEST009\tgene-9" > test_data/test_genes.txt
 
 Rscript gene_expr_heatmap.R --transform rlog \
 --center_and_scale --cluster rows \
 --colour_palette magma --cell_colour grey80 \
 --gene_names --sample_names \
---genes_file test_genes.txt \
-test_samples.tsv test_rnaseq_data.tsv test_heatmap_subset.pdf
+--genes_file test_data/test_genes.txt \
+test_data/test_samples.tsv test_data/test_rnaseq_data.tsv test_data/test_heatmap_subset.pdf
 ```
 
 ![Gene expression heatmap. Genes are displayed in rows with the samples
@@ -55,8 +55,8 @@ Rscript gene_expr_heatmap.R --transform rlog \
 --center_and_scale --cluster rows \
 --colour_palette magma --cell_colour grey80 \
 --sample_names \
---genes_to_label test_genes.txt \
-test_samples.tsv test_rnaseq_data.tsv test_heatmap_subset_labels.pdf
+--genes_to_label test_data/test_genes.txt \
+test_data/test_samples.tsv test_data/test_rnaseq_data.tsv test_data/test_heatmap_subset_labels.pdf
 ```
 
 ![Gene expression heatmap. Genes are displayed in rows with the samples
@@ -72,11 +72,11 @@ Rscript gene_expr_heatmap.R --transform rlog \
 --center_and_scale --cluster rows \
 --colour_palette magma --cell_colour grey80 \
 --gene_names --sample_names \
---sample_metadata_file test_samples_long.tsv \
+--sample_metadata_file test_data/test_samples_long.tsv \
 --sample_metadata_ycol category \
 --sample_metadata_fill value \
 --relative_heights "0,8,2" \
-test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_sample_metadata.pdf
+test_data/test_samples.tsv test_data/test_rnaseq_data.tsv test_data/test_heatmap_with_sample_metadata.pdf
 ```
 
 ![Gene expression heatmap with sample metadata heatmap. Genes are
@@ -93,11 +93,11 @@ Rscript gene_expr_heatmap.R --transform rlog \
 --center_and_scale --cluster both \
 --colour_palette magma --cell_colour grey80 \
 --gene_tree --sample_tree --gene_names --sample_names \
---sample_metadata_file test_samples_long.tsv \
+--sample_metadata_file test_data/test_samples_long.tsv \
 --sample_metadata_ycol category \
 --sample_metadata_fill value \
 --relative_heights 1,3,1 --relative_widths 1,3 \
-test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_trees.pdf
+test_data/test_samples.tsv test_data/test_rnaseq_data.tsv test_data/test_heatmap_with_trees.pdf
 ```
 
 ![Gene expression heatmap with sample metadata heatmap and clustering
@@ -116,15 +116,15 @@ Rscript gene_expr_heatmap.R --transform rlog \
 --center_and_scale --cluster both \
 --colour_palette magma --cell_colour grey80 \
 --gene_tree --sample_tree --gene_names --sample_names \
---sample_metadata_file test_samples_long.tsv \
+--sample_metadata_file test_data/test_samples_long.tsv \
 --sample_metadata_ycol category \
 --sample_metadata_fill value \
---gene_metadata_file test_gene_metadata.tsv \
+--gene_metadata_file test_data/test_gene_metadata.tsv \
 --gene_metadata_xcol category --gene_metadata_fill value \
 --gene_metadata_fill_palette cividis \
 --relative_heights 1,3,1 --relative_widths 1,3,1 \
 --width 640 --height 480 \
-test_samples.tsv test_rnaseq_data.tsv test_heatmap_with_gene-metadata.pdf
+test_data/test_samples.tsv test_data/test_rnaseq_data.tsv test_heatmap_with_gene-metadata.pdf
 ```
 
 ![Gene expression heatmap with gene and sample metadata heatmaps and
