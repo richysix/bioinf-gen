@@ -25,6 +25,8 @@ Sys.setenv(ROOT_PATH = root_path)
 
 ```{r create-test-data, include=FALSE}
 # test data for graph_counts_by_group_facet.R
+# makes test_samples.tsv, rnaseq_adjusted_pvalues.tsv, 
+# test_rnaseq_data.tsv and test_gene_metadata.tsv
 set.seed(583)
 num_rows <- 10
 tmp <- makeExampleDESeqDataSet(n = num_rows, m = 12, betaSD = 2)

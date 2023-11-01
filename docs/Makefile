@@ -8,7 +8,11 @@ md_files = graph_counts_by_group_facet/graph_counts_by_group_facet.md \
 # Documentation
 docs: $(md_files)
 
-graph_counts_by_group_facet/graph_counts_by_group_facet.md: \
+graph_counts_files = graph_counts_by_group_facet/graph_counts_by_group_facet.md \
+../test_data/test_samples.tsv ../test_data/test_rnaseq_data.tsv \
+../test_data/rnaseq_adjusted_pvalues.tsv ../test_data/test_gene_metadata.tsv 
+
+$(graph_counts_files) : \
 graph_counts_by_group_facet/graph_counts_by_group_facet.Rmd
 	Rscript -e 'library("rmarkdown"); render("graph_counts_by_group_facet/graph_counts_by_group_facet.Rmd")'
 
