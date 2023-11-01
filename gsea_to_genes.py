@@ -60,9 +60,9 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('input_file', nargs='?', metavar='FILE',
+    parser.add_argument('input_file', nargs='?', metavar='GSEA FILE',
         type=argparse.FileType('r'), default=sys.stdin, help='Input file (GSEA .xls file) [default: STDIN]')
-    parser.add_argument('output_file', nargs='?', metavar='FILE',
+    parser.add_argument('output_file', nargs='?', metavar='OUTFILE',
         type=argparse.FileType('w'), default=sys.stdout, help='Output file [default: STDOUT]')
     parser.add_argument('--genes_file', nargs='?', metavar='FILE',
         type=argparse.FileType('r'), default=None, help='File of genes to limit output to')

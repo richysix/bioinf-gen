@@ -51,40 +51,6 @@ samples_df %>%
   filter(treatment == "control") %>% 
   write_tsv(., file = file.path(root_path, 'test_data', 'test_samples_control.tsv'))
 
-# test data for gsea_to_genes
-set.seed(241)
-gsea_report <- tibble(
-  NAME = sprintf('Term%03d', 1:5),
-  `GS<br> follow link to MSigDB` = sprintf('Term%03d', 1:5),
-  `GS DETAILS` = "Details...",
-  SIZE = sample(100:200, 5),
-  ES = runif(5, min = 0.5, max = 1.3),
-  NES = ES * 1.8,
-  `NOM p-val` = 0,
-  `FDR q-val` = c(0, 0.0002, 0.001, 0.049, 0.06),
-  `FWER p-val` = 0,
-  `RANK AT MAX` = sample(500:2000, 5),
-  `LEADING EDGE` = "notes"
-)
-write_tsv(gsea_report, file = file.path(root_path, 'test_data', 'test_gsea_report.xls'))
-
-for (term in gsea_report$NAME) {
-  gene_info <- tibble(
-    NAME = sprintf('row_%d', 0:19),
-    PROBE = sprintf('ZFG%03d', 0:19),
-    `GENE SYMBOL` = sprintf('ZFG%03d', 0:19),
-    GENE_TITLE = sprintf('gene%d | description', 0:19),
-    `RANK IN GENE LIST` = sample(3:100, 20, replace = TRUE),
-    `RANK METRIC SCORE` = rnorm(20, mean = 20, sd = 2),
-    `RUNNING ES` = runif(20),
-    `CORE ENRICHMENT` = rep(c('Yes', 'No'), each = 10)
-  )
-  write_tsv(gene_info, file = file.path(root_path, 'test_data', paste0(term, '.xls')))
-}
-write.table(gene_info$PROBE[sample(1:20, 10)], quote = FALSE,
-            file = file.path(root_path, 'test_data', 'gsea-genes.txt'), 
-            col.names = FALSE, row.names = FALSE)
-
 # make test data for upset-sig-genes.R
 num_genes <- 100
 genes <- sprintf('ENSTEST%03d', seq_len(num_genes))

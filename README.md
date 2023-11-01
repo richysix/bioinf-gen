@@ -34,25 +34,6 @@ Click on the links to go to the documentation for that script.
 The plot scripts (gene_expr_heatmap.R, go_barchart.R, go_bubble_plot.R etc.) support outputting plot files as
 pdf, png, ps and svg
 
-### gsea_to_genes.py
-
-This is a script to take GSEA output files and return the genes that are
-responsible for each enrichment.
-There are test file in the test_data directory of this repository.
-```
-cd test_data
-../gsea_to_genes.py --comparison test test_gsea_report.xls
-```
-Each line has the supplied comparison so that multiple of these output files
-can be concatenated.
-The `--genes_file` option allows the output to be limited to only genes in the
-supplied list (e.g. sig genes).
-```
-../gsea_to_genes.py --genes_file gsea-genes.txt --comparison test test_gsea_report.xls
-```
-The default is to output to STDOUT, but an output filename can be given after
-the input file name
-
 ### run_cluego.R
 
 This script runs a standard ClueGO analysis from the supplied gene lists. It assumes that the gene list
