@@ -20,54 +20,19 @@ Click on the links to go to the documentation for that script.
 * [go_bubble_plot.R](docs/go_bubble_plot/go_bubble_plot.md) - Produce a bubble plot from a topgo analysis
 * [graph_counts_by_group_facet.R](docs/graph_counts_by_group_facet/graph_counts_by_group_facet.md) - jittered and facetted count plot
 * graph_counts_line.R
-* gsea_to_genes.py - Get the genes behind GSEA enrichments
+* [gsea_to_genes.py](docs/gsea_to_genes/gsea_to_genes.md) - Get the genes behind GSEA enrichments
 * histogram.R
 * matrix_heatmap_plot.R
 * merge_deseq_counts.pl - merge deseq counts from mutliple files
 * mutmap_create_tsv.pl
 * reshape-long_to_wide.R - reshapes long data to wide data
-* [run_cluego.R](https://github.com/richysix/bioinf-gen#run_cluegor) - Run a Cytoscape ClueGO analysis from gene list(s)
+* [run_cluego.R](docs/run_cluego/run_cluego.md) - Run a Cytoscape ClueGO analysis from gene list(s)
 * [upset-sig-genes.R](https://github.com/richysix/bioinf-gen#upset-sig-genesr) - Simple UpSet plot from DESeq2 sig files with genes for each intersection
 * [volcano_plot.R](docs/volcano_plot/volcano_plot.md) - Volcano plot
 * xlsx_conditional_formatting.R
 
 The plot scripts (gene_expr_heatmap.R, go_barchart.R, go_bubble_plot.R etc.) support outputting plot files as
 pdf, png, ps and svg
-
-### run_cluego.R
-
-This script runs a standard ClueGO analysis from the supplied gene lists. It assumes that the gene list
-has no header and is Ensembl gene ids in the first column. If more than one gene list is supplied,
-the script will produce two images, one coloured by group (Enriched Term) and one coloured by cluster (Gene List origin).
-At the moment the script runs the analysis and saves an image(s) and the output files, but I
-can't find a way to save the analysis as a ClueGO session. This must be done manually in Cytoscape.
-
-Cytoscape (>v3.6+) must be open and Cytoscape Apps 'yFiles Layout Algorithms' and 'ClueGO' must be installed.
-
-*Example*
-```
-# Run with 1 gene list
-run_cluego.R --verbose --analysis_name groups \
---output_image_file=cluego-groups.svg \
---output_basename=cluego-groups \
-set1.sig.genes
-
-# Run with 2 gene lists to see the overlap
-run_cluego.R --verbose --analysis_name overlaps \
---output_image_file=overlap-cluego.svg \
---output_basename=overlap-cluego \
-set1.sig.genes set2.sig.genes
-```
-
-I've had problems trying to run multiple analyses in sequence. If that happens you can try adding the `--destroy_network` option. 
-That will destroy the network at the end of the script so you won't be able to save it as a ClueGO/Cytoscape network, but it means that you can produce a bunch of network pictures in one go.
-
-**Required packages**
-* [tidyverse](https://www.tidyverse.org/)
-* [xml2](https://github.com/r-lib/xml2)
-* [RJSONIO](https://cran.r-project.org/web/packages/RJSONIO/index.html)
-* [httr](https://github.com/r-lib/httr)
-* [biovisr](https://github.com/richysix/biovisr)
 
 ### upset-sig-genes.R
 
