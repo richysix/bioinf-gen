@@ -39,7 +39,7 @@ terms.](test_bubble_cat.png "Test Categorical bubble plot")
 
 ## Required packages
 
--   [optparse](https://cran.r-project.org/web/packages/optparse/index.html)
--   [tidyverse](https://www.tidyverse.org/)
--   [biovisr](https://github.com/richysix/biovisr)
--   [svglite](https://svglite.r-lib.org/) - only required for svg output
+- [optparse](https://cran.r-project.org/web/packages/optparse/index.html)
+- [tidyverse](https://www.tidyverse.org/)
+- [biovisr](https://github.com/richysix/biovisr)
+- [svglite](https://svglite.r-lib.org/) - only required for svg output

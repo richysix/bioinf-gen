@@ -51,8 +51,8 @@ labelled](go-bubble-labels.png "GO bubble plot, with terms 1 to 5 labelled")
 
 ## Required packages
 
--   [tidyverse](https://www.tidyverse.org/)
--   [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
--   [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
--   [biovisr](https://github.com/richysix/biovisr)
--   [miscr](https://github.com/richysix/miscr)
+- [tidyverse](https://www.tidyverse.org/)
+- [viridis](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
+- [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
+- [biovisr](https://github.com/richysix/biovisr)
+- [miscr](https://github.com/richysix/miscr)

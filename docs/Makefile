@@ -1,27 +1,26 @@
-md_files = graph_counts_by_group_facet/graph_counts_by_group_facet.md \
+md_files = ../test_data graph_counts_by_group_facet/graph_counts_by_group_facet.md \
             gene_expr_heatmap/gene_expr_heatmap.md \
             bubble_plot/bubble_plot.md go_bubble_plot/go_bubble_plot.md \
             go_barchart/go_barchart.md \
             volcano_plot/volcano_plot.md \
             gsea_to_genes/gsea_to_genes.md \
             run_cluego/run_cluego.md \
-            upset-sig-genes.md
+            upset-sig-genes/upset-sig-genes.md
 
 # Documentation
 docs: $(md_files)
 
+../test_data: 
+	mkdir ../test_data
+
 graph_counts_files = graph_counts_by_group_facet/graph_counts_by_group_facet.md \
-../test_data/test_samples.tsv ../test_data/test_rnaseq_data.tsv \
-../test_data/rnaseq_adjusted_pvalues.tsv ../test_data/test_gene_metadata.tsv 
+../test_data/test_samples.tsv ../test_data/test_rnaseq_data.tsv
 
 $(graph_counts_files) : \
 graph_counts_by_group_facet/graph_counts_by_group_facet.Rmd
 	Rscript -e 'library("rmarkdown"); render("graph_counts_by_group_facet/graph_counts_by_group_facet.Rmd")'
 
-gene_expr_heatmap_files = gene_expr_heatmap/gene_expr_heatmap.md \
-../test_data/test_genes.txt ../test_data/test_samples_long.tsv
-
-$(gene_expr_heatmap_files): gene_expr_heatmap/gene_expr_heatmap.Rmd \
+gene_expr_heatmap/gene_expr_heatmap.md : gene_expr_heatmap/gene_expr_heatmap.Rmd \
 ../test_data/test_samples.tsv ../test_data/test_rnaseq_data.tsv
 	Rscript -e 'library("rmarkdown"); render("gene_expr_heatmap/gene_expr_heatmap.Rmd")'
 
@@ -43,5 +42,14 @@ gsea_to_genes/gsea_to_genes.md: gsea_to_genes/gsea_to_genes.Rmd
 run_cluego/run_cluego.md: run_cluego/run_cluego.Rmd
 	Rscript -e 'library("rmarkdown"); render("run_cluego/run_cluego.Rmd")'
 
-upset-sig-genes.md ../test_data/set*.sig.tsv : upset-sig-genes/upset-sig-genes.Rmd
+upset-sig-genes/upset-sig-genes.md : upset-sig-genes/upset-sig-genes.Rmd
 	Rscript -e 'library("rmarkdown"); render("upset-sig-genes/upset-sig-genes.Rmd")'
+
+.PHONY : cleanall cleandata cleanmd
+cleanall : cleandata cleanmd
+
+cleandata :
+	-rm -r ../test_data
+
+cleanmd : 
+	find ./ -type f -name "*.md" | xargs rm

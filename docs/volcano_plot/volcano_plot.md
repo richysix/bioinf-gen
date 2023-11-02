@@ -55,14 +55,14 @@ Change).](volcano-either-threshold.png "Test volcano plot")
 
 ## Required packages
 
--   [optparse](https://github.com/trevorld/r-optparse)
--   [tidyverse](https://www.tidyverse.org/)
--   [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
--   [miscr](https://github.com/richysix/miscr)
+- [optparse](https://github.com/trevorld/r-optparse)
+- [tidyverse](https://www.tidyverse.org/)
+- [ggrepel](https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html)
+- [miscr](https://github.com/richysix/miscr)
 
 ## Optional packages
 
--   [ggrastr](https://cran.r-project.org/web/packages/ggrastr/vignettes/Raster_geoms.html) -
-    Use to rasterise the points layer if installed
--   [svglite](https://svglite.r-lib.org/) - Used for svg output if
-    installed
+- [ggrastr](https://cran.r-project.org/web/packages/ggrastr/vignettes/Raster_geoms.html) -
+  Use to rasterise the points layer if installed
+- [svglite](https://svglite.r-lib.org/) - Used for svg output if
+  installed
