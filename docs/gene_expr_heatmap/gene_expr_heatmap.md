@@ -2,6 +2,8 @@
 
 ## gene_expr_heatmap.R
 
+[Go to script](../../gene_expr_heatmap.R)
+
 Script to produce a heatmap from RNAseq data. It expects a sample file
 and a count file (e.g. sig.tsv) and the name of the output image file.
 

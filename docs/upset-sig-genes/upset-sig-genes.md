@@ -1,5 +1,7 @@
 ## upset-sig-genes.R
 
+[Go to script](../../run_cluego.R)
+
 This script produces a basic UpSet plot from a list of DESeq2 sig files.
 For example:
 

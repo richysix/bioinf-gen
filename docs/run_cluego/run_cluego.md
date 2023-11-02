@@ -2,6 +2,8 @@
 
 ## run_cluego.R
 
+[Go to script](../../run_cluego.R)
+
 This script runs a standard ClueGO analysis from the supplied gene
 lists. It assumes that the gene list has no header and is Ensembl gene
 ids in the first column. If more than one gene list is supplied, the

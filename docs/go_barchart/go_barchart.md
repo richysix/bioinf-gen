@@ -2,6 +2,8 @@
 
 ## go_barchart.R
 
+[Go to script](../../go_barchart.R)
+
 Script to produce a barchart from a file of GO enrichments. By default
 the script expects columns named GO.ID, Term, FE, Set and up_down, but
 these can be changed by setting options. The GO.IDs are plotted on the y

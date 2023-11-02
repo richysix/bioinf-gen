@@ -40,6 +40,8 @@ test_all_data <- tibble(
 write_tsv(test_all_data, path = file.path(root_path, 'test_data', 'volcano-test-data.tsv'))
 ```
 
+## volcano_plot.R
+
 [Go to script](../../volcano_plot.R)
 
 Script to produce a volcano plot from a RNA-seq experiment.  

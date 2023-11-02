@@ -23,7 +23,7 @@ cd test_data
 Rscript ../kappa-scores-topgo.R BP.sig.genes.tsv
 ```
 
-For this test data the output file should look like this:
+For this test data the top of the output file should look like this:
 
 | Term1        | Term2        | kappa_score |
 |:-------------|:-------------|------------:|

@@ -2,6 +2,8 @@
 
 ## gsea_to_genes.py
 
+[Go to script](../../gsea_to_genes.py)
+
 This is a script to take GSEA output files and return the genes that are
 responsible for each enrichment. There are test files in the test_data
 directory of this repository.
