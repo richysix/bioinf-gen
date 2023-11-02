@@ -33,12 +33,17 @@ desc <- paste(
   '\nScript to find and plot the intersections between DE gene lists',
   sep = "\n"
 )
-
+if (interactive()) {
+  cmd_args <- file.path('test_data', paste0('set', 1:3, '.sig.tsv'))
+} else {
+  cmd_args <- commandArgs(trailingOnly = TRUE)
+}
 cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'upset-sig-genes.R',
     usage = "Usage: %prog [options] input_files",
     description = desc ),
+  args = cmd_args,
   positional_arguments = c(2, Inf)
 )
 
@@ -59,8 +64,18 @@ debug <- cmd_line_args$options[['debug']]
 # open input files
 sig_genes_list <- purrr::map(cmd_line_args$args, load_rnaseq_data)
 # label sets by removing deseq2- from the start and [/.]sig.tsv from the end of the filename
-sets <- sub("^deseq2-", "", cmd_line_args$args) %>% 
-  sub("[/.]sig.tsv$", "", .)
+# first check if filename matches deseq2-*/sig.tsv
+if (all(grepl(".*/sig.tsv", cmd_line_args$args))) {
+  # use dirname, after removing deseq2- if it's there
+  sets <- sub("^deseq2-", "", cmd_line_args$args) |> 
+    dirname()
+} else if(all(grepl(".*\\.sig\\.tsv", basename(cmd_line_args$args)))) {
+  # remove .sig.tsv from basename
+  sets <- basename(cmd_line_args$args) %>% 
+    sub("\\.sig\\.tsv$", "", .)
+} else {
+  stop("Couldn't work out how to label the sets!")
+}
 names(sets) <- sets
 names(sig_genes_list) <- sets
 
@@ -105,8 +120,8 @@ for (col_name in sets) {
 # and join in Gene Names
 purrr::map_dfr(sig_genes_list, ~ .x) %>% # concat gene lists
   select(., GeneID, Name) %>% unique() %>% # select ids and names and make unique
-  inner_join(., gene_ids_to_sets) %>% # join to gene_ids_to_sets
-  unite("Set", all_of(sets), sep = "|", na.rm = TRUE) %>% 
+  inner_join(., gene_ids_to_sets, by = "GeneID") %>% # join to gene_ids_to_sets
+  unite("Set", all_of(unname(sets)), sep = "|", na.rm = TRUE) %>% 
   mutate(., Intersection = factor(Intersection),
          Intersection = fct_infreq(Intersection)) %>% # order by the size of the intersections
   arrange(., Intersection, Name) %>% 
@@ -121,16 +136,3 @@ open_graphics_device(filename = plot_file,
 upset(fromList(gene_ids_list), order.by = "freq",
       sets = sets, keep.order = keep_order)
 invisible(dev.off())
-
-# options for testing
-# cmd_line_args <-
-#   list(options = list('output_file' = 'upset-test.tsv',
-#                       'plot_file' = 'upset-test-2.svg',
-#                       'keep_order' = FALSE,
-#                       'width' = 10, 'height' = 8,
-#                       debug = TRUE),
-#        args = c('deseq2-srpk3_hom_ttnb_het_vs_srpk3_hom_ttnb_wt/sig.tsv',
-#                 'deseq2-srpk3_hom_ttnb_het_vs_srpk3_wt_ttnb_het/sig.tsv',
-#                 'deseq2-srpk3_hom_ttnb_het_vs_srpk3_wt_ttnb_wt/sig.tsv',
-#                 'deseq2-srpk3_hom_ttnb_wt_vs_srpk3_wt_ttnb_wt/sig.tsv',
-#                 'deseq2-srpk3_wt_ttnb_het_vs_srpk3_wt_ttnb_wt/sig.tsv'))
