@@ -1,0 +1,81 @@
+---
+title: "Kappa scores for topgo terms"
+author: "Richard White"
+output:
+  md_document:
+    variant: gfm
+---
+
+# Calculate kappa scores for terms from topgo output files
+
+```{r packages, include=FALSE, message=FALSE}
+for( package in c("knitr", "rprojroot", "tidyverse")) {
+  library(package, character.only = TRUE)
+}
+```
+
+```{r knitr_options, include=FALSE, message=FALSE}
+opts_chunk$set(include=TRUE, echo=TRUE)
+```
+
+```{r root-path, include=FALSE}
+root_path <- find_root(is_rstudio_project)
+Sys.setenv(ROOT_PATH = root_path)
+```
+
+```{r create-test-data, include=FALSE}
+num_sig_genes <- 100
+sig_genes <- paste0('gene', seq_len(num_sig_genes))
+
+num_terms <- 10
+sig_genes_per_term <- 50
+set.seed(637)
+go_sig_genes <- tibble(
+  GO.ID = rep(sprintf('GO:%07d', seq_len(num_terms)), each = sig_genes_per_term),
+  Term = rep(sprintf('Term%d', seq_len(num_terms)), each = sig_genes_per_term),
+  Gene = sample(paste0('gene', seq_len(num_sig_genes)*2), num_terms*50, replace = TRUE)
+) %>% 
+  mutate(., `p value` = case_when(Gene %in% sig_genes ~ 1,
+                                  TRUE ~ 0)) %>% 
+  unique()
+write_tsv(go_sig_genes, file = file.path(root_path, 'test_data', 'BP.sig.genes.tsv'))
+```
+
+## kappa-scores-topgo.R
+
+[Go to script](../../kappa-scores-topgo.R)
+
+This script calculates kappa scores to quantify the degree of overlap in the DE genes annotated to different GO terms.
+The input is the *.sig.genes.tsv output file from the [TopGO script](https://github.com/iansealy/topgo-wrapper).
+
+The output file is tab-separated with three columns:
+
+1. Term1
+1. Term2
+1. kappa score
+
+There is some test data in the [test_data](../../test_data/) directory of this repository.
+
+```{bash kappa, eval=FALSE, echo=TRUE}
+cd test_data
+Rscript ../kappa-scores-topgo.R BP.sig.genes.tsv
+``` 
+
+```{bash run-counts-basic, echo=FALSE, results='hide'}
+cd test_data
+Rscript $ROOT_PATH/kappa-scores-topgo.R \
+$ROOT_PATH/test_data/BP.sig.genes.tsv
+```
+
+For this test data the top of the output file should look like this:
+
+```{r output, echo=FALSE}
+add_backticks <- function(x) {
+  x <- sub("^", "`", x)
+  sub("$", "`", x)
+}
+read_tsv('kappa_scores.tsv', show_col_types = FALSE) |> 
+  mutate(across(Term1:Term2, add_backticks)) |> 
+  head() |> 
+  kable()
+```

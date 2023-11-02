@@ -1,11 +1,9 @@
 md_files = ../test_data graph_counts_by_group_facet/graph_counts_by_group_facet.md \
-            gene_expr_heatmap/gene_expr_heatmap.md \
-            bubble_plot/bubble_plot.md go_bubble_plot/go_bubble_plot.md \
-            go_barchart/go_barchart.md \
-            volcano_plot/volcano_plot.md \
-            gsea_to_genes/gsea_to_genes.md \
-            run_cluego/run_cluego.md \
-            upset-sig-genes/upset-sig-genes.md
+gene_expr_heatmap/gene_expr_heatmap.md bubble_plot/bubble_plot.md \
+go_bubble_plot/go_bubble_plot.md go_barchart/go_barchart.md \
+volcano_plot/volcano_plot.md gsea_to_genes/gsea_to_genes.md \
+run_cluego/run_cluego.md upset-sig-genes/upset-sig-genes.md \
+kappa-scores-topgo/kappa-scores-topgo.md
 
 # Documentation
 docs: $(md_files)
@@ -44,6 +42,9 @@ run_cluego/run_cluego.md: run_cluego/run_cluego.Rmd
 
 upset-sig-genes/upset-sig-genes.md : upset-sig-genes/upset-sig-genes.Rmd
 	Rscript -e 'library("rmarkdown"); render("upset-sig-genes/upset-sig-genes.Rmd")'
+
+kappa-scores-topgo/kappa-scores-topgo.md : kappa-scores-topgo/kappa-scores-topgo.Rmd
+	Rscript -e 'library("rmarkdown"); render("kappa-scores-topgo/kappa-scores-topgo.Rmd")'
 
 .PHONY : cleanall cleandata cleanmd
 cleanall : cleandata cleanmd

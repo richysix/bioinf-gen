@@ -43,7 +43,8 @@ for( package in packages ){
 }
 
 # topgo sig.genes.tsv
-go_sig_genes <- read_tsv(cmd_line_args$args[1])
+go_sig_genes <- read_tsv(cmd_line_args$args[1],
+                         show_col_types = FALSE)
 
 # check sig col
 pval_colname <- rlang::sym(cmd_line_args$options[['pval_colname']])
