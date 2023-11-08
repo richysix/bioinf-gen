@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-desc <- "
+desc_string <- "
 This script runs a standard ClueGO analysis from the supplied gene lists. 
 It assumes that the gene list has a header and the Ensembl gene ids are in a column named Gene. 
 If more than one gene list is supplied, the script will produce two images, 
@@ -68,7 +68,7 @@ cmd_line_args <- parse_args(
   OptionParser(
     option_list=option_list, prog = 'run_cluego.R', 
     usage = "Usage: %prog [options] input_files", 
-    description = desc ), 
+    description = desc_string), 
   args = arguments,
   positional_arguments = c(1, 8)
 )
@@ -77,8 +77,26 @@ cmd_line_args <- parse_args(
 debug <- cmd_line_args$options[['debug']]
 verbose <- cmd_line_args$options[['verbose']]
 output_basename <- cmd_line_args$options[['output_basename']]
-output_path <- ifelse(dirname(output_basename) == ".", getwd(), dirname(output_basename))
+path <- dirname(output_basename)
+if (grepl("^/", path)) {
+  # absolute path
+  output_path <- path
+} else {
+  if (dirname(output_basename) == ".") {
+    output_path <- getwd()
+  } else {
+    output_path <- file.path(getwd(), dirname(output_basename))
+    # check dir exists
+    if (!dir.exists(output_path)) {
+      success <- dir.create(output_path)
+      if (!success) {
+        stop("The output directory doesn't exist and couldn't create it.")
+      }
+    }
+  }
+}
 file_base <- basename(output_basename)
+
 ontologies_to_select <- unlist(strsplit(cmd_line_args$options[['ontologies']], ",", fixed = TRUE))
 
 # load packages
@@ -226,7 +244,7 @@ identifiers <- list(
 )
 for (cluster_index in seq_len(length(cmd_line_args$args))) {
   file <- cmd_line_args$args[cluster_index]
-  gene_info <- read_tsv(file)
+  gene_info <- read_tsv(file,show_col_types = FALSE)
   # check gene ids match Ensembl identifiers
   if (is.null(identifiers[[organism_name]])) {
     warning("No identifier regex for species, ", organism_name)
@@ -438,9 +456,9 @@ writeBin(content(response, as = "raw"), cmd_line_args$options[['output_image_fil
 # # 4.4 Get genes result table
 response <- GET(paste(cluego_base_url, "analysis-results", "get-gene-table", current_network_suid, sep="/"))
 stop_for_status(response, "Get gene table")
-result_table_text <- content(response, encode = "text", encoding = "UTF-8")
+gene_table_text <- content(response, encode = "text", encoding = "UTF-8")
+result_table <- text_to_data_frame(gene_table_text)
 table_file_name = file.path(output_path, paste0(file_base, "-gene-table.txt"))
-result_table <- text_to_data_frame(result_table_text)
 if (!is.null(result_table)) {
   write_tsv(result_table, file=table_file_name)
 }
@@ -448,8 +466,8 @@ if (!is.null(result_table)) {
 # 4.5 Get Kappascore Matrix
 response <- GET(paste(cluego_base_url, "analysis-results", "get-kappascore-matrix", current_network_suid, sep="/"))
 stop_for_status(response, "Get kappa score matrix")
-result_table_text <- content(response, encode = "text", encoding = "UTF-8")
-kappa_result_table <- text_to_data_frame(result_table_text)
+kappa_table_text <- content(response, encode = "text", encoding = "UTF-8")
+kappa_result_table <- text_to_data_frame(kappa_table_text)
 table_file_name = file.path(output_path, paste0(file_base, "-kappascore-matrix.txt"))
 if (!is.null(kappa_result_table)) {
   write_tsv(kappa_result_table, file=table_file_name)
@@ -458,8 +476,8 @@ if (!is.null(kappa_result_table)) {
 # 4.6 Get binary Gene-Term Matrix
 response <- GET(paste(cluego_base_url, "analysis-results", "get-binary-gene-term-matrix", current_network_suid, sep="/"))
 stop_for_status(response, "Get binary Gene-Term Matrix")
-result_table_text <- content(response, encode = "text", encoding = "UTF-8")
-gene_term_result_table <- text_to_data_frame(result_table_text)
+gene_term_matrix_table_text <- content(response, encode = "text", encoding = "UTF-8")
+gene_term_result_table <- text_to_data_frame(gene_term_matrix_table_text)
 table_file_name = file.path(output_path, paste0(file_base, "-binary-gene-term-matrix.txt"))
 if (!is.null(gene_term_result_table)) {
   write_tsv(gene_term_result_table, file=table_file_name)
