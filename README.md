@@ -17,6 +17,7 @@ Click on the links to go to the documentation for that script.
 * deseq2-from-counts.R
 * deseq2-multiple_groups.R
 * figshare/ - script to upload files to Figshare
+* [gantt-from-excel.R](docs/gantt-from-excel/gantt_chart.md) - Gantt chart
 * [gene_expr_heatmap.R](docs/gene_expr_heatmap/gene_expr_heatmap.md) - Gene expression heatmap
 * gene_lists_from_groups_cluego.pl
 * get_msigdb_geneset.R

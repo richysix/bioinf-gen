@@ -1,0 +1,97 @@
+---
+title: "Create a Gantt chart"
+output:
+  md_document:
+    variant: gfm
+---
+
+# Create a Gantt chart from an Excel spreadsheet.
+
+```{r packages, include=FALSE, message=FALSE}
+# load packages
+for (package in c("knitr", "rprojroot", "tidyverse", "biovisr", "openxlsx")) {
+  library(package, character.only = TRUE)
+}
+```
+
+```{r knitr_options, include=FALSE, message=FALSE}
+opts_chunk$set(fig.width = 6, fig.height = 4, include = TRUE, echo = TRUE)
+```
+
+```{r root-path, include=FALSE}
+root_path <- find_root(is_rstudio_project)
+Sys.setenv(ROOT_PATH = root_path)
+```
+
+```{r create-test-data, include=FALSE}
+# test data for bubble_plot.R
+gantt_data <- tibble(
+  TaskID = paste0("T", 1:9),
+  Task = paste0("Task", 1:9),
+  CategoryID = c(rep(paste0("C", 1:4), each = 2), "C4"),
+  Category = paste0("Aim", 1:9),
+  Start = c(0, 6, 0, 9, 12, 16, 24, 28, 32),
+  TimeEstimate = c(6, 6, 9, 9, 4, 8, 4, 4, 4),
+  SuperCategory = c(rep(paste0("Objective", 1:2), each = 4), "Objective2")
+)
+
+write.xlsx(gantt_data, file = file.path(root_path, 'test_data',
+                                        'gantt-test-data.xlsx'),
+           sheetName = "gantt-table")
+```
+
+[Go to script](../../gantt-from-excel.R)
+
+Script to produce a Gantt chart from an Excel worksheet.
+There is some test data in the test_data directory of this repository.  
+The script expects columns named `TaskID`, `Task`, `CategoryID`, `Category`, 
+`Start` and `TimeEstimate`. `SuperCategory` is an optional column used to group 
+items to have a box drawn around them.
+The script produces two plots. One contains each task on a separate line and
+the bars are coloured by category. The second aggregates the data to categories.
+For example ...
+
+```{bash gantt-no-options, eval=FALSE, echo=TRUE}
+Rscript gantt-from-excel.R \
+test_data/gantt-test-data.xlsx
+```
+
+```{bash run-gantt-no-options, echo=FALSE, results='hide'}
+Rscript $ROOT_PATH/gantt-from-excel.R \
+$ROOT_PATH/test_data/gantt-test-data.xlsx
+```
+
+By default, both plots are output to a pdf called `gantt.pdf`. Separate plots
+can be produced in `png`, `svg` or `eps` format.
+Extra options include 
+
+* --output_file to change the name of the output file
+* --sheet_name to set the name of the sheet to use
+* --width and --height to set the dimensions of the plots
+* --add_super_category_boxes to have boxes drawn around the bars to groups 
+categories into larger categories
+
+```{bash gantt-png-options, eval=FALSE, echo=TRUE}
+Rscript gantt-from-excel.R \
+--output_file gantt-test.png \
+--sheet_name "gantt-table" \
+--width 1600 --height 800 \
+--add_super_category_boxes \
+test_data/gantt-test-data.xlsx
+```
+
+```{bash run-gantt-png-options, echo=FALSE, results='hide'}
+Rscript $ROOT_PATH/gantt-from-excel.R \
+--output_file gantt-test.png \
+--sheet_name "gantt-table" \
+--width 1600 --height 800 \
+--add_super_category_boxes \
+$ROOT_PATH/test_data/gantt-test-data.xlsx
+
+```
+
+![Test Gantt chart by task. It shows coloured bars, representing the start and 
+estimated durations of a set of tasks.](gantt-test-by-task.png "Test Gantt chart (by task)")
+
+![Test Gantt chart by category. It shows coloured bars, representing the start and 
+estimated durations of a set of tasks aggregated to the task categories.](gantt-test-by-category.png "Test Gantt chart (by category)")
