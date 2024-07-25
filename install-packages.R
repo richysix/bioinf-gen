@@ -26,6 +26,9 @@ option_list <- list(
     default = FALSE,
     help = "List which packages would be installed [default %default]"
   ),
+  make_option("--lib", type = "character", default = NULL,
+              help = paste0("Set the library directory for installation",
+                            "[default %default]")),
   make_option(
     "--no_check", action = "store_true", type = "logical", default = FALSE,
     help = "Don't check whether packages are already installed [default %default]"
@@ -59,6 +62,7 @@ cmd_line_args <- parse_args(
 
 list_packages <- cmd_line_args$options[['list_packages']]
 get_packages <- cmd_line_args$options[['get_packages']]
+lib_dir <- cmd_line_args$options[['lib']]
 if (list_packages & get_packages) {
   stop('UpdatedRVersion-Install-Packages.R\n',
        'Only one of --list_packages and --get_packages can be specified')
@@ -140,9 +144,10 @@ if (no_check) {
 }
 if (any(!.inst)) {
   if (list_packages) {
-    cat("CRAN packages to install:\n", paste(.cran_packages[!.inst], sep = "\n"), "\n")
+    cat("CRAN packages to install:\n", 
+        paste(.cran_packages[!.inst], sep = "\n"), "\n")
   } else {
-    install.packages(.cran_packages[!.inst])
+    install.packages(.cran_packages[!.inst], lib = lib_dir)
   }
 }
 
@@ -153,9 +158,11 @@ if (no_check) {
 }
 if (any(!.inst)) {
   if (list_packages) {
-    cat('Bioconductor packages to install:\n', paste(.bioc_packages[!.inst], sep = "\n"), "\n")
+    cat('Bioconductor packages to install:\n', 
+        paste(.bioc_packages[!.inst], sep = "\n"), "\n")
   } else {
-    BiocManager::install(.bioc_packages[!.inst], update = FALSE)
+    BiocManager::install(.bioc_packages[!.inst], update = FALSE,
+                         lib = lib_dir)
   }
 }
 
@@ -166,8 +173,9 @@ if (no_check) {
 }
 if (any(!.inst)) {
   if (list_packages) {
-    cat('GitHub packages to install:\n', paste(.bioc_packages[!.inst], sep = "\n"), "\n")
+    cat('GitHub packages to install:\n', 
+        paste(.bioc_packages[!.inst], sep = "\n"), "\n")
   } else {
-    devtools::install_github(.github_repos[!.inst])
+    devtools::install_github(.github_repos[!.inst], lib = lib_dir)
   }
 }
