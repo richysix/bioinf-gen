@@ -103,6 +103,9 @@ def main(args):
                                     continue
                                 else:
                                     edges[source_node_idx + '-' + target_node_idx] = 1
+                            if args.edge_offset:
+                                weight = float(weight) + args.edge_offset
+                                weight = f"{weight:.3f}"
                             print(edge_idx, source_node_idx, target_node_idx, weight, sep=",", file=out)
                             edge_idx += 1
                         # clear edge list
@@ -111,16 +114,18 @@ def main(args):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('mci_file', metavar='MCIFILE',
+    parser.add_argument('mci_file', metavar='MCI FILE',
         type=str, default='graph.mci', help='mcl graph file')
-    parser.add_argument('cluster_file', metavar='CLUSTERFILE',
+    parser.add_argument('cluster_file', metavar='CLUSTER FILE',
         type=str, default='graph.mci.I14', help='cluster file from mcl showing which nodes belong to each cluster')
-    parser.add_argument('gene_info_file', metavar='GENEFILE',
+    parser.add_argument('gene_info_file', metavar='GENE FILE',
         type=str, default='graph.tab', help='gene info file containing mcl node index and gene id and name')
-    parser.add_argument('--nodes_file', metavar='NODESFILE',
+    parser.add_argument('--nodes_file', metavar='NODES FILE',
         type=str, default='graph.nodes.csv', help='Name of the output file for the nodes')
-    parser.add_argument('--edges_file', metavar='EDGESFILE',
+    parser.add_argument('--edges_file', metavar='EDGES FILE',
         type=str, default='graph.edges.csv', help='Name of the output file for the edges')
+    parser.add_argument('--edge_offset', metavar='EDGE OFFSET',
+        type=float, default=None, help='An amount to add to edge weights')
     parser.add_argument('--debug', action='count', default=0,
         help='Prints debugging information')
     args = parser.parse_args()
