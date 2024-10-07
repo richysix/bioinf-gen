@@ -21,8 +21,6 @@ option_list <- list(
               help="Data is DeTCT data, not RNA-seq [default %default]"),
   make_option("--transform", action="store", type="character", default="rlog",
               help="Transformation to apply to data [default %default]"),
-  make_option("--centre_and_scale", action="store_true", type="logical", default=FALSE,
-              help="Center and scale the counts by row (genes) [default %default]"),
   make_option("--center_and_scale", action="store_true", type="logical", default=FALSE, dest = "centre_and_scale",
               help="Center and scale the counts by row (genes) [default %default]"),
   make_option("--cluster", action="store", type="character", default="none",
@@ -191,6 +189,8 @@ if (cmd_line_args$options[['transform']] == "rlog") {
 counts <- assay(dds)
 if (cmd_line_args$options[['centre_and_scale']]) {
     counts <- as.data.frame(t( scale( t(counts) ) ))
+} else {
+    counts <- as.data.frame(counts)
 }
 
 # subset data to gene list if provided
