@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-desc = ''' Script to parse an mcl graph to nodes and edges file 
+desc = """Script to parse an mcl graph to nodes and edges file
 
 The gene info file should contain the following columns
 
@@ -9,7 +9,8 @@ id - index covering all genes
 gene_id - Ensembl gene ID
 gene_name - Gene name
 description - Description
-'''
+"""
+
 import argparse
 import re
 import sys
@@ -18,6 +19,7 @@ def main(args):
     ''' Main body of code '''
     # load cluster file first
     cluster_idx_for = {}
+    nodes_for_cluster = {}
     begin = False
     nodelist = []
     with open(args.cluster_file, 'r') as f:
@@ -34,8 +36,7 @@ def main(args):
                     complete = True
                 else:
                     complete = False
-                for x in info:
-                    nodelist.append(x)
+                nodelist.extend(info)
                 if complete:
                     if args.debug > 1:
                         print(nodelist)
@@ -44,21 +45,45 @@ def main(args):
                         if cluster_idx is None:
                             cluster_idx = node_idx
                         else:
-                            cluster_idx_for[node_idx] = int(cluster_idx)
+                            cluster_idx_for[node_idx] = cluster_idx
+                            if cluster_idx not in nodes_for_cluster:
+                                nodes_for_cluster[cluster_idx] = [node_idx]
+                            else:
+                                nodes_for_cluster[cluster_idx].append(node_idx)
                     # reset node list
                     nodelist = []
     if args.debug > 1:
-        print(cluster_idx_for)
-    
-    # load tab file
+        print(cluster_idx_for, file = sys.stderr)
+        print(nodes_for_cluster, file = sys.stderr)
+
+    # open tab file
+    gene_id_for = {}
+    with open(args.graph_tab_file, 'r') as f:
+        for line in f:
+            info = line.rstrip('\n').split('\t') # columns are node_index, gene_id
+            gene_id_for[info[0]] = info[1]
+    gene_info_for = {}
+    with open(args.annotation_file, 'r') as f:
+        for idx, line in enumerate(f):
+            info = line.rstrip('\n').split('\t') # columns are gene_id, chr, start, end, strand, biotype, name, description
+            gene_info_for[info[0]] = { 
+                "name": info[6], 
+                "idx": idx,
+                "description": info[7]
+            }
+
+    # open nodes output file
     with open(args.nodes_file, 'w') as out:
-        print('node_idx', 'id', 'gene_id', 'gene_name', 'cluster_id', sep=',', file=out)
-        with open(args.gene_info_file, 'r') as f:
-            for line in f:
-                info = line.rstrip('\n').split('\t') # columns are node_index, id, gene_id, gene_name, description
-                node_idx = info[0]
-                cluster_idx = cluster_idx_for[node_idx] + 1
-                print(str.format('"{0}","{1}","{2}","{3}","{4}"', node_idx, info[1], info[2], info[3], str(cluster_idx)), file=out)
+        print('node_idx', 'id', 'gene_id', 'gene_name', 'description', 'cluster_id', 'singleton', sep=',', file=out)
+        for node_idx, gene_id in gene_id_for.items():
+            cluster_idx = cluster_idx_for[node_idx]
+            singleton = True if len(nodes_for_cluster[cluster_idx]) == 1 else False
+            cluster_idx = int(cluster_idx) + 1
+            print(str.format('"{0}","{1}","{2}","{3}","{4}","{5}","{6}"', 
+                node_idx, gene_info_for[gene_id]["idx"], gene_id, 
+                gene_info_for[gene_id]["name"], 
+                gene_info_for[gene_id]["description"],
+                str(cluster_idx), singleton), file=out)
     
     # open file and read in input
     begin = False
@@ -113,13 +138,16 @@ def main(args):
                         
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('mci_file', metavar='MCI FILE',
+    parser = argparse.ArgumentParser(description=desc,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('mci_file', metavar='MCI_FILE',
         type=str, default='graph.mci', help='mcl graph file')
-    parser.add_argument('cluster_file', metavar='CLUSTER FILE',
+    parser.add_argument('cluster_file', metavar='CLUSTER_FILE',
         type=str, default='graph.mci.I14', help='cluster file from mcl showing which nodes belong to each cluster')
-    parser.add_argument('gene_info_file', metavar='GENE FILE',
-        type=str, default='graph.tab', help='gene info file containing mcl node index and gene id and name')
+    parser.add_argument('graph_tab_file', metavar='GRAPH_TAB_FILE',
+        type=str, default='graph.tab', help='graph tab file containing mcl node index and gene id')
+    parser.add_argument('annotation_file', metavar='ANNOTATION_FILE',
+        type=str, default='annotation.txt', help='annotation file containing gene id and name')
     parser.add_argument('--nodes_file', metavar='NODES FILE',
         type=str, default='graph.nodes.csv', help='Name of the output file for the nodes')
     parser.add_argument('--edges_file', metavar='EDGES FILE',
