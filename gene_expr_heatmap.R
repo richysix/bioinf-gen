@@ -191,6 +191,8 @@ if (cmd_line_args$options[['transform']] == "rlog") {
 counts <- assay(dds)
 if (cmd_line_args$options[['centre_and_scale']]) {
     counts <- as.data.frame(t( scale( t(counts) ) ))
+} else {
+    counts <- as.data.frame(counts)
 }
 
 # subset data to gene list if provided
