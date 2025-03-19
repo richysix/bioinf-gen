@@ -262,9 +262,9 @@ if (cmd_line_args$options[['no_pvalue']]) {
 
 # make a region column
 if (detct) {
-    data$region <- paste(data[['Chr']], data[['Region start']],
-                         data[['Region end']], data[["3' end position"]],
-                         data[["3' end strand"]], sep=":")
+    data$region <- paste(data[['Chr']], data[['RegionStart']],
+                         data[['RegionEnd']], data[["3PrimeEndPosition"]],
+                         data[["3PrimeEndStrand"]], sep=":")
 } else {
     data$region <-
         sprintf("%s:%d-%d:%s", data[['Chr']], data[['Start']],
