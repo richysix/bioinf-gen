@@ -1,5 +1,5 @@
-certifi==2024.7.4
+certifi==2026.10.19
 charset-normalizer==3.0.1
 idna==3.7
-requests==2.32.4
-urllib3==2.6.0
+requests==2.34.2
+urllib3==2.8.0
